@@ -67,64 +67,89 @@ Out of scope for MVP
 
 ## Local development
 
-### Prerequisites
+### What you need to set up yourself
 
-* Node.js 18+ (recommended)
-* Git
-* Supabase CLI (recommended for local DB + migrations)
+After merging this PR you need **one external account and three credential values** before the app can talk to a database. Everything else (Node, npm install, dev server) is automated.
 
-### 1) Clone and install
+#### Step 1 — Create a free Supabase project
+
+1. Go to [supabase.com](https://supabase.com) and sign in (GitHub login works fine).
+2. Click **New project**, give it a name (e.g. `corved-local`), choose a region close to you, and set a database password. Wait ~2 minutes for provisioning.
+3. In your new project, open **Project Settings → API**.
+4. Copy these three values — you'll need them in the next step:
+
+   | Value | Where to find it |
+   |---|---|
+   | **Project URL** | "Project URL" field |
+   | **Anon (public) key** | Under "Project API keys" → `anon public` |
+   | **Service role key** | Under "Project API keys" → `service_role` (click "Reveal") |
+
+> **Security:** Never commit real keys to the repo. The `service_role` key bypasses all Row Level Security — only use it server-side.
+
+#### Step 2 — Create `.env.local`
+
+In the project root, create a file called `.env.local` (it is gitignored — never committed):
 
 ```bash
-git clone <your-repo-url>
-cd CorvEd
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxxxxxxxxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+```
+
+Paste the values you copied in Step 1. The file name and prefix matter:
+
+* `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` — safe to expose to the browser.
+* `SUPABASE_SERVICE_ROLE_KEY` — **server-only**, never prefix it with `NEXT_PUBLIC_`.
+
+#### Step 3 — Install dependencies
+
+```bash
 npm install
 ```
 
-### 2) Set up Supabase
-
-Option A (recommended): local Supabase via CLI
-
-```bash
-supabase init
-supabase start
-```
-
-Apply migrations + seed data (once you add them):
-
-```bash
-supabase db reset
-```
-
-Option B: hosted Supabase project
-
-* Create a Supabase project
-* Copy Project URL and anon key
-
-### 3) Configure environment variables
-
-Create a .env.local file in the project root:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-
-# server-only (never expose to the browser)
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-```
-
-Notes
-
-* SUPABASE_SERVICE_ROLE_KEY must only be used server-side (Server Actions / Route Handlers).
-* Email verification should be enforced in the app for email/password signups.
-
-### 4) Run the dev server
+#### Step 4 — Run the dev server
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd placeholder landing page. All other routes (`/auth/sign-in`, `/dashboard`, etc.) exist as stubs — they return a "TODO" placeholder while features are built in E2–E12.
+
+---
+
+### What the app can do right now (after this PR)
+
+| Area | Status |
+|---|---|
+| Landing page at `/` | ✅ CorvEd placeholder renders |
+| All route stubs exist | ✅ No 404s — pages return "TODO" |
+| Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
+| Auth flows | 🚧 Coming in E3 |
+| Dashboards, requests, sessions | 🚧 Coming in E4–E10 |
+
+---
+
+### Prerequisites
+
+* Node.js 20 LTS (or 18+)
+* Git
+* A [Supabase](https://supabase.com) account (free tier is sufficient)
+
+### Optional: local Supabase via CLI
+
+If you want a fully local database (no internet needed during development), install the [Supabase CLI](https://supabase.com/docs/guides/cli) and run:
+
+```bash
+supabase start
+```
+
+The CLI reads `supabase/config.toml` (already in the repo) and starts a local Postgres + Auth + Studio on Docker. When it starts, it prints local values for all three env vars — paste those into `.env.local` instead of the hosted project values.
+
+Apply migrations and seed data (once added):
+
+```bash
+supabase db reset
+```
 
 ## Database, migrations, and seed data
 
