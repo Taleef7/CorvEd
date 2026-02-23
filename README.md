@@ -116,11 +116,11 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd placeholder landing page. All other routes (`/auth/sign-in`, `/dashboard`, etc.) exist as stubs — they return a "TODO" placeholder while features are built in E2–E12.
+Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landing page. All auth flows are live — sign up, verify email, set profile, and dashboard routing all work.
 
 ---
 
-### What the app can do right now (after E2)
+### What the app can do right now (after E3)
 
 | Area | Status |
 |---|---|
@@ -129,9 +129,25 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd place
 | WhatsApp CTA button | ✅ `wa.me` deep link with prefilled message (requires `NEXT_PUBLIC_WHATSAPP_NUMBER` env var) |
 | `POST /api/leads` route | ✅ Server-side validation + Supabase insert via admin client |
 | `leads` DB migration | ✅ `supabase/migrations/20260223000001_create_leads_table.sql` — RLS: anon insert allowed, auth read/update |
-| All route stubs exist | ✅ No 404s — pages return "TODO" |
 | Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
-| Auth flows | 🚧 Coming in E3 |
+| **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password |
+| **Auth: email verification** | ✅ `app/auth/verify/page.tsx` — instructions page; unverified users cannot reach dashboard |
+| **Auth: sign in (email/password)** | ✅ `app/auth/sign-in/page.tsx` — generic error message (no email enumeration) |
+| **Auth: Google OAuth** | ✅ Sign-in + sign-up pages both have "Sign in with Google" button |
+| **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if profile incomplete |
+| **Auth: profile setup** | ✅ `app/auth/profile-setup/page.tsx` — display name, WhatsApp number (auto-normalized), timezone (auto-detected) |
+| **Auth: sign out** | ✅ `app/auth/sign-out/route.ts` — POST clears session, redirects to sign-in |
+| **Route protection (proxy)** | ✅ `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
+| **Role-aware dashboard redirect** | ✅ `app/dashboard/page.tsx` — admin→`/admin`, tutor→`/tutor`, student/parent stays on dashboard |
+| **Admin route protection** | ✅ `app/admin/layout.tsx` — verifies `admin` role server-side; non-admins → `/dashboard` |
+| **Tutor route protection** | ✅ `app/tutor/layout.tsx` — verifies `tutor` or `admin` role; others → `/dashboard` |
+| **Admin: user management screen** | ✅ `app/admin/users/page.tsx` — lists all users, shows roles, assign/remove roles, set primary role |
+| **DB: enum types** | ✅ `supabase/migrations/20260223000002_create_enums.sql` — all 8 MVP enum types |
+| **DB: subjects table** | ✅ `supabase/migrations/20260223000003_create_subjects.sql` — 9 MVP subjects seeded |
+| **DB: user_profiles + user_roles** | ✅ `supabase/migrations/20260223000004_create_user_profiles.sql` — tables, helper functions, trigger, RLS |
+| **DB: handle_new_user() trigger** | ✅ Auto-creates profile + `student` role on every signup |
+| **DB: helper functions** | ✅ `has_role()`, `is_admin()`, `is_tutor()` — used in RLS policies |
+| **DB: leads admin RLS** | ✅ `supabase/migrations/20260223000005_leads_admin_rls.sql` — admin-role users can read/update leads |
 | Dashboards, requests, sessions | 🚧 Coming in E4–E10 |
 
 ---
@@ -173,8 +189,15 @@ Recommended workflow
 | File | Description |
 |---|---|
 | `20260223000001_create_leads_table.sql` | `leads` table for landing page intake form submissions. RLS: anon insert allowed; authenticated read/update for admin. |
+| `20260223000002_create_enums.sql` | All 8 MVP enum types: `role_enum`, `level_enum`, `exam_board_enum`, `request_status_enum`, `package_status_enum`, `payment_status_enum`, `match_status_enum`, `session_status_enum`. |
+| `20260223000003_create_subjects.sql` | `subjects` reference table seeded with 9 MVP subjects (Math, Physics, Chemistry, Biology, English, CS, Pakistan Studies, Islamiyat, Urdu). |
+| `20260223000004_create_user_profiles.sql` | `user_profiles` + `user_roles` tables with RLS; `handle_new_user()` trigger that auto-creates profile and assigns `student` role on signup; `has_role()`, `is_admin()`, `is_tutor()` helper functions. |
+| `20260223000005_leads_admin_rls.sql` | Adds admin-role RLS policies to `leads` table (now that `is_admin()` exists). |
 
-Seed data should include the MVP subject list (see docs/ARCHITECTURE.md).
+> **Supabase Dashboard settings required for auth** (after running migrations):
+>
+> - **Auth → Settings**: enable email confirmations; set Site URL to your domain; add `http://localhost:3000/auth/callback` to Redirect URLs.
+> - **Auth → Providers → Google**: enable Google OAuth with credentials from [Google Cloud Console](https://console.cloud.google.com). Authorized redirect URI: `https://<your-supabase-ref>.supabase.co/auth/v1/callback`.
 
 ## Operational model
 
