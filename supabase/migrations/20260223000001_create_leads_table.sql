@@ -63,7 +63,10 @@ alter table public.leads enable row level security;
 create policy "Anyone can submit a lead"
   on public.leads
   for insert
-  with check (true);
+  with check (
+    status = 'new'
+    and admin_notes is null
+  );
 
 -- Policy: only the service-role key (admin server-side) can read leads.
 -- auth.role() = 'service_role' is true only when the Supabase service-role key
