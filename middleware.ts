@@ -1,10 +1,10 @@
-// E3 T3.1 / T3.2: session management + route protection proxy (Next.js 16)
+// E3 T3.1 / T3.2: session management + role-based route protection
 // Closes #20 #21
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
