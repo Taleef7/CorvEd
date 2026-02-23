@@ -18,7 +18,7 @@ create table public.leads (
     'math', 'physics', 'chemistry', 'biology', 'english',
     'cs', 'pak_studies', 'islamiyat', 'urdu'
   )),
-  exam_board text check (exam_board in ('cambridge', 'edexcel', 'other', 'not_sure')),
+  exam_board text not null default 'not_sure' check (exam_board in ('cambridge', 'edexcel', 'other', 'not_sure')),
 
   -- scheduling context
   availability text not null,
