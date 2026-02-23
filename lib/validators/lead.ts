@@ -20,7 +20,10 @@ export const leadSchema = z.object({
     'islamiyat',
     'urdu',
   ]),
-  exam_board: z.enum(['cambridge', 'edexcel', 'other', 'not_sure']).optional(),
+  exam_board: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.enum(['cambridge', 'edexcel', 'other', 'not_sure']).optional(),
+  ),
   availability: z.string().min(10, 'Please describe your availability (at least 10 characters)'),
   city_timezone: z.string().min(2, 'Please enter your city or timezone'),
   goals: z.string().optional(),
