@@ -193,6 +193,7 @@ Recommended workflow
 | `20260223000003_create_subjects.sql` | `subjects` reference table seeded with 9 MVP subjects (Math, Physics, Chemistry, Biology, English, CS, Pakistan Studies, Islamiyat, Urdu). |
 | `20260223000004_create_user_profiles.sql` | `user_profiles` + `user_roles` tables with RLS; `handle_new_user()` trigger that auto-creates profile and assigns `student` role on signup; `has_role()`, `is_admin()`, `is_tutor()` helper functions. |
 | `20260223000005_leads_admin_rls.sql` | Adds admin-role RLS policies to `leads` table (now that `is_admin()` exists). |
+| `20260223000006_user_profiles_insert_rls.sql` | Adds INSERT policy on `user_profiles` so authenticated users can upsert their own row during profile setup (safety net if trigger row is absent). |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
