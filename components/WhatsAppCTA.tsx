@@ -22,7 +22,9 @@ export function WhatsAppCTA({
 }: WhatsAppCTAProps) {
   if (!WHATSAPP_NUMBER) return null
 
-  const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${PREFILLED_MESSAGE}`
+  // wa.me expects the number in international format WITHOUT a leading '+'.
+  const normalizedNumber = WHATSAPP_NUMBER.replace(/^\+/, '')
+  const href = `https://wa.me/${normalizedNumber}?text=${PREFILLED_MESSAGE}`
 
   return (
     <Link

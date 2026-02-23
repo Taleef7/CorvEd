@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { leadSchema } from '@/lib/validators/lead'
+import { leadSchema, LeadFormData } from '@/lib/validators/lead'
+
+// The raw request body may include the honeypot field alongside form data
+type RequestBody = LeadFormData & { _hp?: string }
 
 export async function POST(req: NextRequest) {
   let body: unknown
@@ -8,6 +11,14 @@ export async function POST(req: NextRequest) {
     body = await req.json()
   } catch {
     return NextResponse.json({ error: 'Invalid request body' }, { status: 400 })
+  }
+
+  // Honeypot spam check: bots commonly fill all fields including hidden ones.
+  // The `_hp` field is rendered hidden in the UI; humans leave it empty.
+  const rawBody = body as RequestBody
+  if (rawBody?._hp) {
+    // Silently accept to avoid leaking honeypot logic to bots
+    return NextResponse.json({ id: 'ok' }, { status: 201 })
   }
 
   const parsed = leadSchema.safeParse(body)
@@ -26,7 +37,12 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    console.error('[leads POST] Supabase error:', error.message)
+    // Avoid logging full error details (schema/internals) in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[leads POST] Supabase error:', error)
+    } else {
+      console.error('[leads POST] Failed to insert lead')
+    }
     return NextResponse.json({ error: 'Failed to save lead' }, { status: 500 })
   }
 
