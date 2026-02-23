@@ -56,8 +56,6 @@ jwt_expiry = 3600
 enable_refresh_token_rotation = true
 # Allows session sharing between browser tabs.
 enable_session_sharing = true
-# If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
