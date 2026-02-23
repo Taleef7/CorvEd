@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { safeNext } from '@/lib/auth/utils'
 
@@ -21,6 +21,7 @@ type SignInData = z.infer<typeof signInSchema>
 export function SignInForm() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const router = useRouter()
   const searchParams = useSearchParams()
   const next = safeNext(searchParams.get('next'))
 
@@ -42,7 +43,7 @@ export function SignInForm() {
       setServerError('Invalid email or password. Please try again.')
       return
     }
-    window.location.href = next
+    router.push(next)
   }
 
   async function signInWithGoogle() {
