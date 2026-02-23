@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: CorvEd WhatsApp Support
+    url: https://wa.me/<YOUR_NUMBER_IN_E164>
+    about: For student/parent support requests (non-technical).
+  - name: CorvEd Ops Playbook
+    url: https://github.com/<YOUR_ORG>/<YOUR_REPO>/blob/main/docs/OPS.md
+    about: Read the operational workflows and WhatsApp templates.
