@@ -1,0 +1,2 @@
+-- MVP subject list seed
+-- Subjects: Math, Physics, Chemistry, Biology, English, Computer Science, Pakistan Studies, Islamiyat, Urdu
