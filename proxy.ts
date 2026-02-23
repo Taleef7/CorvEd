@@ -38,11 +38,12 @@ export async function proxy(request: NextRequest) {
   const protectedPaths = ['/dashboard', '/tutor', '/admin']
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p))
 
-  // Redirect unauthenticated users to sign-in
+  // Redirect unauthenticated users to sign-in, preserving the full path + query
   if (isProtected && !user) {
     const url = request.nextUrl.clone()
+    const next = pathname + request.nextUrl.search
     url.pathname = '/auth/sign-in'
-    url.searchParams.set('next', pathname)
+    url.searchParams.set('next', next)
     return NextResponse.redirect(url)
   }
 

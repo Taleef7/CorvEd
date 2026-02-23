@@ -11,5 +11,5 @@ export async function POST(request: NextRequest) {
 
   const url = request.nextUrl.clone()
   url.pathname = '/auth/sign-in'
-  return NextResponse.redirect(url)
+  return NextResponse.redirect(url, 303)
 }

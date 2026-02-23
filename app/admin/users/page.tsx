@@ -24,13 +24,34 @@ type UserRoleRow = {
 export default async function AdminUsersPage() {
   const admin = createAdminClient()
 
-  const [{ data: profiles }, { data: roleRows }] = await Promise.all([
+  const [
+    { data: profiles, error: profilesError },
+    { data: roleRows, error: rolesError },
+  ] = await Promise.all([
     admin
       .from('user_profiles')
       .select('user_id, display_name, whatsapp_number, timezone, primary_role, created_at')
       .order('created_at', { ascending: false }),
     admin.from('user_roles').select('user_id, role'),
   ])
+
+  if (profilesError || rolesError) {
+    return (
+      <div>
+        <h1 className="mb-4 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+          User Management
+        </h1>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-6 py-4 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <p className="font-semibold">Failed to load user data.</p>
+          {profilesError && <p className="mt-1">Profiles: {profilesError.message}</p>}
+          {rolesError && <p className="mt-1">Roles: {rolesError.message}</p>}
+          <p className="mt-2 text-xs text-red-600 dark:text-red-500">
+            Check that SUPABASE_SERVICE_ROLE_KEY is set correctly.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   // Group roles by user_id for quick lookup
   const rolesByUser = new Map<string, Role[]>()

@@ -23,7 +23,9 @@ create table public.user_roles (
 -- ── Helper functions ─────────────────────────────────────────────────────────
 
 create or replace function public.has_role(p_uid uuid, p_role public.role_enum)
-returns boolean language sql stable security definer as $$
+returns boolean language sql stable security definer
+set search_path = public, pg_temp
+as $$
   select exists (
     select 1 from public.user_roles ur
     where ur.user_id = p_uid and ur.role = p_role
@@ -31,19 +33,25 @@ returns boolean language sql stable security definer as $$
 $$;
 
 create or replace function public.is_admin(p_uid uuid)
-returns boolean language sql stable security definer as $$
+returns boolean language sql stable security definer
+set search_path = public, pg_temp
+as $$
   select public.has_role(p_uid, 'admin');
 $$;
 
 create or replace function public.is_tutor(p_uid uuid)
-returns boolean language sql stable security definer as $$
+returns boolean language sql stable security definer
+set search_path = public, pg_temp
+as $$
   select public.has_role(p_uid, 'tutor');
 $$;
 
 -- ── Auto-create profile on signup ────────────────────────────────────────────
 
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer
+set search_path = public, pg_temp
+as $$
 begin
   insert into public.user_profiles (user_id, display_name, timezone, primary_role)
   values (

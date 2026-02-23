@@ -16,9 +16,35 @@ function assertValidRole(role: string): asserts role is Role {
   }
 }
 
+/** Verify the calling user is authenticated and has the admin role.
+ *  Throws if the caller is not an admin — prevents direct action invocations
+ *  from bypassing the layout-level redirect guard.
+ */
+async function requireAdmin(): Promise<string> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) throw new Error('Unauthorized: not authenticated')
+
+  const admin = createAdminClient()
+  const { data: roles } = await admin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+
+  const isAdmin = roles?.some((r) => r.role === 'admin') ?? false
+  if (!isAdmin) throw new Error('Unauthorized: admin role required')
+
+  return user.id
+}
+
 /** Assign a role to a user. Creates the row if not present. */
 export async function assignRole(userId: string, role: string) {
+  await requireAdmin()
   assertValidRole(role)
+
   const admin = createAdminClient()
   const { error } = await admin
     .from('user_roles')
@@ -31,6 +57,7 @@ export async function assignRole(userId: string, role: string) {
  *  Guard: cannot remove the last admin role from the system.
  */
 export async function removeRole(userId: string, role: string) {
+  await requireAdmin()
   assertValidRole(role)
 
   // Guard: cannot remove last admin
@@ -56,11 +83,27 @@ export async function removeRole(userId: string, role: string) {
   revalidatePath('/admin/users')
 }
 
-/** Set the primary_role on a user's profile (controls dashboard routing). */
+/** Set the primary_role on a user's profile (controls dashboard routing).
+ *  The chosen primary role must be among the user's assigned roles.
+ */
 export async function setPrimaryRole(userId: string, primaryRole: string) {
+  await requireAdmin()
   assertValidRole(primaryRole)
 
+  // Validate that the user actually has this role assigned
   const admin = createAdminClient()
+  const { data: existingRoles } = await admin
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', userId)
+    .eq('role', primaryRole)
+
+  if (!existingRoles || existingRoles.length === 0) {
+    throw new Error(
+      `Cannot set primary role to '${primaryRole}': user does not have that role assigned.`
+    )
+  }
+
   const { error } = await admin
     .from('user_profiles')
     .update({ primary_role: primaryRole })

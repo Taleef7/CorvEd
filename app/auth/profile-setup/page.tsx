@@ -83,12 +83,15 @@ export default function ProfileSetupPage() {
 
     const { error } = await supabase
       .from('user_profiles')
-      .update({
-        display_name: data.display_name,
-        whatsapp_number: normalizeWhatsApp(data.whatsapp_number),
-        timezone: data.timezone,
-      })
-      .eq('user_id', user.id)
+      .upsert(
+        {
+          user_id: user.id,
+          display_name: data.display_name,
+          whatsapp_number: normalizeWhatsApp(data.whatsapp_number),
+          timezone: data.timezone,
+        },
+        { onConflict: 'user_id' }
+      )
 
     if (error) {
       setServerError('Failed to save profile. Please try again.')
