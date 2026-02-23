@@ -1,0 +1,170 @@
+name: Bug report
+description: Report a defect or regression in CorvEd
+title: "[Bug]: "
+labels: ["type: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form to report anything broken, incorrect, or inconsistent.
+        Include routes, timestamps, and screenshots when possible.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How urgently this needs to be fixed.
+      options:
+        - P0 (blocks core flow / launch)
+        - P1 (major but workaround exists)
+        - P2 (minor / cosmetic)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Where the bug happens.
+      options:
+        - Landing
+        - Auth
+        - Student
+        - Parent
+        - Tutor
+        - Admin
+        - Requests
+        - Packages
+        - Payments
+        - Matches
+        - Sessions
+        - Scheduling/Timezone
+        - WhatsApp Ops
+        - Storage/Uploads
+        - DevOps/CI
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release target
+      description: Where you want this fixed.
+      options:
+        - Phase 0 (concierge)
+        - MVP v0.1
+        - MVP v0.2
+        - Post-MVP
+    validations:
+      required: true
+
+  - type: input
+    id: route
+    attributes:
+      label: Affected route / page
+      description: "Example: /admin/requests or /dashboard/sessions"
+      placeholder: "/admin/requests"
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened
+      description: Clear description of the bug, including what you were trying to do.
+      placeholder: "When I click 'Mark Paid', the payment status updates but the request status stays payment_pending..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps to reproduce reliably.
+      placeholder: |
+        1) Login as admin
+        2) Go to /admin/payments
+        3) Open a pending payment
+        4) Click "Mark as paid"
+        5) Observe request status
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: "Request status should become ready_to_match and package should become active."
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: "Payment becomes paid, but request remains payment_pending."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Frequency
+      options:
+        - Always
+        - Often
+        - Sometimes
+        - Rare
+        - Once
+    validations:
+      required: false
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Environment
+      options:
+        - Local
+        - Staging
+        - Production
+    validations:
+      required: true
+
+  - type: textarea
+    id: browser
+    attributes:
+      label: Device / browser
+      description: "Include OS + browser version. Example: Windows 11 / Chrome 122, iPhone iOS 17 / Safari."
+      placeholder: "Windows 11 / Chrome 145"
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / console output
+      description: Paste relevant logs (server logs, browser console, Supabase errors). Remove sensitive data.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots / screen recordings
+      description: Drag/drop images or link recordings.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Reporter checklist
+      options:
+        - label: I searched existing issues and didn’t find a duplicate.
+          required: true
+        - label: I removed or redacted sensitive info (phone numbers, bank info, etc.) from logs/screenshots.
+          required: true
+        - label: I can reproduce this bug consistently with the steps above.
+          required: false

@@ -1,0 +1,121 @@
+name: Task
+description: An engineering or ops task that is not a user story
+title: "[Task]: "
+labels: ["type: task"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for implementation tasks, refactors, migrations, CI, ops setup, and one-off work.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Landing
+        - Auth
+        - Student
+        - Parent
+        - Tutor
+        - Admin
+        - Requests
+        - Packages
+        - Payments
+        - Matches
+        - Sessions
+        - Scheduling/Timezone
+        - WhatsApp Ops
+        - Storage/Uploads
+        - DevOps/CI
+        - Docs
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release target
+      options:
+        - Phase 0 (concierge)
+        - MVP v0.1
+        - MVP v0.2
+        - Post-MVP
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objective
+      description: What is the outcome of this task?
+      placeholder: "Create initial Supabase migrations for core schema (subjects, profiles, requests, packages, payments, matches, sessions)."
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Proposed steps
+      description: Break down what needs to happen. Keep it implementation-oriented.
+      placeholder: |
+        1) Add enums
+        2) Create tables with constraints + indexes
+        3) Enable RLS
+        4) Add helper role functions
+        5) Add policies
+        6) Seed subjects
+    validations:
+      required: false
+
+  - type: textarea
+    id: definition
+    attributes:
+      label: Definition of done
+      description: How do we know this is done?
+      placeholder: |
+        - Migrations run cleanly in local Supabase
+        - Tables appear in Supabase Studio
+        - Basic insert/select tests pass under expected roles
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies / blockers
+      placeholder: "- Depends on #101 (Architecture doc sign-off)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / edge cases
+      placeholder: "RLS policy complexity; ensure tutor cannot modify scheduled times."
+    validations:
+      required: false
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation / test plan
+      description: Manual checks or commands to run.
+      placeholder: |
+        - supabase db reset
+        - run seed
+        - create test users and confirm RLS behaviors
+    validations:
+      required: false

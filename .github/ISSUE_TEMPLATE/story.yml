@@ -1,0 +1,161 @@
+name: User story
+description: A user-focused story with acceptance criteria for CorvEd
+title: "[Story]: "
+labels: ["type: story"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for product work. Keep the story small enough to ship in one PR when possible.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options:
+        - P0 (MVP must-have)
+        - P1 (recommended before launch)
+        - P2 (nice-to-have / later)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - Landing
+        - Auth
+        - Student
+        - Parent
+        - Tutor
+        - Admin
+        - Requests
+        - Packages
+        - Payments
+        - Matches
+        - Sessions
+        - Scheduling/Timezone
+        - WhatsApp Ops
+        - Storage/Uploads
+        - DevOps/CI
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: release
+    attributes:
+      label: Release target
+      options:
+        - Phase 0 (concierge)
+        - MVP v0.1
+        - MVP v0.2
+        - Post-MVP
+    validations:
+      required: true
+
+  - type: dropdown
+    id: persona
+    attributes:
+      label: Primary user / persona
+      options:
+        - Student
+        - Parent
+        - Tutor
+        - Admin
+    validations:
+      required: true
+
+  - type: textarea
+    id: story
+    attributes:
+      label: User story
+      description: Use the format "As a __, I want __, so that __."
+      placeholder: "As a parent, I want to see my child’s next session and Meet link, so that joining class is easy."
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context / background
+      description: Why are we building this? What problem does it solve?
+      placeholder: "Parents in Pakistan often coordinate on WhatsApp. The platform should reduce confusion by showing next session + Meet link as the source of truth."
+    validations:
+      required: false
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope notes
+      description: Include key decisions and boundaries (what is included/excluded).
+      placeholder: |
+        Included:
+        - Show next session time in user timezone
+        - Show recurring Meet link from match
+        Excluded:
+        - Email reminders (later)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: acceptance
+    attributes:
+      label: Acceptance criteria (minimum)
+      description: Check these once implemented. Add specifics in the Notes section if needed.
+      options:
+        - label: Works on mobile and desktop layouts.
+          required: false
+        - label: Enforces CorvEd policies and role permissions (RLS / server actions).
+          required: false
+        - label: Handles timezone correctly for overseas users.
+          required: false
+        - label: Includes basic empty/loading/error states.
+          required: false
+        - label: Has a clear manual test plan in the PR description.
+          required: false
+
+  - type: textarea
+    id: detailed_ac
+    attributes:
+      label: Detailed acceptance criteria
+      description: List the exact behaviors that must be true.
+      placeholder: |
+        - Student dashboard shows next session card with:
+          - Localized date/time
+          - Meet link
+          - Tutor name
+        - If no sessions exist, show "Scheduling in progress" state
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Links to issues that must be done first.
+      placeholder: "- #123 (Auth), #124 (Matches schema)"
+    validations:
+      required: false
+
+  - type: textarea
+    id: designs
+    attributes:
+      label: Designs / references
+      description: Link Figma, screenshots, or reference apps.
+      placeholder: "Figma link or screenshot"
+    validations:
+      required: false
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Implementation notes
+      description: Anything that will help the implementer (data fields, tables, edge cases).
+      placeholder: |
+        - Data source: sessions table ordered by scheduled_start_utc asc
+        - Meet link: matches.meet_link
+        - Only show sessions inside active package window
+    validations:
+      required: false
