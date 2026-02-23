@@ -94,12 +94,15 @@ In the project root, create a file called `.env.local` (it is gitignored — nev
 NEXT_PUBLIC_SUPABASE_URL=https://xxxxxxxxxxxxxxxxxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGci...
+# Optional: WhatsApp Business number in international format without '+' (e.g. 923001234567)
+NEXT_PUBLIC_WHATSAPP_NUMBER=923001234567
 ```
 
 Paste the values you copied in Step 1. The file name and prefix matter:
 
 * `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` — safe to expose to the browser.
 * `SUPABASE_SERVICE_ROLE_KEY` — **server-only**, never prefix it with `NEXT_PUBLIC_`.
+* `NEXT_PUBLIC_WHATSAPP_NUMBER` — your WhatsApp Business number. If omitted, the WhatsApp CTA button is hidden.
 
 #### Step 3 — Install dependencies
 
@@ -117,11 +120,15 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd place
 
 ---
 
-### What the app can do right now (after this PR)
+### What the app can do right now (after E2)
 
 | Area | Status |
 |---|---|
-| Landing page at `/` | ✅ CorvEd placeholder renders |
+| Landing page at `/` | ✅ Full landing page with hero, how it works, subjects, packages, policies, intake form, FAQ, footer |
+| Intake / lead capture form | ✅ React Hook Form + Zod — works without login; saves to Supabase `leads` table |
+| WhatsApp CTA button | ✅ `wa.me` deep link with prefilled message (requires `NEXT_PUBLIC_WHATSAPP_NUMBER` env var) |
+| `POST /api/leads` route | ✅ Server-side validation + Supabase insert via admin client |
+| `leads` DB migration | ✅ `supabase/migrations/20260223000001_create_leads_table.sql` — RLS: anon insert allowed, auth read/update |
 | All route stubs exist | ✅ No 404s — pages return "TODO" |
 | Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
 | Auth flows | 🚧 Coming in E3 |
@@ -160,6 +167,12 @@ Recommended workflow
 * Add migrations under supabase/migrations
 * Run locally: supabase db reset
 * Deploy: supabase db push (or a CI workflow later)
+
+### Current migrations
+
+| File | Description |
+|---|---|
+| `20260223000001_create_leads_table.sql` | `leads` table for landing page intake form submissions. RLS: anon insert allowed; authenticated read/update for admin. |
 
 Seed data should include the MVP subject list (see docs/ARCHITECTURE.md).
 
