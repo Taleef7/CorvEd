@@ -7,7 +7,7 @@ export const leadSchema = z
       .string()
       .min(9, 'Enter a valid WhatsApp number')
       .regex(/^[+\d][\d\s\-()]{7,}$/, 'Enter a valid phone number')
-      // Normalise to digits only (strip spaces, hyphens, parentheses) for consistent storage
+      // Normalise phone number by stripping spaces, hyphens, and parentheses, preserving a leading '+' for international format
       .transform((val) => val.replace(/[ \-()]/g, '')),
     role: z.enum(['student', 'parent']),
     // child_name is optional per product spec (docs/MVP.md section 10.1)
