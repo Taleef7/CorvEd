@@ -1,0 +1,46 @@
+name: Update Issue Bodies (E1)
+
+# Manually triggered from the GitHub Actions tab.
+# Updates the bodies of Epic E1, T1.1, and T1.3 with the comprehensive
+# descriptions stored in .github/issue-bodies/.
+on:
+  workflow_dispatch:
+
+jobs:
+  update-issues:
+    name: Update E1 issue bodies via GitHub API
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update Epic E1 (#5)
+        run: |
+          gh issue edit 5 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file .github/issue-bodies/issue-5-epic-e1.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update T1.1 (#6)
+        run: |
+          gh issue edit 6 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file .github/issue-bodies/issue-6-t1-1.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update T1.3 (#8)
+        run: |
+          gh issue edit 8 \
+            --repo "$GITHUB_REPOSITORY" \
+            --body-file .github/issue-bodies/issue-8-t1-3.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Done
+        run: |
+          echo "✅ Updated issues: #5 (Epic E1), #6 (T1.1), #8 (T1.3)"
