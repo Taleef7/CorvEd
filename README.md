@@ -137,7 +137,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if profile incomplete |
 | **Auth: profile setup** | ✅ `app/auth/profile-setup/page.tsx` — display name, WhatsApp number (auto-normalized), timezone (auto-detected) |
 | **Auth: sign out** | ✅ `app/auth/sign-out/route.ts` — POST clears session, redirects to sign-in |
-| **Route protection (middleware)** | ✅ `middleware.ts` + `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
+| **Route protection (proxy)** | ✅ `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
 | **Role-aware dashboard redirect** | ✅ `app/dashboard/page.tsx` — admin→`/admin`, tutor→`/tutor`, student/parent stays on dashboard |
 | **Admin route protection** | ✅ `app/admin/layout.tsx` — verifies `admin` role server-side; non-admins → `/dashboard` |
 | **Tutor route protection** | ✅ `app/tutor/layout.tsx` — verifies `tutor` or `admin` role; others → `/dashboard` |
