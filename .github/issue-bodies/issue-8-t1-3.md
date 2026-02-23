@@ -67,7 +67,8 @@ jobs:
         env:
           # Placeholder values — Next.js requires NEXT_PUBLIC_* at build time.
           # These stubs allow the build to complete in CI without a live Supabase project.
-          NEXT_PUBLIC_SUPABASE_URL: https://placeholder.supabase.co
+          # Use the Supabase CLI local default URL so the format is valid but clearly local.
+          NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: placeholder_anon_key
           SUPABASE_SERVICE_ROLE_KEY: placeholder_service_role_key
 ```

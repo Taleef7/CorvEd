@@ -120,7 +120,21 @@ export async function createClient() {
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll() { return cookieStore.getAll() }, setAll(…) { … } } }
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        // setAll is required for server-side auth cookie refresh.
+        // See Supabase SSR docs for the full Next.js App Router implementation:
+        // https://supabase.com/docs/guides/auth/server-side/nextjs
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
+        },
+      },
+    }
   )
 }
 ```
