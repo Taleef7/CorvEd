@@ -10,20 +10,13 @@ import { z } from 'zod'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { safeNext } from '@/lib/auth/utils'
 
 const signInSchema = z.object({
   email: z.string().email('Enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
 })
 type SignInData = z.infer<typeof signInSchema>
-
-/** Validate a redirect target — must be a relative path starting with `/`. */
-function safeNext(raw: string | null): string {
-  if (!raw) return '/dashboard'
-  // Reject protocol-relative (//...) and absolute URLs
-  if (!raw.startsWith('/') || raw.startsWith('//')) return '/dashboard'
-  return raw
-}
 
 export function SignInForm() {
   const [serverError, setServerError] = useState<string | null>(null)
@@ -130,10 +123,14 @@ export function SignInForm() {
         )}
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label
+            htmlFor="signin-email"
+            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
             Email
           </label>
           <input
+            id="signin-email"
             type="email"
             autoComplete="email"
             {...register('email')}
@@ -146,10 +143,14 @@ export function SignInForm() {
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <label
+            htmlFor="signin-password"
+            className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+          >
             Password
           </label>
           <input
+            id="signin-password"
             type="password"
             autoComplete="current-password"
             {...register('password')}
