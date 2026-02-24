@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E3)
+### What the app can do right now (after E4)
 
 | Area | Status |
 |---|---|
@@ -149,7 +149,13 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **DB: handle_new_user() trigger** | ✅ Auto-creates profile + `student` role on every signup |
 | **DB: helper functions** | ✅ `has_role()`, `is_admin()`, `is_tutor()` — used in RLS policies |
 | **DB: leads admin RLS** | ✅ `supabase/migrations/20260223000005_leads_admin_rls.sql` — admin-role users can read/update leads |
-| Dashboards, requests, sessions | 🚧 Coming in E4–E10 |
+| **Student dashboard** | ✅ `app/dashboard/page.tsx` — lists all requests with status badges; "New Request" CTA |
+| **Tutoring request form** | ✅ `app/dashboard/requests/new/page.tsx` — React Hook Form + Zod; level, subject (from DB), exam board, availability, timezone (pre-filled), goals, preferred start date; duplicate request warning |
+| **Request confirmation page** | ✅ `app/dashboard/requests/[id]/page.tsx` — read-only summary, status badge, status-aware "what's next" banner, "Select Package" CTA |
+| **DB: requests table + RLS** | ✅ `supabase/migrations/20260223000007_create_requests_table.sql` — full schema, indexes, updated_at trigger, 4 RLS policies (insert self, select creator/admin, update creator limited, admin update) |
+| **Request status utilities** | ✅ `lib/utils/request.ts` — `STATUS_LABELS` + `STATUS_COLOURS` for all 7 request statuses |
+| **Request Zod schema** | ✅ `lib/validators/request.ts` — validates all request fields |
+| Packages, sessions | 🚧 Coming in E5–E10 |
 
 ---
 
@@ -195,6 +201,7 @@ Recommended workflow
 | `20260223000004_create_user_profiles.sql` | `user_profiles` + `user_roles` tables with RLS; `handle_new_user()` trigger that auto-creates profile and assigns `student` role on signup; `has_role()`, `is_admin()`, `is_tutor()` helper functions. |
 | `20260223000005_leads_admin_rls.sql` | Adds admin-role RLS policies to `leads` table (now that `is_admin()` exists). |
 | `20260223000006_user_profiles_insert_rls.sql` | Adds INSERT policy on `user_profiles` so authenticated users can upsert their own row during profile setup (safety net if trigger row is absent). |
+| `20260223000007_create_requests_table.sql` | `requests` table with all fields from the data model; indexes on `(status, created_at desc)` and `created_by_user_id`; `updated_at` trigger; 4 RLS policies (creator insert, creator/admin select, creator update limited to `new`/`payment_pending`, admin update). |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
