@@ -1,17 +1,13 @@
 // E4 T4.2: Request detail / confirmation page
-// Closes #28
+// E5 S5.1: links to package selection with requestId param
+// Closes #28 #31
 
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { STATUS_LABELS, STATUS_COLOURS, RequestStatus } from '@/lib/utils/request'
+import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
 
 export const dynamic = 'force-dynamic'
-
-const LEVEL_LABELS: Record<string, string> = {
-  o_levels: 'O Levels',
-  a_levels: 'A Levels',
-}
 
 const EXAM_BOARD_LABELS: Record<string, string> = {
   cambridge: 'Cambridge',
@@ -30,7 +26,7 @@ function StatusBadge({ status }: { status: RequestStatus }) {
   )
 }
 
-function NextStepBanner({ status }: { status: RequestStatus }) {
+function NextStepBanner({ status, requestId }: { status: RequestStatus; requestId: string }) {
   if (status === 'new') {
     return (
       <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
@@ -38,7 +34,7 @@ function NextStepBanner({ status }: { status: RequestStatus }) {
           Next step: Select a package and pay to begin the matching process.
         </p>
         <Link
-          href="/dashboard/packages"
+          href={`/dashboard/packages/new?requestId=${requestId}`}
           className="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
         >
           Select Package →
@@ -158,7 +154,7 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Next step banner */}
-        <NextStepBanner status={status} />
+        <NextStepBanner status={status} requestId={request.id} />
 
         {/* Request summary */}
         <div className="rounded-2xl bg-white px-8 py-8 shadow-md dark:bg-zinc-900">

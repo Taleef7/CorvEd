@@ -55,6 +55,12 @@ export default async function AdminLayout({
               >
                 Requests
               </Link>
+              <Link
+                href="/admin/payments"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Payments
+              </Link>
             </nav>
           </div>
           <form action="/auth/sign-out" method="post">
