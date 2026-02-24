@@ -1,6 +1,6 @@
 # CorvEd Roadmap
 
-Last updated: 2026-02-22  
+Last updated: 2026-02-24  
 Owner: Taleef  
 References: docs/MVP.md, docs/PRODUCT.md, docs/OPS.md, docs/ARCHITECTURE.md  
 Stack: Next.js + Supabase
@@ -203,7 +203,7 @@ Sprint 0 (setup + Phase 0 ops) — 3 to 7 days
 - landing page + intake
 - run concierge with first leads
 
-Sprint 1 (core platform foundation) — 1 to 2 weeks
+Sprint 1 (core platform foundation) — 1 to 2 weeks ✅ COMPLETE (2026-02-24)
 - Next.js + Supabase auth
 - user profiles + roles
 - request creation
