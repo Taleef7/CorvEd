@@ -80,6 +80,7 @@ create table public.payments (
 create index on public.payments (status, created_at desc);
 create index on public.payments (package_id);
 create index on public.payments (payer_user_id);
+create index on public.payments (verified_by_user_id);
 
 -- updated_at trigger
 create or replace function public.payments_set_updated_at()

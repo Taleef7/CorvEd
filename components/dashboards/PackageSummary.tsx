@@ -28,8 +28,8 @@ export function PackageSummary({
   status,
   packageId,
 }: PackageSummaryProps) {
-  const sessionsRemaining = tier_sessions - sessions_used
-  const pct = tier_sessions > 0 ? Math.round((sessions_used / tier_sessions) * 100) : 0
+  const sessionsRemaining = Math.max(0, tier_sessions - sessions_used)
+  const pct = tier_sessions > 0 ? Math.min(100, Math.round((sessions_used / tier_sessions) * 100)) : 0
 
   if (status === 'pending') {
     return (

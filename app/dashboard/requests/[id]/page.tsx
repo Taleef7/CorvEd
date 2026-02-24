@@ -5,14 +5,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { STATUS_LABELS, STATUS_COLOURS, RequestStatus } from '@/lib/utils/request'
+import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
 
 export const dynamic = 'force-dynamic'
-
-const LEVEL_LABELS: Record<string, string> = {
-  o_levels: 'O Levels',
-  a_levels: 'A Levels',
-}
 
 const EXAM_BOARD_LABELS: Record<string, string> = {
   cambridge: 'Cambridge',

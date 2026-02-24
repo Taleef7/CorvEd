@@ -4,13 +4,9 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { markPaymentPaid, markPaymentRejected } from './actions'
+import { LEVEL_LABELS } from '@/lib/utils/request'
+import { MarkPaidForm, RejectForm } from './PaymentActions'
 import Link from 'next/link'
-
-const LEVEL_LABELS: Record<string, string> = {
-  o_levels: 'O Levels',
-  a_levels: 'A Levels',
-}
 
 const STATUS_COLOURS: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -158,26 +154,18 @@ export default async function AdminPaymentsPage({
                   </span>
                 </div>
 
-                {/* Action buttons — only for pending payments */}
-                {payment.status === 'pending' && pkg && req && (
+                {/* Action buttons — only for pending payments with valid related data */}
+                {payment.status === 'pending' && pkg?.id && req?.id && (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     {payment.proof_path && (
                       <ProofLinkButton proofPath={payment.proof_path} />
                     )}
 
-                    <form
-                      action={async () => {
-                        'use server'
-                        await markPaymentPaid(payment.id, pkg.id, req.id)
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-green-700"
-                      >
-                        ✅ Mark Paid
-                      </button>
-                    </form>
+                    <MarkPaidForm
+                      paymentId={payment.id}
+                      packageId={pkg.id}
+                      requestId={req.id}
+                    />
 
                     <RejectForm paymentId={payment.id} />
                   </div>
@@ -191,39 +179,12 @@ export default async function AdminPaymentsPage({
   )
 }
 
-// Inline client component for proof link (needs signed URL)
+// Inline server component for proof indicator (signed URL generation is in PaymentActions)
 function ProofLinkButton({ proofPath }: { proofPath: string }) {
   void proofPath
   return (
     <span className="text-xs text-zinc-400 italic">
       Proof on file (view via Supabase Storage)
     </span>
-  )
-}
-
-// Inline reject form with note
-function RejectForm({ paymentId }: { paymentId: string }) {
-  return (
-    <form
-      action={async (formData: FormData) => {
-        'use server'
-        const note = formData.get('note') as string
-        await markPaymentRejected(paymentId, note)
-      }}
-      className="flex items-center gap-2"
-    >
-      <input
-        type="text"
-        name="note"
-        placeholder="Rejection note (optional)"
-        className="rounded-lg border border-zinc-300 px-2 py-1 text-xs shadow-sm focus:border-red-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-      />
-      <button
-        type="submit"
-        className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700"
-      >
-        ❌ Reject
-      </button>
-    </form>
   )
 }

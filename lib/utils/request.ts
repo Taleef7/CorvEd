@@ -1,5 +1,11 @@
 // E4 T4.3: Request status helpers (labels, badge colours)
+// E5: LEVEL_LABELS shared constant
 // Closes #29
+
+export const LEVEL_LABELS: Record<string, string> = {
+  o_levels: 'O Levels',
+  a_levels: 'A Levels',
+}
 
 export type RequestStatus =
   | 'new'

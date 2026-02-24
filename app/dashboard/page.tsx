@@ -8,13 +8,8 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { STATUS_LABELS, STATUS_COLOURS, RequestStatus } from '@/lib/utils/request'
+import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
 import { PackageSummary } from '@/components/dashboards/PackageSummary'
-
-const LEVEL_LABELS: Record<string, string> = {
-  o_levels: 'O Levels',
-  a_levels: 'A Levels',
-}
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   return (
@@ -74,7 +69,7 @@ export default async function DashboardPage() {
       .from('packages')
       .select('id, request_id, tier_sessions, sessions_used, start_date, end_date, status')
       .in('request_id', requestIds)
-      .in('status', ['pending', 'active'])
+      .in('status', ['pending', 'active', 'expired'])
       .order('created_at', { ascending: false })
 
     if (packages) {

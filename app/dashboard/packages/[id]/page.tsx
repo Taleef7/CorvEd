@@ -7,11 +7,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PAYMENT_INSTRUCTIONS, PACKAGES } from '@/lib/config/pricing'
-
-const LEVEL_LABELS: Record<string, string> = {
-  o_levels: 'O Levels',
-  a_levels: 'A Levels',
-}
+import { LEVEL_LABELS } from '@/lib/utils/request'
 
 const MAX_PROOF_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 
@@ -102,7 +98,7 @@ export default function PackageDetailPage() {
           .from('payments')
           .select('id, amount_pkr, status, reference, proof_path')
           .eq('package_id', id)
-          .single(),
+          .maybeSingle(),
       ])
 
       setRequest(reqData as RequestRow | null)
@@ -144,7 +140,14 @@ export default function PackageDetailPage() {
         return
       }
 
-      const filePath = `${user.id}/${id}/${Date.now()}_${file.name}`
+      // Sanitize filename: preserve only the final extension, clean the base name
+      const lastDot = file.name.lastIndexOf('.')
+      const baseName = (lastDot > 0 ? file.name.slice(0, lastDot) : file.name)
+        .replace(/[^a-zA-Z0-9_-]/g, '_')
+        .slice(0, 60)
+      const ext = lastDot > 0 ? file.name.slice(lastDot).replace(/[^a-zA-Z0-9.]/g, '') : ''
+      const safeFileName = baseName + ext
+      const filePath = `${user.id}/${id}/${Date.now()}_${safeFileName}`
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('payment-proofs')
         .upload(filePath, file)
@@ -198,10 +201,11 @@ export default function PackageDetailPage() {
   const levelLabel = LEVEL_LABELS[request.level] ?? request.level
   const studentName = profile?.display_name ?? 'Student'
 
+  const sanitizeRefValue = (value: string) => value.replace(/\|/g, '')
   const reference_ = PAYMENT_INSTRUCTIONS.referenceFormat
-    .replace('{StudentName}', studentName)
-    .replace('{Subject}', subjectName)
-    .replace('{Level}', levelLabel)
+    .replace('{StudentName}', sanitizeRefValue(studentName))
+    .replace('{Subject}', sanitizeRefValue(subjectName))
+    .replace('{Level}', sanitizeRefValue(levelLabel))
 
   const formatDate = (d: string) =>
     new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -310,10 +314,14 @@ export default function PackageDetailPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label
+                  htmlFor="transaction-reference"
+                  className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
                   Transaction reference / ID (optional)
                 </label>
                 <input
+                  id="transaction-reference"
                   type="text"
                   value={reference}
                   onChange={(e) => setReference(e.target.value)}
@@ -323,10 +331,14 @@ export default function PackageDetailPage() {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                <label
+                  htmlFor="payment-proof"
+                  className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                >
                   Payment proof screenshot (optional, max 5 MB)
                 </label>
                 <input
+                  id="payment-proof"
                   ref={fileRef}
                   type="file"
                   accept="image/jpeg,image/png,image/jpg,application/pdf"

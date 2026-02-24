@@ -48,10 +48,29 @@ function NewPackageContent() {
     }
 
     const today = new Date()
-    const startDate = today.toISOString().split('T')[0]
-    const endDate = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate())
-      .toISOString()
-      .split('T')[0]
+    const startDate = today.toISOString().slice(0, 10)
+    // Compute end date as same day next month, clamped to last day of that month
+    const endDateObj = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, today.getUTCDate()),
+    )
+    // If day overflowed into the following month (e.g. Jan 31 → Mar), clamp to last day
+    if (endDateObj.getUTCMonth() !== (today.getUTCMonth() + 1) % 12) {
+      endDateObj.setUTCDate(0)
+    }
+    const endDate = endDateObj.toISOString().slice(0, 10)
+
+    // Check for existing active/pending package to prevent duplicates
+    const { data: existingPkg } = await supabase
+      .from('packages')
+      .select('id')
+      .eq('request_id', requestId)
+      .in('status', ['pending', 'active'])
+      .maybeSingle()
+
+    if (existingPkg) {
+      router.push(`/dashboard/packages/${existingPkg.id}`)
+      return
+    }
 
     // Insert package row
     const { data: newPkg, error: pkgError } = await supabase
@@ -77,13 +96,14 @@ function NewPackageContent() {
     }
 
     // Advance request status to payment_pending
-    const { error: reqError } = await supabase
+    const { data: updatedRequests, error: reqError } = await supabase
       .from('requests')
       .update({ status: 'payment_pending' })
       .eq('id', requestId)
       .eq('status', 'new')
+      .select()
 
-    if (reqError) {
+    if (reqError || !updatedRequests || updatedRequests.length === 0) {
       setError('Package created but failed to update request status. Please contact support.')
       setLoading(false)
       return

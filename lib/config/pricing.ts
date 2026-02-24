@@ -11,34 +11,25 @@ export interface PackageConfig {
   description: string
 }
 
+function createPackageConfig(
+  tier: PackageTier,
+  typicalFrequency: string,
+  pricePerMonthPkr: number,
+  description: string,
+): PackageConfig {
+  return { tier, sessionsPerMonth: tier, typicalFrequency, pricePerMonthPkr, description }
+}
+
 export const PACKAGES: PackageConfig[] = [
-  {
-    tier: 8,
-    sessionsPerMonth: 8,
-    typicalFrequency: '~2x per week',
-    pricePerMonthPkr: 8000,
-    description: '8 sessions per month, 60 minutes each',
-  },
-  {
-    tier: 12,
-    sessionsPerMonth: 12,
-    typicalFrequency: '~3x per week',
-    pricePerMonthPkr: 11000,
-    description: '12 sessions per month, 60 minutes each',
-  },
-  {
-    tier: 20,
-    sessionsPerMonth: 20,
-    typicalFrequency: '~5x per week',
-    pricePerMonthPkr: 16000,
-    description: '20 sessions per month, 60 minutes each',
-  },
+  createPackageConfig(8,  '~2x per week', 8000,  '8 sessions per month, 60 minutes each'),
+  createPackageConfig(12, '~3x per week', 11000, '12 sessions per month, 60 minutes each'),
+  createPackageConfig(20, '~5x per week', 16000, '20 sessions per month, 60 minutes each'),
 ]
 
 export const PAYMENT_INSTRUCTIONS = {
-  bankName: '',           // ← Fill in before launch
-  accountTitle: '',       // ← Fill in before launch
-  accountNumber: '',      // ← Fill in before launch
+  bankName: 'CONFIGURE_BEFORE_LAUNCH',           // ← Fill in before launch
+  accountTitle: 'CONFIGURE_BEFORE_LAUNCH',       // ← Fill in before launch
+  accountNumber: 'CONFIGURE_BEFORE_LAUNCH',      // ← Fill in before launch
   referenceFormat: 'CorvEd | {StudentName} | {Subject} | {Level}',
   notes:
     'After transferring, send your screenshot or transaction reference to our WhatsApp for faster verification.',
