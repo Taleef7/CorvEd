@@ -2,7 +2,6 @@ import Link from 'next/link'
 import { LeadForm } from '@/components/LeadForm'
 import { WhatsAppCTA } from '@/components/WhatsAppCTA'
 
-// Subjects offered at MVP launch
 const SUBJECTS = [
   'Mathematics',
   'Physics',
@@ -15,7 +14,6 @@ const SUBJECTS = [
   'Urdu',
 ]
 
-// Package tiers
 const PACKAGES = [
   {
     sessions: 8,
@@ -23,6 +21,8 @@ const PACKAGES = [
     price: 'PKR —',
     description: 'Ideal for focused revision or lighter weekly commitment.',
     highlight: false,
+    accentColor: '#D02020',
+    shape: 'circle' as const,
   },
   {
     sessions: 12,
@@ -30,6 +30,8 @@ const PACKAGES = [
     price: 'PKR —',
     description: 'The most popular choice for consistent weekly progress.',
     highlight: true,
+    accentColor: '#1040C0',
+    shape: 'square' as const,
   },
   {
     sessions: 20,
@@ -37,38 +39,50 @@ const PACKAGES = [
     price: 'PKR —',
     description: 'Intensive preparation for upcoming exams.',
     highlight: false,
+    accentColor: '#F0C020',
+    shape: 'triangle' as const,
   },
 ]
 
-// How it works steps
 const HOW_IT_WORKS = [
   {
     step: 1,
-    title: 'Submit your request',
+    title: 'Submit Your Request',
     body: 'Choose your level and subject, share your availability and goals.',
+    bg: 'bg-white',
+    numBg: '#D02020',
+    numText: 'white',
   },
   {
     step: 2,
-    title: 'Pay for your package',
+    title: 'Pay for Your Package',
     body: 'Bank transfer, manually verified by our team within a few hours.',
+    bg: 'bg-[#F0F0F0]',
+    numBg: '#1040C0',
+    numText: 'white',
   },
   {
     step: 3,
-    title: 'Get matched',
+    title: 'Get Matched',
     body: 'We assign a verified teacher based on your subject, level, and schedule.',
+    bg: 'bg-white',
+    numBg: '#F0C020',
+    numText: '#121212',
   },
   {
     step: 4,
-    title: 'Start learning',
+    title: 'Start Learning',
     body: 'Join via a recurring Google Meet link and track sessions on your dashboard.',
+    bg: 'bg-[#F0F0F0]',
+    numBg: '#1040C0',
+    numText: 'white',
   },
 ]
 
-// FAQ items
 const FAQS = [
   {
-    q: 'Do I need to create an account to submit a request?',
-    a: "No — just fill out the form below and we'll follow up on WhatsApp.",
+    q: 'Do I need to create an account?',
+    a: "No — just fill out the form and we'll follow up on WhatsApp.",
   },
   {
     q: 'How does matching work?',
@@ -79,7 +93,7 @@ const FAQS = [
     a: 'Request via WhatsApp at least 24 hours before your class. Late reschedules are treated as no-shows.',
   },
   {
-    q: "What happens if the teacher doesn't show up?",
+    q: "What if the teacher doesn't show up?",
     a: 'Tutor no-shows are not deducted from your package. We reschedule immediately.',
   },
   {
@@ -88,70 +102,218 @@ const FAQS = [
   },
   {
     q: 'Can I try one session before committing?',
-    a: 'Packages are monthly. Contact us on WhatsApp to discuss your specific needs.',
+    a: 'Packages are monthly. Contact us on WhatsApp to discuss your needs.',
   },
 ]
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-50">
-      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-white px-6 py-20 text-center dark:from-zinc-900 dark:via-zinc-950 dark:to-zinc-950 sm:py-28">
-        <div className="mx-auto max-w-3xl">
-          <span className="mb-4 inline-block rounded-full bg-indigo-100 px-4 py-1 text-xs font-semibold uppercase tracking-widest text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300">
-            Pakistan-first · Overseas supported
-          </span>
-          <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            1:1 Online Tutoring for
+    <div className="min-h-screen bg-[#F0F0F0] text-[#121212]">
+      {/* ── NAVBAR ──────────────────────────────────────────────────────────── */}
+      <header className="sticky top-0 z-50 bg-white border-b-4 border-[#121212]">
+        <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
+          {/* Logo mark + wordmark */}
+          <Link href="/" className="flex items-center gap-3 group">
+            <div className="flex items-center gap-1">
+              <div className="w-4 h-4 rounded-full bg-[#D02020] border-2 border-[#121212]" />
+              <div className="w-4 h-4 bg-[#1040C0] border-2 border-[#121212]" />
+              <div
+                className="w-0 h-0"
+                style={{
+                  borderLeft: '8px solid transparent',
+                  borderRight: '8px solid transparent',
+                  borderBottom: '14px solid #F0C020',
+                  filter: 'drop-shadow(0 0 0 2px #121212)',
+                }}
+              />
+            </div>
+            <span className="text-xl font-black uppercase tracking-tighter group-hover:text-[#D02020] transition">
+              CorvEd
+            </span>
+          </Link>
+
+          {/* Nav links */}
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/dashboard"
+              className="hidden md:inline-block px-4 py-1.5 text-xs font-black uppercase tracking-widest text-[#121212] hover:bg-[#F0F0F0] transition"
+            >
+              Dashboard
+            </Link>
+            <Link
+              href="/tutor"
+              className="hidden md:inline-block px-4 py-1.5 text-xs font-black uppercase tracking-widest text-[#121212] hover:bg-[#F0F0F0] transition"
+            >
+              Tutor Portal
+            </Link>
+            <Link
+              href="/auth/sign-in"
+              className="px-4 py-2 text-xs font-black uppercase tracking-widest border-2 border-[#121212] rounded-full hover:bg-[#121212] hover:text-white transition"
+            >
+              Log In
+            </Link>
+            <Link
+              href="/auth/sign-up"
+              className="px-4 py-2 text-xs font-black uppercase tracking-widest bg-[#D02020] text-white border-2 border-[#121212] rounded-full shadow-[3px_3px_0px_0px_#121212] hover:bg-[#D02020]/90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition"
+            >
+              Sign Up
+            </Link>
+            <Link
+              href="/admin"
+              className="hidden sm:inline-block px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#121212]/50 hover:text-[#D02020] underline underline-offset-2 transition"
+            >
+              Admin
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* ── HERO ─────────────────────────────────────────────────────────────── */}
+      <section className="border-b-4 border-[#121212] grid lg:grid-cols-[58%_42%] min-h-[88vh]">
+        {/* Left: Text panel */}
+        <div className="bg-white border-r-0 lg:border-r-4 border-[#121212] px-8 sm:px-12 lg:px-16 py-16 sm:py-20 flex flex-col justify-center">
+          <div className="flex items-center gap-2 mb-8">
+            <div className="w-2.5 h-2.5 rounded-full bg-[#D02020] border-2 border-[#121212]" />
+            <span className="text-xs font-black uppercase tracking-[0.2em] text-[#121212]/50">
+              Pakistan-First · Overseas Supported
+            </span>
+          </div>
+
+          <h1 className="text-5xl sm:text-6xl xl:text-7xl font-black uppercase leading-[0.88] tracking-tighter text-[#121212]">
+            1:1 Online
             <br />
-            <span className="text-indigo-600">O Levels &amp; A Levels</span>
+            Tutoring
+            <br />
+            <span className="text-[#1040C0]">for O &amp; A</span>
+            <br />
+            <span className="text-[#1040C0]">Levels.</span>
           </h1>
-          <p className="mt-5 text-lg text-zinc-500 dark:text-zinc-400">
-            Verified teachers. Fixed schedules. Google Meet.{' '}
-            <span className="whitespace-nowrap">WhatsApp-first support.</span>
-          </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-4">
+
+          <div className="mt-8 border-l-4 border-[#D02020] pl-5">
+            <p className="text-lg leading-relaxed text-[#121212]/60">
+              Verified teachers. Fixed schedules.
+              <br />
+              Google Meet. WhatsApp-first support.
+            </p>
+          </div>
+
+          <div className="mt-10 flex flex-wrap gap-4">
             <a
               href="#intake"
-              className="rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+              className="px-8 py-4 bg-[#D02020] text-white font-black uppercase tracking-wider text-sm border-2 border-[#121212] shadow-[5px_5px_0px_0px_#121212] hover:bg-[#D02020]/90 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition"
             >
               Get Started
             </a>
-            <WhatsAppCTA label="Chat on WhatsApp" />
+            <WhatsAppCTA
+              label="Chat on WhatsApp"
+              className="!rounded-none !border-2 !border-[#121212] !shadow-[5px_5px_0px_0px_#121212] !font-black !uppercase !tracking-wider !text-sm active:!translate-x-[2px] active:!translate-y-[2px] active:!shadow-none"
+            />
+          </div>
+
+          {/* Geometric row accent */}
+          <div className="mt-14 flex items-center gap-3">
+            <div className="w-5 h-5 rounded-full bg-[#1040C0] border-2 border-[#121212]" />
+            <div className="w-5 h-5 bg-[#F0C020] border-2 border-[#121212]" />
+            <div
+              className="w-0 h-0"
+              style={{
+                borderLeft: '10px solid transparent',
+                borderRight: '10px solid transparent',
+                borderBottom: '17px solid #D02020',
+              }}
+            />
+            <div className="flex-1 h-[3px] bg-[#121212]" />
+          </div>
+        </div>
+
+        {/* Right: Blue geometric composition */}
+        <div
+          className="hidden lg:flex relative bg-[#1040C0] items-center justify-center overflow-hidden"
+          style={{
+            backgroundImage:
+              'radial-gradient(rgba(255,255,255,0.12) 2px, transparent 2px)',
+            backgroundSize: '24px 24px',
+          }}
+        >
+          {/* Yellow circle — top right, partially off-screen */}
+          <div
+            className="absolute w-56 h-56 rounded-full bg-[#F0C020] border-4 border-[#121212]"
+            style={{ top: '6%', right: '-6%' }}
+          />
+          {/* White square with triangle — center */}
+          <div className="relative z-10 w-48 h-48 bg-white border-4 border-[#121212] shadow-[10px_10px_0px_0px_#121212] flex items-center justify-center">
+            <div
+              className="w-0 h-0"
+              style={{
+                borderLeft: '40px solid transparent',
+                borderRight: '40px solid transparent',
+                borderBottom: '68px solid #121212',
+              }}
+            />
+          </div>
+          {/* Red rotated square (diamond) — bottom right */}
+          <div
+            className="absolute w-40 h-40 bg-[#D02020] border-4 border-[#121212]"
+            style={{ bottom: '10%', right: '8%', transform: 'rotate(45deg)' }}
+          />
+          {/* Small black filled circle — top left */}
+          <div
+            className="absolute w-14 h-14 rounded-full bg-[#121212]"
+            style={{ top: '22%', left: '10%' }}
+          />
+        </div>
+      </section>
+
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────────────── */}
+      <section className="bg-white border-b-4 border-[#121212] px-6 py-20">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-4">
+            <h2 className="text-4xl sm:text-5xl font-black uppercase tracking-tighter">
+              How It Works
+            </h2>
+          </div>
+          <div className="mb-14 inline-block bg-[#F0C020] border-2 border-[#121212] px-4 py-1.5">
+            <span className="text-xs font-black uppercase tracking-[0.15em]">
+              Get matched and learning in 24–48 hours.
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            {HOW_IT_WORKS.map(({ step, title, body, bg, numBg, numText }, i) => (
+              <div
+                key={step}
+                className={`${bg} border-2 border-[#121212] p-8 flex flex-col ${
+                  i < HOW_IT_WORKS.length - 1 ? 'border-b-0 lg:border-b-2 lg:border-r-0' : ''
+                }`}
+              >
+                <div
+                  className="w-10 h-10 flex items-center justify-center border-2 border-[#121212] font-black text-lg mb-6 rounded-full flex-shrink-0"
+                  style={{ background: numBg, color: numText }}
+                >
+                  {step}
+                </div>
+                <h3 className="font-black uppercase tracking-tight text-sm mb-3">{title}</h3>
+                <p className="text-sm text-[#121212]/55 leading-relaxed">{body}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* ── How It Works ─────────────────────────────────────────────────────── */}
-      <section className="bg-white px-6 py-16 dark:bg-zinc-950">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-10 text-center text-2xl font-bold sm:text-3xl">How It Works</h2>
-          <ol className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {HOW_IT_WORKS.map(({ step, title, body }) => (
-              <li key={step} className="flex flex-col items-center text-center">
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-indigo-600 text-lg font-bold text-white">
-                  {step}
-                </div>
-                <h3 className="font-semibold">{title}</h3>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ── Subjects ─────────────────────────────────────────────────────────── */}
-      <section className="bg-zinc-50 px-6 py-16 dark:bg-zinc-900">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-4 text-center text-2xl font-bold sm:text-3xl">Subjects We Cover</h2>
-          <p className="mb-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+      {/* ── SUBJECTS ─────────────────────────────────────────────────────────── */}
+      <section className="bg-[#F0C020] border-b-4 border-[#121212] px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="mb-2 text-4xl sm:text-5xl font-black uppercase tracking-tighter text-[#121212]">
+            Subjects We Cover
+          </h2>
+          <p className="mb-10 text-xs font-black uppercase tracking-[0.15em] text-[#121212]/50">
             Available for both O Levels and A Levels
           </p>
-          <div className="flex flex-wrap justify-center gap-3">
+          <div className="flex flex-wrap gap-3">
             {SUBJECTS.map((subject) => (
               <span
                 key={subject}
-                className="rounded-full border border-indigo-200 bg-white px-4 py-1.5 text-sm font-medium text-indigo-700 dark:border-indigo-800 dark:bg-zinc-800 dark:text-indigo-300"
+                className="bg-white border-2 border-[#121212] px-5 py-2.5 text-sm font-black uppercase tracking-wider shadow-[4px_4px_0px_0px_#121212] hover:-translate-y-0.5 transition cursor-default"
               >
                 {subject}
               </span>
@@ -160,40 +322,67 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Packages ─────────────────────────────────────────────────────────── */}
-      <section className="bg-white px-6 py-16 dark:bg-zinc-950">
-        <div className="mx-auto max-w-4xl">
-          <h2 className="mb-2 text-center text-2xl font-bold sm:text-3xl">Monthly Packages</h2>
-          <p className="mb-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            All sessions are 60 minutes · Packages are per subject · Prices in PKR
+      {/* ── PACKAGES ─────────────────────────────────────────────────────────── */}
+      <section className="bg-[#D02020] border-b-4 border-[#121212] px-6 py-20">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="mb-2 text-4xl sm:text-5xl font-black uppercase tracking-tighter text-white">
+            Monthly Packages
+          </h2>
+          <p className="mb-12 text-xs font-black uppercase tracking-[0.15em] text-white/50">
+            All sessions are 60 minutes · Per subject · Prices in PKR
           </p>
+
           <div className="grid gap-6 sm:grid-cols-3">
-            {PACKAGES.map(({ sessions, frequency, price, description, highlight }) => (
+            {PACKAGES.map(({ sessions, frequency, price, description, highlight, accentColor, shape }) => (
               <div
                 key={sessions}
-                className={`relative flex flex-col rounded-2xl border p-6 shadow-sm ${
-                  highlight
-                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950'
-                    : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900'
-                }`}
+                className="relative bg-white border-4 border-[#121212] p-8 flex flex-col shadow-[8px_8px_0px_0px_#121212] hover:-translate-y-1 transition"
               >
+                {/* Geometric accent — top right corner */}
+                <div className="absolute top-4 right-4">
+                  {shape === 'circle' && (
+                    <div
+                      className="w-5 h-5 rounded-full border-2 border-[#121212]"
+                      style={{ background: accentColor }}
+                    />
+                  )}
+                  {shape === 'square' && (
+                    <div
+                      className="w-5 h-5 border-2 border-[#121212]"
+                      style={{ background: accentColor }}
+                    />
+                  )}
+                  {shape === 'triangle' && (
+                    <div
+                      className="w-0 h-0"
+                      style={{
+                        borderLeft: '10px solid transparent',
+                        borderRight: '10px solid transparent',
+                        borderBottom: `17px solid ${accentColor}`,
+                      }}
+                    />
+                  )}
+                </div>
+
                 {highlight && (
-                  <span className="mb-3 self-start rounded-full bg-indigo-600 px-3 py-0.5 text-xs font-semibold text-white">
+                  <span className="mb-4 self-start bg-[#1040C0] text-white text-xs font-black uppercase tracking-wider px-3 py-1 border-2 border-[#121212] rounded-full">
                     Most popular
                   </span>
                 )}
-                <p className="text-3xl font-extrabold">
+
+                <p className="text-5xl font-black leading-none">
                   {sessions}
-                  <span className="text-base font-medium text-zinc-500"> sessions/month</span>
+                  <span className="text-sm font-medium text-[#121212]/40 ml-1">sessions/month</span>
                 </p>
-                <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{frequency}</p>
-                <p className="mt-4 text-2xl font-bold text-indigo-600 dark:text-indigo-400">
-                  {price}
+                <p className="mt-1 text-xs font-black uppercase tracking-wider text-[#121212]/40">
+                  {frequency}
                 </p>
-                <p className="mt-3 text-sm text-zinc-500 dark:text-zinc-400">{description}</p>
+                <p className="mt-6 text-2xl font-black text-[#1040C0]">{price}</p>
+                <p className="mt-3 text-sm text-[#121212]/55 leading-relaxed flex-1">{description}</p>
+
                 <a
                   href="#intake"
-                  className="mt-6 rounded-lg border border-indigo-600 px-4 py-2 text-center text-sm font-semibold text-indigo-600 transition hover:bg-indigo-600 hover:text-white dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-600 dark:hover:text-white"
+                  className="mt-8 block text-center border-2 border-[#121212] px-4 py-3 text-xs font-black uppercase tracking-widest shadow-[3px_3px_0px_0px_#121212] hover:bg-[#121212] hover:text-white active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition"
                 >
                   Get started
                 </a>
@@ -203,108 +392,213 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Policy Summary ───────────────────────────────────────────────────── */}
-      <section className="bg-zinc-50 px-6 py-12 dark:bg-zinc-900">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-800 dark:bg-zinc-800">
-          <h2 className="mb-4 text-lg font-bold">Policies (the short version)</h2>
-          <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-amber-500">⏰</span>
-              <span>
-                <strong>Reschedule:</strong> Request at least 24 hours before your class via
-                WhatsApp.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-amber-500">📋</span>
-              <span>
-                <strong>Student no-show:</strong> Session is counted as used.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-amber-500">✅</span>
-              <span>
-                <strong>Tutor no-show:</strong> Session is not deducted — we reschedule
-                immediately.
-              </span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="mt-0.5 text-amber-500">📅</span>
-              <span>
-                <strong>Packages:</strong> Monthly only. Sessions do not carry over to the next
-                month.
-              </span>
-            </li>
-          </ul>
+      {/* ── POLICY SUMMARY ───────────────────────────────────────────────────── */}
+      <section className="bg-[#F0F0F0] border-b-4 border-[#121212] px-6 py-16">
+        <div className="mx-auto max-w-3xl">
+          <div className="border-4 border-[#121212] bg-white p-8 shadow-[8px_8px_0px_0px_#121212]">
+            <h2 className="mb-6 text-2xl font-black uppercase tracking-tighter">
+              Policies (the short version)
+            </h2>
+            <ul className="space-y-5">
+              {[
+                {
+                  icon: '⏰',
+                  label: 'Reschedule',
+                  text: 'Request at least 24 hours before your class via WhatsApp.',
+                  bar: '#F0C020',
+                },
+                {
+                  icon: '📋',
+                  label: 'Student no-show',
+                  text: 'Session is counted as used.',
+                  bar: '#D02020',
+                },
+                {
+                  icon: '✅',
+                  label: 'Tutor no-show',
+                  text: 'Session is not deducted — we reschedule immediately.',
+                  bar: '#1040C0',
+                },
+                {
+                  icon: '📅',
+                  label: 'Packages',
+                  text: 'Monthly only. Sessions do not carry over to the next month.',
+                  bar: '#121212',
+                },
+              ].map(({ icon, label, text, bar }) => (
+                <li
+                  key={label}
+                  className="flex items-start gap-4 border-l-4 pl-4"
+                  style={{ borderColor: bar }}
+                >
+                  <span className="text-xl leading-none mt-0.5">{icon}</span>
+                  <span className="text-sm leading-relaxed">
+                    <strong className="font-black uppercase text-[#121212]">{label}: </strong>
+                    <span className="text-[#121212]/60">{text}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 pt-6 border-t-2 border-[#121212]">
+              <Link
+                href="/policies"
+                className="text-xs font-black uppercase tracking-widest underline underline-offset-4 hover:text-[#D02020] transition"
+              >
+                Read full policies →
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ── Intake Form ──────────────────────────────────────────────────────── */}
-      <section id="intake" className="bg-white px-6 py-16 dark:bg-zinc-950">
+      {/* ── INTAKE FORM ──────────────────────────────────────────────────────── */}
+      <section
+        id="intake"
+        className="bg-[#1040C0] border-b-4 border-[#121212] px-6 py-20"
+        style={{
+          backgroundImage:
+            'radial-gradient(rgba(255,255,255,0.08) 2px, transparent 2px)',
+          backgroundSize: '24px 24px',
+        }}
+      >
         <div className="mx-auto max-w-xl">
-          <h2 className="mb-2 text-center text-2xl font-bold sm:text-3xl">Request Tutoring</h2>
-          <p className="mb-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <h2 className="mb-2 text-4xl sm:text-5xl font-black uppercase tracking-tighter text-white">
+            Request Tutoring
+          </h2>
+          <p className="mb-10 text-xs font-black uppercase tracking-[0.15em] text-white/50">
             No account needed. Fill in your details and we&apos;ll follow up on WhatsApp.
           </p>
-          <LeadForm />
-          <div className="mt-6 text-center">
-            <p className="mb-3 text-sm text-zinc-500 dark:text-zinc-400">
-              Prefer WhatsApp? Chat with us directly →
+          <div className="bg-white border-4 border-[#121212] shadow-[8px_8px_0px_0px_#121212] p-8">
+            <LeadForm />
+          </div>
+          <div className="mt-8 text-center">
+            <p className="mb-4 text-xs font-black uppercase tracking-widest text-white/50">
+              Prefer WhatsApp? Chat directly →
             </p>
-            <WhatsAppCTA label="Chat on WhatsApp" />
+            <WhatsAppCTA
+              label="Chat on WhatsApp"
+              className="!rounded-none !border-2 !border-white !shadow-[4px_4px_0px_0px_rgba(255,255,255,0.5)]"
+            />
           </div>
         </div>
       </section>
 
       {/* ── FAQ ──────────────────────────────────────────────────────────────── */}
-      <section className="bg-zinc-50 px-6 py-16 dark:bg-zinc-900">
-        <div className="mx-auto max-w-3xl">
-          <h2 className="mb-10 text-center text-2xl font-bold sm:text-3xl">
+      <section className="bg-white border-b-4 border-[#121212] px-6 py-20">
+        <div className="mx-auto max-w-4xl">
+          <h2 className="mb-12 text-4xl sm:text-5xl font-black uppercase tracking-tighter">
             Frequently Asked Questions
           </h2>
-          <dl className="space-y-6">
-            {FAQS.map(({ q, a }) => (
+          <dl className="grid grid-cols-1 sm:grid-cols-2 border-2 border-[#121212]">
+            {FAQS.map(({ q, a }, i) => (
               <div
                 key={q}
-                className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-700 dark:bg-zinc-800"
+                className={`p-6 border-[#121212] ${
+                  i % 2 === 0 ? 'bg-[#F0F0F0] sm:border-r-2' : 'bg-white'
+                } ${i < FAQS.length - 2 ? 'border-b-2' : ''}`}
               >
-                <dt className="font-semibold">{q}</dt>
-                <dd className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">{a}</dd>
+                <dt className="font-black uppercase tracking-tight text-sm mb-3 text-[#121212]">
+                  {q}
+                </dt>
+                <dd className="text-sm text-[#121212]/55 leading-relaxed">{a}</dd>
               </div>
             ))}
           </dl>
         </div>
       </section>
 
-      {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-zinc-200 bg-white px-6 py-10 dark:border-zinc-800 dark:bg-zinc-950">
-        <div className="mx-auto max-w-4xl">
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:text-left">
+      {/* ── FOOTER ───────────────────────────────────────────────────────────── */}
+      <footer className="bg-[#121212] text-white px-6 py-14">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between border-b-2 border-white/10 pb-10">
+            {/* Brand */}
             <div>
-              <p className="text-lg font-bold">CorvEd</p>
-              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                Structured 1:1 online tutoring for O &amp; A Levels
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 rounded-full bg-[#D02020] border-2 border-white/20" />
+                  <div className="w-4 h-4 bg-[#1040C0] border-2 border-white/20" />
+                  <div
+                    className="w-0 h-0"
+                    style={{
+                      borderLeft: '8px solid transparent',
+                      borderRight: '8px solid transparent',
+                      borderBottom: '14px solid #F0C020',
+                    }}
+                  />
+                </div>
+                <span className="text-xl font-black uppercase tracking-tighter">CorvEd</span>
+              </div>
+              <p className="text-sm text-white/50 max-w-xs leading-relaxed">
+                Structured 1:1 online tutoring for O &amp; A Level students in Pakistan and abroad.
               </p>
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
-                Math · Physics · Chemistry · Biology · English · CS · Pak Studies · Islamiyat · Urdu
+              <p className="mt-3 text-xs text-white/25 uppercase tracking-widest">
+                Math · Physics · Chemistry · Biology · English · CS
               </p>
             </div>
-            <div className="flex flex-col items-center gap-2 sm:items-end">
-              <Link
-                href="/policies"
-                className="text-sm text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-              >
-                Policies
-              </Link>
-              <Link
-                href="/auth/sign-up"
-                className="text-sm text-zinc-500 underline hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
-              >
-                Create an account
-              </Link>
+
+            {/* Links grid */}
+            <div className="grid grid-cols-3 gap-10">
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-white/30">
+                  Platform
+                </h3>
+                <ul className="space-y-2.5">
+                  {[
+                    { href: '/auth/sign-in', label: 'Log In' },
+                    { href: '/auth/sign-up', label: 'Sign Up' },
+                    { href: '/dashboard', label: 'Dashboard' },
+                    { href: '/tutor', label: 'Tutor Portal' },
+                  ].map(({ href, label }) => (
+                    <li key={label}>
+                      <Link
+                        href={href}
+                        className="text-xs font-black uppercase tracking-wider text-white/50 hover:text-white transition"
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-white/30">
+                  Info
+                </h3>
+                <ul className="space-y-2.5">
+                  {[
+                    { href: '/policies', label: 'Policies' },
+                    { href: '#intake', label: 'Request Tutoring' },
+                  ].map(({ href, label }) => (
+                    <li key={label}>
+                      <Link
+                        href={href}
+                        className="text-xs font-black uppercase tracking-wider text-white/50 hover:text-white transition"
+                      >
+                        {label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <h3 className="text-xs font-black uppercase tracking-widest mb-4 text-white/30">
+                  Admin
+                </h3>
+                <ul className="space-y-2.5">
+                  <li>
+                    <Link
+                      href="/admin"
+                      className="text-xs font-black uppercase tracking-wider text-white/50 hover:text-[#D02020] transition"
+                    >
+                      Admin Panel
+                    </Link>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-          <p className="mt-8 text-center text-xs text-zinc-400 dark:text-zinc-600">
+
+          <p className="mt-8 text-center text-xs text-white/20 uppercase tracking-widest">
             © {new Date().getFullYear()} CorvEd. All rights reserved.
           </p>
         </div>

@@ -1,9 +1,17 @@
 import type { Metadata } from "next";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["400", "500", "700", "900"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "CorvEd - Tutoring Platform",
-  description: "Connect students with qualified tutors",
+  title: "CorvEd — 1:1 Online Tutoring for O & A Levels",
+  description:
+    "Verified teachers. Fixed schedules. Google Meet. WhatsApp-first support.",
 };
 
 export default function RootLayout({
@@ -13,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className={`${outfit.className} antialiased`}>{children}</body>
     </html>
   );
 }
