@@ -113,10 +113,15 @@ export default function NewRequestPage() {
       .limit(1)
 
     if (existing && existing.length > 0) {
-      setDuplicateWarning(
+      const warningMessage =
         'You already have an active request for this level and subject. Are you sure you want to create another?'
-      )
-      // Allow the user to proceed anyway — they've been warned
+      setDuplicateWarning(warningMessage)
+
+      const proceed = window.confirm(warningMessage)
+      if (!proceed) {
+        // User chose not to create a duplicate request
+        return
+      }
     }
 
     const { data: req, error } = await supabase
@@ -131,7 +136,7 @@ export default function NewRequestPage() {
           exam_board: data.exam_board ?? 'unspecified',
           goals: data.goals || null,
           timezone: data.timezone,
-          availability_windows: JSON.stringify(data.availability_windows),
+          availability_windows: data.availability_windows,
           preferred_start_date: data.preferred_start_date || null,
           status: 'new',
         },
