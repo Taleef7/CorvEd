@@ -163,7 +163,14 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Admin: mark payment rejected** | ✅ Updates `payments.status → rejected` with optional rejection note, writes audit log |
 | **DB: packages + payments tables** | ✅ `supabase/migrations/20260224000001_create_packages_payments.sql` — packages (tier_sessions 8/12/20, start/end date, sessions_total/used, status), payments (amount_pkr, method, reference, proof_path, rejection_note, verified_by/at), audit_logs; all with RLS |
 | **Pricing config** | ✅ `lib/config/pricing.ts` — `PACKAGES` array (8/12/20 tiers, PKR prices, typicalFrequency) + `PAYMENT_INSTRUCTIONS` (bank details, reference format) |
-| Sessions | 🚧 Coming in E6–E10 |
+| **Tutor application form** | ✅ `app/tutor/profile/page.tsx` — tutor can fill in bio, timezone, subjects × levels (O/A checkboxes), weekly availability grid; saves to `tutor_profiles`, `tutor_subjects`, `tutor_availability`; shows pending/approved status badge |
+| **Admin: tutor directory** | ✅ `app/admin/tutors/page.tsx` — lists all tutors with status, subjects, levels, timezone; filter by status (pending/approved), subject, level; Approve and Revoke buttons |
+| **Admin: tutor detail page** | ✅ `app/admin/tutors/[id]/page.tsx` — full tutor profile including bio, all subjects × levels, availability windows, WhatsApp number; approve/revoke controls |
+| **Tutor approval workflow** | ✅ `app/admin/tutors/actions.ts` — `approveTutor` sets `approved = true`; `revokeTutorApproval` sets `approved = false`; both write audit log entries |
+| **DB: tutor tables** | ✅ `supabase/migrations/20260224000002_create_tutor_tables.sql` — `tutor_profiles` (approved, bio, timezone), `tutor_subjects` (subject_id × level per tutor), `tutor_availability` (JSONB windows); RLS policies for all three tables |
+| **Tutor Zod schema** | ✅ `lib/validators/tutor.ts` — validates bio (min 50 chars), timezone, subjects array, availability windows |
+| **Matching query helper** | ✅ `lib/services/matching.ts` — `fetchApprovedTutors()` shared query filtered to `approved = true`; ready for E7 matching screen |
+| Sessions | 🚧 Coming in E7–E10 |
 
 ---
 
@@ -211,6 +218,7 @@ Recommended workflow
 | `20260223000006_user_profiles_insert_rls.sql` | Adds INSERT policy on `user_profiles` so authenticated users can upsert their own row during profile setup (safety net if trigger row is absent). |
 | `20260223000007_create_requests_table.sql` | `requests` table with all fields from the data model; indexes on `(status, created_at desc)` and `created_by_user_id`; `updated_at` trigger; 4 RLS policies (creator insert, creator/admin select, creator update limited to `new`/`payment_pending`, admin update). |
 | `20260224000001_create_packages_payments.sql` | `packages` table (tier_sessions 8/12/20, start/end date, sessions_total/used, status enum, updated_at trigger, 3 RLS policies); `payments` table (amount_pkr, method, reference, proof_path, rejection_note, status enum, verified_by/at, updated_at trigger, 4 RLS policies); `audit_logs` table for admin payment actions. |
+| `20260224000002_create_tutor_tables.sql` | `tutor_profiles` (approved bool default false, bio, timezone, updated_at trigger); `tutor_subjects` (tutor × subject × level, composite PK); `tutor_availability` (JSONB windows array, updated_at trigger); RLS policies for all three tables — tutors manage own rows, admins read/update all. |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
