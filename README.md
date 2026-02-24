@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E4)
+### What the app can do right now (after E5)
 
 | Area | Status |
 |---|---|
@@ -149,13 +149,21 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **DB: handle_new_user() trigger** | ✅ Auto-creates profile + `student` role on every signup |
 | **DB: helper functions** | ✅ `has_role()`, `is_admin()`, `is_tutor()` — used in RLS policies |
 | **DB: leads admin RLS** | ✅ `supabase/migrations/20260223000005_leads_admin_rls.sql` — admin-role users can read/update leads |
-| **Student dashboard** | ✅ `app/dashboard/page.tsx` — lists all requests with status badges; "New Request" CTA |
+| **Student dashboard** | ✅ `app/dashboard/page.tsx` — lists all requests with status badges; "New Request" CTA; package summary cards per request |
 | **Tutoring request form** | ✅ `app/dashboard/requests/new/page.tsx` — React Hook Form + Zod; level, subject (from DB), exam board, availability, timezone (pre-filled), goals, preferred start date; duplicate request warning |
-| **Request confirmation page** | ✅ `app/dashboard/requests/[id]/page.tsx` — read-only summary, status badge, status-aware "what's next" banner, "Select Package" CTA |
+| **Request confirmation page** | ✅ `app/dashboard/requests/[id]/page.tsx` — read-only summary, status badge, status-aware "what's next" banner, "Select Package" CTA (links with requestId) |
 | **DB: requests table + RLS** | ✅ `supabase/migrations/20260223000007_create_requests_table.sql` — full schema, indexes, updated_at trigger, 4 RLS policies (insert self, select creator/admin, update creator limited, admin update) |
 | **Request status utilities** | ✅ `lib/utils/request.ts` — `STATUS_LABELS` + `STATUS_COLOURS` for all 7 request statuses |
 | **Request Zod schema** | ✅ `lib/validators/request.ts` — validates all request fields |
-| Packages, sessions | 🚧 Coming in E5–E10 |
+| **Package selection page** | ✅ `app/dashboard/packages/new/page.tsx` — 3 package tier cards (8/12/20 sessions), PKR pricing, policy notes, creates package + payment rows, advances request to `payment_pending` |
+| **Package payment page** | ✅ `app/dashboard/packages/[id]/page.tsx` — bank transfer instructions with personalised reference, optional proof upload (Supabase Storage), optional transaction reference, payment status display |
+| **Package summary card** | ✅ `components/dashboards/PackageSummary.tsx` — shows package tier, month window, sessions remaining, progress bar; handles pending/active/expired states |
+| **Admin: payments list** | ✅ `app/admin/payments/page.tsx` — lists payments with filter (pending/paid/rejected/all), student name, subject, tier, amount, date, proof indicator |
+| **Admin: mark payment paid** | ✅ Updates `payments.status → paid`, `packages.status → active`, `requests.status → ready_to_match`, writes audit log |
+| **Admin: mark payment rejected** | ✅ Updates `payments.status → rejected` with optional rejection note, writes audit log |
+| **DB: packages + payments tables** | ✅ `supabase/migrations/20260224000001_create_packages_payments.sql` — packages (tier_sessions 8/12/20, start/end date, sessions_total/used, status), payments (amount_pkr, method, reference, proof_path, rejection_note, verified_by/at), audit_logs; all with RLS |
+| **Pricing config** | ✅ `lib/config/pricing.ts` — `PACKAGES` array (8/12/20 tiers, PKR prices, typicalFrequency) + `PAYMENT_INSTRUCTIONS` (bank details, reference format) |
+| Sessions | 🚧 Coming in E6–E10 |
 
 ---
 
@@ -202,11 +210,13 @@ Recommended workflow
 | `20260223000005_leads_admin_rls.sql` | Adds admin-role RLS policies to `leads` table (now that `is_admin()` exists). |
 | `20260223000006_user_profiles_insert_rls.sql` | Adds INSERT policy on `user_profiles` so authenticated users can upsert their own row during profile setup (safety net if trigger row is absent). |
 | `20260223000007_create_requests_table.sql` | `requests` table with all fields from the data model; indexes on `(status, created_at desc)` and `created_by_user_id`; `updated_at` trigger; 4 RLS policies (creator insert, creator/admin select, creator update limited to `new`/`payment_pending`, admin update). |
+| `20260224000001_create_packages_payments.sql` | `packages` table (tier_sessions 8/12/20, start/end date, sessions_total/used, status enum, updated_at trigger, 3 RLS policies); `payments` table (amount_pkr, method, reference, proof_path, rejection_note, status enum, verified_by/at, updated_at trigger, 4 RLS policies); `audit_logs` table for admin payment actions. |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
 > - **Auth → Settings**: enable email confirmations; set Site URL to your domain; add `http://localhost:3000/auth/callback` to Redirect URLs.
 > - **Auth → Providers → Google**: enable Google OAuth with credentials from [Google Cloud Console](https://console.cloud.google.com). Authorized redirect URI: `https://<your-supabase-ref>.supabase.co/auth/v1/callback`.
+> - **Storage → New Bucket**: create a bucket named `payment-proofs` with **Public: No** (private). This is required for payment proof uploads in E5.
 
 ## Operational model
 
