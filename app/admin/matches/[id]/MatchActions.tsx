@@ -177,12 +177,29 @@ async function editMatchAction(
   const time = formData.get('time') as string
   const rawDays = formData.getAll('days').map(Number)
 
-  const schedulePattern =
-    timezone && time && rawDays.length > 0
-      ? { timezone, days: rawDays, time, duration_mins: 60 }
-      : undefined
+  // Only build a schedule pattern if all three fields are present; if any partial, error.
+  const hasAnyScheduleField = !!timezone || !!time || rawDays.length > 0
+  const hasAllScheduleFields = !!timezone && !!time && rawDays.length > 0
+  if (hasAnyScheduleField && !hasAllScheduleFields) {
+    return {
+      error: 'Please provide timezone, start time, and at least one day — or leave all schedule fields empty.',
+    }
+  }
 
-  return updateMatchDetails({ matchId, meetLink, schedulePattern })
+  // Pass schedulePattern only when all fields are present; omit (undefined) otherwise
+  // so that the server action does not overwrite an existing schedule.
+  const payload: {
+    matchId: string
+    meetLink?: string
+    schedulePattern?: { timezone: string; days: number[]; time: string; duration_mins: number } | null
+  } = { matchId }
+
+  if (typeof meetLink !== 'undefined') payload.meetLink = meetLink
+  if (hasAllScheduleFields) {
+    payload.schedulePattern = { timezone, days: rawDays, time, duration_mins: 60 }
+  }
+
+  return updateMatchDetails(payload)
 }
 
 export function EditMatchForm({

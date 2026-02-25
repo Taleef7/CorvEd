@@ -45,6 +45,15 @@ async function assignAction(
       ? { timezone, days: rawDays, time, duration_mins: 60 }
       : undefined
 
+  // Partial schedule: if any schedule field is filled but not all three, reject early
+  const hasAnyScheduleField = !!timezone || !!time || rawDays.length > 0
+  const hasAllScheduleFields = !!timezone && !!time && rawDays.length > 0
+  if (hasAnyScheduleField && !hasAllScheduleFields) {
+    return {
+      error: 'Please provide timezone, start time, and at least one day — or leave all schedule fields empty to save the schedule later.',
+    }
+  }
+
   return assignTutor({ requestId, tutorUserId, meetLink, schedulePattern })
 }
 

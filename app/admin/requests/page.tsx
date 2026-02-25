@@ -61,8 +61,7 @@ export default async function AdminRequestsPage({
          subjects ( name ),
          user_profiles!requests_created_by_user_id_fkey ( display_name, whatsapp_number ),
          packages ( tier_sessions, status )`
-      )
-      .order('created_at', { ascending: true }),
+      ),
     admin.from('subjects').select('id, name').eq('active', true).order('sort_order'),
   ])
 

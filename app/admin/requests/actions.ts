@@ -48,6 +48,20 @@ export async function assignTutor({
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
 
+    // Validate the request exists and is in a matchable state
+    const { data: request } = await admin
+      .from('requests')
+      .select('id, status')
+      .eq('id', requestId)
+      .maybeSingle()
+
+    if (!request) throw new Error('Request not found.')
+    if (request.status !== 'ready_to_match') {
+      throw new Error(
+        `Cannot assign a tutor: request is currently in "${request.status}" status. Only "ready_to_match" requests can be assigned.`
+      )
+    }
+
     const { data: match, error } = await admin
       .from('matches')
       .insert([
@@ -58,18 +72,23 @@ export async function assignTutor({
           meet_link: meetLink || null,
           schedule_pattern: schedulePattern ?? null,
           assigned_by_user_id: adminUserId,
-          assigned_at: new Date().toISOString(),
+          // assigned_at has a DB default of now()
         },
       ])
       .select()
       .single()
 
-    if (error) throw new Error(`Failed to create match: ${error.message}`)
+    if (error) {
+      if (error.code === '23505') {
+        throw new Error('This request already has a match assigned. Use the match detail page to reassign the tutor.')
+      }
+      throw new Error(`Failed to create match: ${error.message}`)
+    }
 
-    // Advance request status to 'matched'
+    // Advance request status to 'matched' (updated_at is managed by DB trigger)
     const { error: reqError } = await admin
       .from('requests')
-      .update({ status: 'matched', updated_at: new Date().toISOString() })
+      .update({ status: 'matched' })
       .eq('id', requestId)
 
     if (reqError) throw new Error(`Failed to advance request: ${reqError.message}`)
@@ -113,12 +132,22 @@ export async function reassignTutor({
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
 
+    // Validate match exists and new tutor is actually different
+    const { data: existingMatch } = await admin
+      .from('matches')
+      .select('id, tutor_user_id')
+      .eq('id', matchId)
+      .maybeSingle()
+
+    if (!existingMatch) throw new Error('Match not found.')
+    if (existingMatch.tutor_user_id === newTutorUserId) {
+      throw new Error('The selected tutor is already assigned to this match.')
+    }
+
+    // updated_at is managed by the DB trigger
     const { error } = await admin
       .from('matches')
-      .update({
-        tutor_user_id: newTutorUserId,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ tutor_user_id: newTutorUserId })
       .eq('id', matchId)
 
     if (error) throw new Error(`Failed to reassign tutor: ${error.message}`)
@@ -149,7 +178,10 @@ export async function reassignTutor({
   }
 }
 
-/** Update the meet_link and/or schedule_pattern on an existing match. */
+/** Update the meet_link and/or schedule_pattern on an existing match.
+ *  Only fields that are explicitly passed (not undefined) are written;
+ *  passing undefined for a field leaves it unchanged in the database.
+ */
 export async function updateMatchDetails({
   matchId,
   meetLink,
@@ -162,22 +194,37 @@ export async function updateMatchDetails({
     days: number[]
     time: string
     duration_mins: number
-  }
+  } | null
 }): Promise<{ error?: string }> {
   try {
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
 
+    // Build update payload dynamically — only include fields that were explicitly provided.
+    // updated_at is managed by the DB trigger.
+    const updateData: Record<string, unknown> = {}
+    if (typeof meetLink !== 'undefined') {
+      updateData.meet_link = meetLink || null
+    }
+    if (typeof schedulePattern !== 'undefined') {
+      updateData.schedule_pattern = schedulePattern
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return {} // Nothing to update
+    }
+
     const { error } = await admin
       .from('matches')
-      .update({
-        meet_link: meetLink ?? null,
-        schedule_pattern: schedulePattern ?? null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', matchId)
 
     if (error) throw new Error(`Failed to update match: ${error.message}`)
+
+    // Audit log — record whichever fields changed
+    const auditDetails: Record<string, unknown> = {}
+    if (typeof meetLink !== 'undefined') auditDetails.meet_link = meetLink || null
+    if (typeof schedulePattern !== 'undefined') auditDetails.schedule_pattern = schedulePattern
 
     const { error: auditError } = await admin.from('audit_logs').insert([
       {
@@ -185,7 +232,7 @@ export async function updateMatchDetails({
         action: 'match_details_updated',
         entity_type: 'match',
         entity_id: matchId,
-        details: { meet_link: meetLink ?? null },
+        details: auditDetails,
       },
     ])
     if (auditError) {
@@ -198,3 +245,4 @@ export async function updateMatchDetails({
     return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
   }
 }
+
