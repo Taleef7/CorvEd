@@ -11,9 +11,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
-import { formatSessionTime } from '@/lib/utils/session'
 import { PackageSummary } from '@/components/dashboards/PackageSummary'
-import { RescheduleButton } from '@/components/dashboards/RescheduleButton'
+import { NextSessionCard, type NextSessionData } from '@/components/dashboards/NextSessionCard'
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   return (
@@ -51,23 +50,7 @@ export default async function DashboardPage() {
 
   const userTimezone = profile?.timezone ?? 'UTC'
 
-  // Fetch next upcoming session for this student
-  type NextSessionRow = {
-    id: string
-    scheduled_start_utc: string
-    scheduled_end_utc: string
-    status: string
-    matches: {
-      meet_link: string | null
-      tutor_profiles: {
-        user_profiles: { display_name: string } | null
-      } | null
-      requests: {
-        level: string | null
-        subjects: { name: string } | null
-      } | null
-    } | null
-  }
+  // Fetch next upcoming session for this student (scheduled or rescheduled)
   const { data: nextSessionData } = await supabase
     .from('sessions')
     .select(
@@ -84,12 +67,12 @@ export default async function DashboardPage() {
        )`,
     )
     .gt('scheduled_start_utc', new Date().toISOString())
-    .eq('status', 'scheduled')
+    .in('status', ['scheduled', 'rescheduled'])
     .order('scheduled_start_utc', { ascending: true })
     .limit(1)
     .maybeSingle()
 
-  const nextSession = nextSessionData as NextSessionRow | null
+  const nextSession = nextSessionData as NextSessionData | null
 
   // Fetch student's requests
   const { data: requests } = await supabase
@@ -150,58 +133,12 @@ export default async function DashboardPage() {
 
         {/* Next Session Card (T9.1) */}
         {nextSession ? (
-          <div className="rounded-2xl bg-indigo-50 px-6 py-5 shadow-sm dark:bg-indigo-900/20">
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-              🎓 Your Next Session
-            </p>
-            <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-50">
-              {formatSessionTime(nextSession.scheduled_start_utc, userTimezone)}
-            </p>
-            <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
-              {(nextSession.matches?.requests?.subjects as { name: string } | null)?.name ?? '—'}
-              {nextSession.matches?.requests?.level
-                ? ` — ${LEVEL_LABELS[nextSession.matches.requests.level] ?? nextSession.matches.requests.level}`
-                : ''}
-            </p>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-              With:{' '}
-              {(
-                nextSession.matches?.tutor_profiles?.user_profiles as
-                  | { display_name: string }
-                  | null
-              )?.display_name ?? '—'}
-            </p>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              {nextSession.matches?.meet_link && (
-                <a
-                  href={nextSession.matches.meet_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-                >
-                  🔗 Join Google Meet
-                </a>
-              )}
-              <RescheduleButton
-                subject={
-                  (nextSession.matches?.requests?.subjects as { name: string } | null)?.name ?? '—'
-                }
-                level={
-                  LEVEL_LABELS[nextSession.matches?.requests?.level ?? ''] ??
-                  nextSession.matches?.requests?.level ??
-                  '—'
-                }
-                scheduledStartUtc={nextSession.scheduled_start_utc}
-                studentTimezone={userTimezone}
-              />
-            </div>
-            <Link
-              href="/dashboard/sessions"
-              className="mt-3 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
-            >
-              View all sessions →
-            </Link>
-          </div>
+          <NextSessionCard
+            session={nextSession}
+            userTimezone={userTimezone}
+            serverNowMs={serverNowMs}
+            viewAllHref="/dashboard/sessions"
+          />
         ) : (
           <div className="rounded-2xl bg-white px-6 py-5 shadow-sm dark:bg-zinc-900">
             <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
@@ -273,8 +210,11 @@ export default async function DashboardPage() {
                       end_date={pkg.end_date}
                       status={pkg.status}
                       packageId={pkg.id}
-                      daysUntilEnd={Math.ceil(
-                        (new Date(pkg.end_date).getTime() - serverNowMs) / (1000 * 60 * 60 * 24),
+                      daysUntilEnd={Math.max(
+                        0,
+                        Math.ceil(
+                          (new Date(pkg.end_date).getTime() - serverNowMs) / (1000 * 60 * 60 * 24),
+                        ),
                       )}
                     />
                   ) : status === 'new' ? (

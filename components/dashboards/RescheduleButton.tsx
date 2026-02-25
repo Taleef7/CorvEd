@@ -10,6 +10,8 @@ export interface RescheduleButtonProps {
   level: string
   scheduledStartUtc: string
   studentTimezone: string
+  /** Server-computed timestamp (ms) for the 24-hour check. Avoids impure Date.now() in render. */
+  serverNowMs?: number
 }
 
 function buildRescheduleMessage(session: RescheduleButtonProps): string {
@@ -23,12 +25,13 @@ function buildRescheduleMessage(session: RescheduleButtonProps): string {
     hour12: true,
   }).format(new Date(session.scheduledStartUtc))
 
+  // Use the session date for the TZ abbreviation so DST is correct for that date
   const tzAbbr =
     new Intl.DateTimeFormat('en', {
       timeZone: session.studentTimezone,
       timeZoneName: 'short',
     })
-      .formatToParts(new Date())
+      .formatToParts(new Date(session.scheduledStartUtc))
       .find((p) => p.type === 'timeZoneName')?.value ?? ''
 
   return encodeURIComponent(
@@ -44,14 +47,16 @@ export function RescheduleButton({
   level,
   scheduledStartUtc,
   studentTimezone,
+  serverNowMs,
 }: RescheduleButtonProps) {
   if (!WHATSAPP_NUMBER) return null
 
   const message = buildRescheduleMessage({ subject, level, scheduledStartUtc, studentTimezone })
   const href = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`
 
-  // Compute 24-hour warning: check if session starts within 24 hours from now
-  const msUntilSession = new Date(scheduledStartUtc).getTime() - new Date().getTime()
+  // Use server-computed timestamp when available; fall back to client time otherwise
+  const nowMs = serverNowMs ?? new Date().getTime()
+  const msUntilSession = new Date(scheduledStartUtc).getTime() - nowMs
   const hoursUntilSession = msUntilSession / (1000 * 60 * 60)
   const isWithin24Hours = hoursUntilSession > 0 && hoursUntilSession < 24
 

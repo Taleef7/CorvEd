@@ -78,12 +78,11 @@ export function PackageSummary({
 
   // Renewal alert: ≤3 sessions remaining OR ≤5 days until package end
   const showRenewalAlert = sessionsRemaining <= 3 || daysUntilEnd <= 5
-  const renewalMessage = WHATSAPP_NUMBER
-    ? encodeURIComponent(
+  const renewalHref = WHATSAPP_NUMBER
+    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
         `Hi CorvEd 👋 I'd like to renew my tutoring package.\n\nSessions remaining: ${sessionsRemaining}\nPackage ends: ${formatDate(end_date)}\n\nPlease share the renewal options. Thanks!`,
-      )
-    : ''
-  const renewalHref = WHATSAPP_NUMBER ? `https://wa.me/${WHATSAPP_NUMBER}?text=${renewalMessage}` : '#'
+      )}`
+    : undefined
 
   // Active package
   return (
@@ -135,7 +134,7 @@ export function PackageSummary({
               ? `⚠️ Your sessions are used up. Renew to continue.`
               : `⚠️ Only ${sessionsRemaining} session${sessionsRemaining === 1 ? '' : 's'} left${daysUntilEnd <= 5 ? ` and ${daysUntilEnd} day${daysUntilEnd === 1 ? '' : 's'} until package ends` : ''}. Renew soon to avoid gaps.`}
           </p>
-          {WHATSAPP_NUMBER && (
+          {renewalHref && (
             <a
               href={renewalHref}
               target="_blank"
