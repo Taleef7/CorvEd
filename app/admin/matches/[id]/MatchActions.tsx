@@ -1,10 +1,11 @@
-// E7 T7.4 S7.2: Client components for match detail actions (reassign tutor + edit details)
-// Closes #50 #46
+// E7 T7.4 S7.2 E8 T8.1: Client components for match detail actions (reassign tutor, edit details, generate sessions)
+// Closes #50 #46 #54
 
 'use client'
 
 import { useActionState, useState } from 'react'
 import { reassignTutor, updateMatchDetails } from '../../requests/actions'
+import { generateSessionsForMatch } from '@/lib/services/sessions'
 
 const DAY_OPTIONS = [
   { label: 'Sun', value: 0 },
@@ -327,6 +328,57 @@ export function EditMatchForm({
       >
         {isPending ? 'Saving…' : 'Save Changes'}
       </button>
+    </form>
+  )
+}
+
+// ── Generate Sessions Form ────────────────────────────────────────────────────
+
+type GenerateResult = { error?: string; count?: number } | undefined
+
+async function generateAction(
+  _prev: GenerateResult,
+  formData: FormData,
+): Promise<GenerateResult> {
+  const matchId = formData.get('matchId') as string
+  return generateSessionsForMatch(matchId)
+}
+
+export function GenerateSessionsForm({ matchId }: { matchId: string }) {
+  const [state, formAction, isPending] = useActionState(generateAction, undefined)
+
+  if (state && !state.error) {
+    return (
+      <div className="rounded-xl bg-emerald-50 px-5 py-4 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+        ✅ {state.count} session{state.count !== 1 ? 's' : ''} generated successfully. Match is now{' '}
+        <strong>active</strong>.{' '}
+        <a href="/admin/sessions" className="underline">
+          View sessions →
+        </a>
+      </div>
+    )
+  }
+
+  return (
+    <form action={formAction}>
+      <input type="hidden" name="matchId" value={matchId} />
+      <div className="rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
+        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">📅 Generate Sessions</p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Creates all sessions for the active package based on the schedule pattern and Meet link.
+          Advances match and request to <strong>active</strong>.
+        </p>
+        {state?.error && (
+          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{state.error}</p>
+        )}
+        <button
+          type="submit"
+          disabled={isPending}
+          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+        >
+          {isPending ? 'Generating…' : '⚡ Generate Sessions'}
+        </button>
+      </div>
     </form>
   )
 }

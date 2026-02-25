@@ -1,5 +1,5 @@
-// E7 T7.4 S7.2: Admin match detail page — view match, reassign tutor, edit schedule
-// Closes #50 #46
+// E7 T7.4 S7.2 E8 T8.1: Admin match detail page — view match, reassign tutor, edit schedule, generate sessions
+// Closes #50 #46 #54
 
 export const dynamic = 'force-dynamic'
 
@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchApprovedTutors } from '@/lib/services/matching'
 import { LEVEL_LABELS } from '@/lib/utils/request'
-import { ReassignTutorForm, EditMatchForm } from './MatchActions'
+import { ReassignTutorForm, EditMatchForm, GenerateSessionsForm } from './MatchActions'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -229,14 +229,7 @@ export default async function AdminMatchDetailPage({
         />
 
         {schedule?.days && schedule.days.length > 0 && match.meet_link && (
-          <div className="rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
-            <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              📅 Generate Sessions
-            </p>
-            <p className="mt-0.5 text-xs text-zinc-500">
-              Session generation (E8) will be available once Epic E8 is implemented.
-            </p>
-          </div>
+          <GenerateSessionsForm matchId={match.id} />
         )}
       </div>
 

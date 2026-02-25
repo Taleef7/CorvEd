@@ -73,6 +73,12 @@ export default async function AdminLayout({
               >
                 Matches
               </Link>
+              <Link
+                href="/admin/sessions"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Sessions
+              </Link>
             </nav>
           </div>
           <form action="/auth/sign-out" method="post">
