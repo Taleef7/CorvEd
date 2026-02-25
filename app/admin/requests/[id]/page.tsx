@@ -1,5 +1,5 @@
-// E7 T7.2: Admin request detail + matching screen
-// Closes #48
+// E7 T7.2 E11 T11.3: Admin request detail + matching screen + WhatsApp link
+// Closes #48 #76
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +9,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchApprovedTutors } from '@/lib/services/matching'
 import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS } from '@/lib/utils/request'
 import { AssignTutorForm } from './AssignTutorForm'
+import { WhatsAppLink } from '@/components/WhatsAppLink'
 
 const EXAM_BOARD_LABELS: Record<string, string> = {
   cambridge: 'Cambridge',
@@ -160,7 +161,10 @@ export default async function AdminRequestDetailPage({
                 )}
               </p>
               {profile?.whatsapp_number && (
-                <p className="text-sm text-zinc-500">📱 {profile.whatsapp_number}</p>
+                <p className="flex items-center gap-2 text-sm text-zinc-500">
+                  📱 {profile.whatsapp_number}
+                  <WhatsAppLink number={profile.whatsapp_number} label="Open chat" />
+                </p>
               )}
             </section>
 

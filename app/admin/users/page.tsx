@@ -1,8 +1,9 @@
-// E3 T3.4: admin user role management screen
-// Closes #19 #23
+// E3 T3.4 E11 T11.3: admin user role management screen + WhatsApp links
+// Closes #19 #23 #76
 
 import { createAdminClient } from '@/lib/supabase/admin'
 import { assignRole, removeRole, setPrimaryRole } from '../actions'
+import { WhatsAppLink } from '@/components/WhatsAppLink'
 
 const ALL_ROLES = ['student', 'parent', 'tutor', 'admin'] as const
 type Role = (typeof ALL_ROLES)[number]
@@ -128,7 +129,16 @@ export default async function AdminUsersPage() {
                   </td>
 
                   <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
-                    {user.whatsapp_number ?? '—'}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {user.whatsapp_number ? (
+                        <>
+                          <span>{user.whatsapp_number}</span>
+                          <WhatsAppLink number={user.whatsapp_number} label="Open chat" />
+                        </>
+                      ) : (
+                        '—'
+                      )}
+                    </div>
                   </td>
 
                   <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">

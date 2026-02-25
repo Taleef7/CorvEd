@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E10)
+### What the app can do right now (after E11)
 
 | Area | Status |
 |---|---|
@@ -194,7 +194,16 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Tutor: sessions list** | ✅ `app/tutor/sessions/page.tsx` — upcoming and past sessions in tutor's timezone; student name, subject, Meet link; `SessionCompleteForm` inline on each upcoming session card |
 | **Tutor: session completion form** | ✅ `components/dashboards/SessionCompleteForm.tsx` — radio buttons (Done / Student No-show / My No-show), notes textarea, calls `tutor_update_session` RPC via server action; error state; success state |
 | **DB: increment_sessions_used guard** | ✅ `supabase/migrations/20260225000003_increment_sessions_used_guard.sql` — adds `sessions_used < sessions_total` safety guard to prevent `sessions_used` from exceeding `sessions_total` (over-incrementing); restricts direct RPC access to `service_role` only |
-| WhatsApp templates (E11) | 🚧 Coming in E11 |
+| WhatsApp templates (E11) | ✅ `lib/whatsapp/templates.ts` — 14 typed template functions (greeting, intake, packages, paybank, paid, tutorAvailCheck, matched, rem1h, reschedAck, reschedConfirmed, lateJoin, studentNoShow, tutorNoShow, renewalReminder) |
+| WhatsApp link builder (E11) | ✅ `lib/whatsapp/buildLink.ts` — `buildWaLink(number, message?)` strips non-digits, returns `wa.me/` URL with optional `?text=` parameter |
+| WhatsApp `CopyMessageButton` component (E11) | ✅ `components/CopyMessageButton.tsx` — "📋 Copy message" button with ✅ Copied! toast + optional "💬 Open WhatsApp" link to `wa.me` with pre-filled text |
+| WhatsApp `WhatsAppLink` component (E11) | ✅ `components/WhatsAppLink.tsx` — standalone "💬 Open WhatsApp" link; graceful fallback when number is absent |
+| Admin: WhatsApp actions on match detail (E11) | ✅ `/admin/matches/[id]` — "Copy matched message", "Copy 1-hour reminder (student/tutor)", "Copy tutor availability check" buttons; "Open chat" links next to student/tutor numbers |
+| Admin: WhatsApp actions on payments (E11) | ✅ `/admin/payments` — "Copy payment confirmed" and "Copy payment instructions" buttons + "Open chat" link per payment row |
+| Admin: WhatsApp actions on sessions (E11) | ✅ `/admin/sessions` — per session: "Copy 1-hour reminder", "Copy late join follow-up", "Copy student no-show notice", "Copy tutor no-show apology", "Copy reschedule confirmed" buttons |
+| Admin: WhatsApp link on users page (E11) | ✅ `/admin/users` — "Open chat" link next to each user's WhatsApp number |
+| Admin: WhatsApp link on request detail (E11) | ✅ `/admin/requests/[id]` — "Open chat" link next to student's WhatsApp number |
+| Admin: WhatsApp link on tutor detail (E11) | ✅ `/admin/tutors/[id]` — "Open chat" link next to tutor's WhatsApp number |
 
 ---
 
