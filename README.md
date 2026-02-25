@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E9)
+### What the app can do right now (after E10)
 
 | Area | Status |
 |---|---|
@@ -190,7 +190,11 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Session utilities** | ✅ `lib/utils/session.ts` — `SESSION_STATUS_LABELS`, `SESSION_STATUS_COLOURS`, `formatSessionTime()` (Intl.DateTimeFormat in viewer's timezone) |
 | **Session server actions** | ✅ `lib/services/sessions.ts` — `generateSessionsForMatch`, `updateSessionStatus`, `rescheduleSession` |
 | **DB: sessions table + RLS** | ✅ `supabase/migrations/20260225000002_create_sessions_table.sql` — sessions table (match_id FK, scheduled_start/end_utc, status enum, tutor_notes); 4 RLS policies (admin all, tutor select, student select, tutor update); `increment_sessions_used` RPC; `tutor_update_session` RPC |
-| Tutor dashboard (E10), WhatsApp templates (E11) | 🚧 Coming in E10–E11 |
+| **Tutor: next session card on dashboard** | ✅ `app/tutor/page.tsx` — full tutor dashboard: next session card with student name, subject, level, date/time (tutor's TZ), Meet link; session counts (upcoming/completed); quick links to sessions + profile; empty state when no sessions yet |
+| **Tutor: sessions list** | ✅ `app/tutor/sessions/page.tsx` — upcoming and past sessions in tutor's timezone; student name, subject, Meet link; `SessionCompleteForm` inline on each upcoming session card |
+| **Tutor: session completion form** | ✅ `components/dashboards/SessionCompleteForm.tsx` — radio buttons (Done / Student No-show / My No-show), notes textarea, calls `tutor_update_session` RPC via server action; error state; success state |
+| **DB: increment_sessions_used guard** | ✅ `supabase/migrations/20260225000003_increment_sessions_used_guard.sql` — adds `sessions_used < sessions_total` safety guard to prevent `sessions_used` from exceeding `sessions_total` (over-incrementing); restricts direct RPC access to `service_role` only |
+| WhatsApp templates (E11) | 🚧 Coming in E11 |
 
 ---
 
@@ -241,6 +245,7 @@ Recommended workflow
 | `20260224000002_create_tutor_tables.sql` | `tutor_profiles` (approved bool default false, bio, timezone, updated_at trigger); `tutor_subjects` (tutor × subject × level, composite PK); `tutor_availability` (JSONB windows array, updated_at trigger); RLS policies for all three tables — tutors manage own rows, admins read/update all. |
 | `20260225000001_create_matches_table.sql` | `matches` table with unique `request_id` FK, `tutor_user_id`, `status` enum (matched/active/paused/ended), `meet_link`, `schedule_pattern` JSONB, `assigned_by_user_id`/`assigned_at`; updated_at trigger; RLS: admin full access, tutor and request creator can select. |
 | `20260225000002_create_sessions_table.sql` | `sessions` table (match_id FK, scheduled_start/end_utc, status enum, tutor_notes, updated_by_user_id); indexes on (match_id, start_utc) and (status, start_utc); 4 RLS policies (admin all, tutor select, student select via match→request, tutor update own); `increment_sessions_used(p_request_id)` RPC for atomic sessions_used increment; `tutor_update_session(p_session_id, p_status, p_notes)` security-definer RPC. |
+| `20260225000003_increment_sessions_used_guard.sql` | Adds `sessions_used < sessions_total` safety guard to `increment_sessions_used` RPC — prevents `sessions_used` from exceeding `sessions_total` (over-incrementing); sets safe `search_path`; restricts `EXECUTE` to `service_role` only. |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
