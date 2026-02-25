@@ -1,5 +1,5 @@
-// E7 T7.4 S7.2 E8 T8.1: Admin match detail page — view match, reassign tutor, edit schedule, generate sessions
-// Closes #50 #46 #54
+// E7 T7.4 S7.2 E8 T8.1 E11 T11.2: Admin match detail page — view match, reassign tutor, edit schedule, generate sessions, WhatsApp actions
+// Closes #50 #46 #54 #75
 
 export const dynamic = 'force-dynamic'
 
@@ -9,6 +9,9 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchApprovedTutors } from '@/lib/services/matching'
 import { LEVEL_LABELS } from '@/lib/utils/request'
 import { ReassignTutorForm, EditMatchForm, GenerateSessionsForm } from './MatchActions'
+import { CopyMessageButton } from '@/components/CopyMessageButton'
+import { WhatsAppLink } from '@/components/WhatsAppLink'
+import { templates } from '@/lib/whatsapp/templates'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -97,6 +100,46 @@ export default async function AdminMatchDetailPage({
       ? request.for_student_name
       : (studentProfile?.display_name ?? '—')
 
+  const tutorName = tutorUserProfile?.display_name ?? '—'
+  const schedDays = schedule?.days?.length
+    ? schedule.days.map((d) => DAY_NAMES[d]).join(', ')
+    : ''
+  const schedTime = schedule?.time ?? ''
+  const schedTz = schedule?.timezone ?? ''
+  const meetLink = match.meet_link ?? ''
+
+  // Pre-built template strings for WhatsApp buttons
+  const matchedMsg =
+    schedDays && schedTime && schedTz && meetLink
+      ? templates.matched({
+          tutorName,
+          days: schedDays,
+          time: schedTime,
+          tz: schedTz,
+          meetLink,
+        })
+      : null
+
+  const rem1hStudentMsg =
+    schedTime && schedTz && meetLink
+      ? templates.rem1h({
+          level: levelLabel,
+          subject: subjectName,
+          tutorName,
+          time: schedTime,
+          tz: schedTz,
+          meetLink,
+        })
+      : null
+
+  const tutorAvailCheckMsg = templates.tutorAvailCheck({
+    tutorName,
+    level: levelLabel,
+    subject: subjectName,
+    slot1: '[Day] [Time] [TZ]',
+    slot2: '[Day] [Time] [TZ]',
+  })
+
   const assignedDate = new Date(match.assigned_at).toLocaleDateString('en-GB', {
     day: 'numeric',
     month: 'long',
@@ -150,7 +193,10 @@ export default async function AdminMatchDetailPage({
             <dt className="text-zinc-500">Student</dt>
             <dd className="font-medium text-zinc-800 dark:text-zinc-200">{studentName}</dd>
             {studentProfile?.whatsapp_number && (
-              <dd className="text-xs text-zinc-400">📱 {studentProfile.whatsapp_number}</dd>
+              <dd className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+                📱 {studentProfile.whatsapp_number}
+                <WhatsAppLink number={studentProfile.whatsapp_number} label="Open chat" />
+              </dd>
             )}
           </div>
 
@@ -161,7 +207,10 @@ export default async function AdminMatchDetailPage({
             </dd>
             <dd className="text-xs text-zinc-400">{tutorProfile?.timezone}</dd>
             {tutorUserProfile?.whatsapp_number && (
-              <dd className="text-xs text-zinc-400">📱 {tutorUserProfile.whatsapp_number}</dd>
+              <dd className="mt-1 flex items-center gap-2 text-xs text-zinc-400">
+                📱 {tutorUserProfile.whatsapp_number}
+                <WhatsAppLink number={tutorUserProfile.whatsapp_number} label="Open chat" />
+              </dd>
             )}
           </div>
 
@@ -231,6 +280,60 @@ export default async function AdminMatchDetailPage({
         {schedule?.days && schedule.days.length > 0 && match.meet_link && (
           <GenerateSessionsForm matchId={match.id} />
         )}
+      </div>
+
+      {/* WhatsApp Actions */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          WhatsApp Messages
+        </h2>
+        <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 space-y-3">
+          {matchedMsg ? (
+            <div>
+              <p className="mb-1 text-xs font-medium text-zinc-500">Match confirmed (to student)</p>
+              <CopyMessageButton
+                message={matchedMsg}
+                whatsappNumber={studentProfile?.whatsapp_number ?? undefined}
+                label="Copy matched message"
+              />
+            </div>
+          ) : (
+            <p className="text-xs text-zinc-400 italic">
+              Set schedule and Meet link to enable match confirmation template.
+            </p>
+          )}
+
+          {rem1hStudentMsg && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-zinc-500">1-hour reminder (to student)</p>
+              <CopyMessageButton
+                message={rem1hStudentMsg}
+                whatsappNumber={studentProfile?.whatsapp_number ?? undefined}
+                label="Copy 1-hour reminder (student)"
+              />
+            </div>
+          )}
+
+          {rem1hStudentMsg && (
+            <div>
+              <p className="mb-1 text-xs font-medium text-zinc-500">1-hour reminder (to tutor)</p>
+              <CopyMessageButton
+                message={rem1hStudentMsg}
+                whatsappNumber={tutorUserProfile?.whatsapp_number ?? undefined}
+                label="Copy 1-hour reminder (tutor)"
+              />
+            </div>
+          )}
+
+          <div>
+            <p className="mb-1 text-xs font-medium text-zinc-500">Tutor availability check</p>
+            <CopyMessageButton
+              message={tutorAvailCheckMsg}
+              whatsappNumber={tutorUserProfile?.whatsapp_number ?? undefined}
+              label="Copy tutor availability check"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Audit info */}

@@ -1,5 +1,5 @@
-// E6 T6.3 T6.4 S6.2: Admin tutor detail page — full profile view with approve/revoke
-// Closes #42 #43 #39
+// E6 T6.3 T6.4 S6.2 E11 T11.3: Admin tutor detail page — full profile view with approve/revoke + WhatsApp link
+// Closes #42 #43 #39 #76
 
 export const dynamic = 'force-dynamic'
 
@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ApproveButton, RevokeButton } from '../TutorActions'
+import { WhatsAppLink } from '@/components/WhatsAppLink'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -118,7 +119,12 @@ export default async function AdminTutorDetailPage({
           </h2>
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             <span className="font-medium">WhatsApp:</span>{' '}
-            {profile?.whatsapp_number ?? (
+            {profile?.whatsapp_number ? (
+              <span className="inline-flex items-center gap-2">
+                {profile.whatsapp_number}
+                <WhatsAppLink number={profile.whatsapp_number} label="Open chat" />
+              </span>
+            ) : (
               <span className="italic text-zinc-400">not provided</span>
             )}
           </p>

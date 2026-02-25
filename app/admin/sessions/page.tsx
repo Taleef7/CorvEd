@@ -1,5 +1,5 @@
-// E8 T8.4 S8.2: Admin sessions overview — list all sessions, update status, reschedule
-// Closes #57 #53
+// E8 T8.4 S8.2 E11 T11.2: Admin sessions overview — list all sessions, update status, reschedule, WhatsApp actions
+// Closes #57 #53 #75
 
 export const dynamic = 'force-dynamic'
 
@@ -7,6 +7,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { SESSION_STATUS_LABELS, SESSION_STATUS_COLOURS, formatSessionTime, type SessionStatus } from '@/lib/utils/session'
 import { SessionStatusForm, RescheduleForm } from './SessionActions'
 import Link from 'next/link'
+import { CopyMessageButton } from '@/components/CopyMessageButton'
+import { templates } from '@/lib/whatsapp/templates'
 
 const ADMIN_TIMEZONE = 'Asia/Karachi'
 
@@ -21,15 +23,15 @@ type SessionRow = {
     meet_link: string | null
     request_id: string
     tutor_user_id: string
-    schedule_pattern: { duration_mins?: number } | null
+    schedule_pattern: { duration_mins?: number; timezone?: string } | null
     tutor_profiles: {
-      user_profiles: { display_name: string } | null
+      user_profiles: { display_name: string; whatsapp_number: string | null } | null
     } | null
     requests: {
       id: string
       level: string
       subjects: { name: string } | null
-      user_profiles: { display_name: string } | null
+      user_profiles: { display_name: string; whatsapp_number: string | null } | null
     } | null
   } | null
 }
@@ -44,12 +46,12 @@ export default async function AdminSessionsPage() {
        matches!sessions_match_id_fkey (
          meet_link, request_id, tutor_user_id, schedule_pattern,
          tutor_profiles!matches_tutor_user_id_fkey (
-           user_profiles!tutor_user_id ( display_name )
+           user_profiles!tutor_user_id ( display_name, whatsapp_number )
          ),
          requests!matches_request_id_fkey (
            id, level,
            subjects ( name ),
-           user_profiles!requests_created_by_user_id_fkey ( display_name )
+           user_profiles!requests_created_by_user_id_fkey ( display_name, whatsapp_number )
          )
        )`
     )
@@ -140,12 +142,48 @@ function SessionCard({
   const tutorProfile = match?.tutor_profiles
   const studentName =
     (req?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
+  const studentWhatsApp =
+    (req?.user_profiles as { display_name: string; whatsapp_number: string | null } | null)
+      ?.whatsapp_number ?? null
   const tutorName =
     (tutorProfile?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
+  const tutorWhatsApp =
+    (tutorProfile?.user_profiles as { display_name: string; whatsapp_number: string | null } | null)
+      ?.whatsapp_number ?? null
   const subjectName = (req?.subjects as { name: string } | null)?.name ?? '—'
+  const levelLabel = req?.level ?? ''
   const timeDisplay = formatSessionTime(session.scheduled_start_utc, adminTimezone)
+  const scheduleTz = match?.schedule_pattern?.timezone ?? adminTimezone
   const requestId = match?.request_id ?? ''
   const durationMins = match?.schedule_pattern?.duration_mins ?? 60
+  const meetLink = match?.meet_link ?? ''
+
+  // Template strings for WhatsApp buttons
+  const rem1hMsg = meetLink
+    ? templates.rem1h({
+        level: levelLabel,
+        subject: subjectName,
+        tutorName,
+        time: timeDisplay,
+        tz: scheduleTz,
+        meetLink,
+      })
+    : null
+
+  const lateJoinMsg = meetLink
+    ? templates.lateJoin({ name: studentName, time: timeDisplay, meetLink })
+    : null
+
+  const studentNoShowMsg = templates.studentNoShow({ name: studentName, time: timeDisplay })
+  const tutorNoShowMsg = templates.tutorNoShow({ name: studentName })
+  const reschedConfirmedMsg = meetLink
+    ? templates.reschedConfirmed({
+        day: '[Day]',
+        time: '[Time]',
+        tz: scheduleTz,
+        meetLink,
+      })
+    : null
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -192,6 +230,48 @@ function SessionCard({
           />
         </div>
       )}
+
+      {/* WhatsApp message buttons */}
+      <div className="mt-3 flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+        {rem1hMsg && (
+          <CopyMessageButton
+            message={rem1hMsg}
+            whatsappNumber={studentWhatsApp ?? undefined}
+            label="Copy 1-hour reminder"
+          />
+        )}
+        {lateJoinMsg && (
+          <CopyMessageButton
+            message={lateJoinMsg}
+            whatsappNumber={studentWhatsApp ?? undefined}
+            label="Copy late join follow-up"
+          />
+        )}
+        <CopyMessageButton
+          message={studentNoShowMsg}
+          whatsappNumber={studentWhatsApp ?? undefined}
+          label="Copy student no-show notice"
+        />
+        <CopyMessageButton
+          message={tutorNoShowMsg}
+          whatsappNumber={studentWhatsApp ?? undefined}
+          label="Copy tutor no-show apology"
+        />
+        {reschedConfirmedMsg && (
+          <CopyMessageButton
+            message={reschedConfirmedMsg}
+            whatsappNumber={studentWhatsApp ?? undefined}
+            label="Copy reschedule confirmed"
+          />
+        )}
+        {tutorWhatsApp && rem1hMsg && (
+          <CopyMessageButton
+            message={rem1hMsg}
+            whatsappNumber={tutorWhatsApp}
+            label="Copy 1-hour reminder (tutor)"
+          />
+        )}
+      </div>
     </div>
   )
 }
