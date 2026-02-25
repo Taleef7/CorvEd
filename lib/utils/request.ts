@@ -7,6 +7,12 @@ export const LEVEL_LABELS: Record<string, string> = {
   a_levels: 'A Levels',
 }
 
+/** Returns a human-readable level label, falling back to the raw value or '—'. */
+export function getLevelLabel(level: string | null | undefined): string {
+  if (!level) return '—'
+  return LEVEL_LABELS[level] ?? level
+}
+
 export type RequestStatus =
   | 'new'
   | 'payment_pending'

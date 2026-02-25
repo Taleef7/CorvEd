@@ -1,7 +1,9 @@
 // E3 T3.2: role-aware dashboard redirect
 // E4 T4.3: student dashboard with requests list
 // E5 T5.4: package summary card per request
-// Closes #21, #29, #36
+// E9 T9.1: next session card (time + Meet link)
+// E9 T9.3: package summary with renewal alert
+// Closes #21, #29, #36, #61, #63
 
 export const dynamic = 'force-dynamic'
 
@@ -10,6 +12,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
 import { PackageSummary } from '@/components/dashboards/PackageSummary'
+import { NextSessionCard, type NextSessionData } from '@/components/dashboards/NextSessionCard'
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   return (
@@ -32,7 +35,7 @@ export default async function DashboardPage() {
   // Check if profile setup is complete
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('primary_role, whatsapp_number')
+    .select('primary_role, whatsapp_number, timezone')
     .eq('user_id', user.id)
     .single()
 
@@ -44,6 +47,32 @@ export default async function DashboardPage() {
 
   if (role === 'admin') redirect('/admin')
   if (role === 'tutor') redirect('/tutor')
+
+  const userTimezone = profile?.timezone ?? 'UTC'
+
+  // Fetch next upcoming session for this student (scheduled or rescheduled)
+  const { data: nextSessionData } = await supabase
+    .from('sessions')
+    .select(
+      `id, scheduled_start_utc, scheduled_end_utc, status,
+       matches!sessions_match_id_fkey (
+         meet_link,
+         tutor_profiles!matches_tutor_user_id_fkey (
+           user_profiles!tutor_user_id ( display_name )
+         ),
+         requests!matches_request_id_fkey (
+           level,
+           subjects ( name )
+         )
+       )`,
+    )
+    .gt('scheduled_start_utc', new Date().toISOString())
+    .in('status', ['scheduled', 'rescheduled'])
+    .order('scheduled_start_utc', { ascending: true })
+    .limit(1)
+    .maybeSingle()
+
+  const nextSession = nextSessionData as NextSessionData | null
 
   // Fetch student's requests
   const { data: requests } = await supabase
@@ -83,6 +112,9 @@ export default async function DashboardPage() {
     }
   }
 
+  // Compute server-side "now" timestamp for renewal alert (avoids impure Date.now() in render)
+  const serverNowMs = new Date().getTime()
+
   return (
     <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
       <div className="mx-auto w-full max-w-2xl space-y-6">
@@ -98,6 +130,31 @@ export default async function DashboardPage() {
             + New request
           </Link>
         </div>
+
+        {/* Next Session Card (T9.1) */}
+        {nextSession ? (
+          <NextSessionCard
+            session={nextSession}
+            userTimezone={userTimezone}
+            serverNowMs={serverNowMs}
+            viewAllHref="/dashboard/sessions"
+          />
+        ) : (
+          <div className="rounded-2xl bg-white px-6 py-5 shadow-sm dark:bg-zinc-900">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+              🎓 Your Next Session
+            </p>
+            <p className="mt-2 text-sm text-zinc-500">
+              Your sessions will appear here once your schedule is confirmed.
+            </p>
+            <Link
+              href="/dashboard/sessions"
+              className="mt-2 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+            >
+              View sessions →
+            </Link>
+          </div>
+        )}
 
         {/* Requests list */}
         {!requests || requests.length === 0 ? (
@@ -153,6 +210,12 @@ export default async function DashboardPage() {
                       end_date={pkg.end_date}
                       status={pkg.status}
                       packageId={pkg.id}
+                      daysUntilEnd={Math.max(
+                        0,
+                        Math.ceil(
+                          (new Date(pkg.end_date).getTime() - serverNowMs) / (1000 * 60 * 60 * 24),
+                        ),
+                      )}
                     />
                   ) : status === 'new' ? (
                     <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-900 dark:bg-indigo-900/20">

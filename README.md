@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E8)
+### What the app can do right now (after E9)
 
 | Area | Status |
 |---|---|
@@ -149,7 +149,8 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **DB: handle_new_user() trigger** | ✅ Auto-creates profile + `student` role on every signup |
 | **DB: helper functions** | ✅ `has_role()`, `is_admin()`, `is_tutor()` — used in RLS policies |
 | **DB: leads admin RLS** | ✅ `supabase/migrations/20260223000005_leads_admin_rls.sql` — admin-role users can read/update leads |
-| **Student dashboard** | ✅ `app/dashboard/page.tsx` — lists all requests with status badges; "New Request" CTA; package summary cards per request |
+| **Student dashboard — next session card** | ✅ `app/dashboard/page.tsx` — next upcoming session with time (student's TZ), tutor name, Meet link, Reschedule button; empty state if no sessions yet |
+| **Student dashboard — requests + packages** | ✅ `app/dashboard/page.tsx` — lists all requests with status badges; "New Request" CTA; package summary cards per request |
 | **Tutoring request form** | ✅ `app/dashboard/requests/new/page.tsx` — React Hook Form + Zod; level, subject (from DB), exam board, availability, timezone (pre-filled), goals, preferred start date; duplicate request warning |
 | **Request confirmation page** | ✅ `app/dashboard/requests/[id]/page.tsx` — read-only summary, status badge, status-aware "what's next" banner, "Select Package" CTA (links with requestId) |
 | **DB: requests table + RLS** | ✅ `supabase/migrations/20260223000007_create_requests_table.sql` — full schema, indexes, updated_at trigger, 4 RLS policies (insert self, select creator/admin, update creator limited, admin update) |
@@ -157,7 +158,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Request Zod schema** | ✅ `lib/validators/request.ts` — validates all request fields |
 | **Package selection page** | ✅ `app/dashboard/packages/new/page.tsx` — 3 package tier cards (8/12/20 sessions), PKR pricing, policy notes, creates package + payment rows, advances request to `payment_pending` |
 | **Package payment page** | ✅ `app/dashboard/packages/[id]/page.tsx` — bank transfer instructions with personalised reference, optional proof upload (Supabase Storage), optional transaction reference, payment status display |
-| **Package summary card** | ✅ `components/dashboards/PackageSummary.tsx` — shows package tier, month window, sessions remaining, progress bar; handles pending/active/expired states |
+| **Package summary card** | ✅ `components/dashboards/PackageSummary.tsx` — shows package tier, month window, sessions remaining, progress bar; handles pending/active/expired states; renewal alert (≤3 sessions or ≤5 days to end) with WhatsApp "Chat to Renew" link |
 | **Admin: payments list** | ✅ `app/admin/payments/page.tsx` — lists payments with filter (pending/paid/rejected/all), student name, subject, tier, amount, date, proof indicator |
 | **Admin: mark payment paid** | ✅ Updates `payments.status → paid`, `packages.status → active`, `requests.status → ready_to_match`, writes audit log |
 | **Admin: mark payment rejected** | ✅ Updates `payments.status → rejected` with optional rejection note, writes audit log |
@@ -182,13 +183,14 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Admin: sessions overview** | ✅ `app/admin/sessions/page.tsx` — lists all sessions grouped by upcoming/past; shows student, tutor, subject, time (PKT), status badge, Meet link |
 | **Admin: session status update** | ✅ `SessionStatusForm` — admin can mark sessions done/no-show-student/no-show-tutor; increments `packages.sessions_used` atomically via `increment_sessions_used` RPC |
 | **Admin: reschedule session** | ✅ `RescheduleForm` — admin sets new date+time (in admin timezone, converted to UTC); sets status to rescheduled; writes audit log; shows ⚠ warning if within 24 hours |
-| **Student: sessions list** | ✅ `app/dashboard/sessions/page.tsx` — next upcoming session card with Meet link join button; full list of upcoming + past sessions in student's timezone; status badges; tutor notes |
+| **Student: sessions list** | ✅ `app/dashboard/sessions/page.tsx` — next upcoming session card with Meet link + Reschedule button; full list of upcoming + past sessions in student's timezone; status badges; tutor notes; "Reschedule via WhatsApp" on each upcoming session |
+| **Student: reschedule via WhatsApp** | ✅ `components/dashboards/RescheduleButton.tsx` — prefilled WhatsApp message with subject, level, current session time (student TZ); 24-hour late-reschedule warning |
 | **Tutor: sessions list** | ✅ `app/tutor/sessions/page.tsx` — upcoming and past sessions in tutor's timezone; student name, subject, Meet link; inline session status update form |
 | **Session generation algorithm** | ✅ `lib/services/scheduling.ts` — `generateSessions()` using luxon; iterates days, converts local time → UTC; stops at tier_sessions limit |
 | **Session utilities** | ✅ `lib/utils/session.ts` — `SESSION_STATUS_LABELS`, `SESSION_STATUS_COLOURS`, `formatSessionTime()` (Intl.DateTimeFormat in viewer's timezone) |
 | **Session server actions** | ✅ `lib/services/sessions.ts` — `generateSessionsForMatch`, `updateSessionStatus`, `rescheduleSession` |
 | **DB: sessions table + RLS** | ✅ `supabase/migrations/20260225000002_create_sessions_table.sql` — sessions table (match_id FK, scheduled_start/end_utc, status enum, tutor_notes); 4 RLS policies (admin all, tutor select, student select, tutor update); `increment_sessions_used` RPC; `tutor_update_session` RPC |
-| Tutor dashboard (E10), WhatsApp templates (E11) | 🚧 Coming in E9–E11 |
+| Tutor dashboard (E10), WhatsApp templates (E11) | 🚧 Coming in E10–E11 |
 
 ---
 

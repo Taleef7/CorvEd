@@ -1,7 +1,9 @@
 // E5 T5.4: Package summary card for student dashboard
-// Closes #36
+// E9 T9.3: Renewal alert logic (≤3 sessions remaining or ≤5 days until package end)
+// Closes #36, #63
 
 import Link from 'next/link'
+import { WHATSAPP_NUMBER } from '@/lib/config'
 
 export type PackageSummaryProps = {
   tier_sessions: number
@@ -10,6 +12,8 @@ export type PackageSummaryProps = {
   end_date: string
   status: 'pending' | 'active' | 'expired'
   packageId: string
+  /** Pre-computed on the server: days until package end_date (for renewal alert) */
+  daysUntilEnd?: number
 }
 
 function formatDate(dateStr: string): string {
@@ -27,6 +31,7 @@ export function PackageSummary({
   end_date,
   status,
   packageId,
+  daysUntilEnd = 999,
 }: PackageSummaryProps) {
   const sessionsRemaining = Math.max(0, tier_sessions - sessions_used)
   const pct = tier_sessions > 0 ? Math.min(100, Math.round((sessions_used / tier_sessions) * 100)) : 0
@@ -71,6 +76,14 @@ export function PackageSummary({
     )
   }
 
+  // Renewal alert: ≤3 sessions remaining OR ≤5 days until package end
+  const showRenewalAlert = sessionsRemaining <= 3 || daysUntilEnd <= 5
+  const renewalHref = WHATSAPP_NUMBER
+    ? `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
+        `Hi CorvEd 👋 I'd like to renew my tutoring package.\n\nSessions remaining: ${sessionsRemaining}\nPackage ends: ${formatDate(end_date)}\n\nPlease share the renewal options. Thanks!`,
+      )}`
+    : undefined
+
   // Active package
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -112,6 +125,27 @@ export function PackageSummary({
           {sessions_used} of {tier_sessions} sessions used
         </p>
       </div>
+
+      {/* Renewal alert */}
+      {showRenewalAlert && (
+        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
+          <p className="text-xs text-amber-800 dark:text-amber-300">
+            {sessionsRemaining === 0
+              ? `⚠️ Your sessions are used up. Renew to continue.`
+              : `⚠️ Only ${sessionsRemaining} session${sessionsRemaining === 1 ? '' : 's'} left${daysUntilEnd <= 5 ? ` and ${daysUntilEnd} day${daysUntilEnd === 1 ? '' : 's'} until package ends` : ''}. Renew soon to avoid gaps.`}
+          </p>
+          {renewalHref && (
+            <a
+              href={renewalHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 inline-block text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+            >
+              Chat to Renew →
+            </a>
+          )}
+        </div>
+      )}
     </div>
   )
 }

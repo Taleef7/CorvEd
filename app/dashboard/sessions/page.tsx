@@ -1,5 +1,6 @@
 // E8 S8.1: Student sessions list — upcoming and past sessions with timezone display and Meet link
-// Closes #52
+// E9 T9.2: Sessions list with Reschedule button (T9.4)
+// Closes #52, #62, #64
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,9 @@ import {
   formatSessionTime,
   type SessionStatus,
 } from '@/lib/utils/session'
+import { getLevelLabel } from '@/lib/utils/request'
+import { RescheduleButton } from '@/components/dashboards/RescheduleButton'
+import { NextSessionCard } from '@/components/dashboards/NextSessionCard'
 
 type SessionRow = {
   id: string
@@ -24,6 +28,7 @@ type SessionRow = {
       user_profiles: { display_name: string } | null
     } | null
     requests: {
+      level: string | null
       subjects: { name: string } | null
     } | null
   } | null
@@ -57,6 +62,7 @@ export default async function StudentSessionsPage() {
            user_profiles!tutor_user_id ( display_name )
          ),
          requests!matches_request_id_fkey (
+           level,
            subjects ( name )
          )
        )`
@@ -69,6 +75,9 @@ export default async function StudentSessionsPage() {
   const upcoming = sessions.filter((s) => s.scheduled_start_utc >= nowIso)
   const past = sessions.filter((s) => s.scheduled_start_utc < nowIso)
 
+  // Server-computed timestamp for the 24-hour late-reschedule check in RescheduleButton
+  const serverNowMs = new Date().getTime()
+
   // Next upcoming session
   const nextSession = upcoming[0] ?? null
 
@@ -79,33 +88,17 @@ export default async function StudentSessionsPage() {
 
         {/* Next session card */}
         {nextSession ? (
-          <div className="rounded-2xl bg-indigo-50 px-6 py-5 shadow-sm dark:bg-indigo-900/20">
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-              Next Session
-            </p>
-            <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-50">
-              {formatSessionTime(nextSession.scheduled_start_utc, userTimezone)}
-            </p>
-            <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
-              {(nextSession.matches?.requests?.subjects as { name: string } | null)?.name ?? '—'} ·
-              Tutor:{' '}
-              {(nextSession.matches?.tutor_profiles?.user_profiles as { display_name: string } | null)
-                ?.display_name ?? '—'}
-            </p>
-            {nextSession.matches?.meet_link && (
-              <a
-                href={nextSession.matches.meet_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-              >
-                Join Meet →
-              </a>
-            )}
-          </div>
+          <NextSessionCard
+            session={nextSession}
+            userTimezone={userTimezone}
+            serverNowMs={serverNowMs}
+          />
         ) : (
           <div className="rounded-2xl bg-white px-6 py-8 text-center shadow-sm dark:bg-zinc-900">
             <p className="text-zinc-500">No upcoming sessions scheduled.</p>
+            <p className="mt-1 text-sm text-zinc-400">
+              Your sessions will appear here once your schedule is confirmed.
+            </p>
           </div>
         )}
 
@@ -116,7 +109,7 @@ export default async function StudentSessionsPage() {
               Upcoming Sessions ({upcoming.length})
             </h2>
             {upcoming.map((session) => (
-              <SessionCard key={session.id} session={session} userTimezone={userTimezone} />
+              <SessionCard key={session.id} session={session} userTimezone={userTimezone} serverNowMs={serverNowMs} />
             ))}
           </section>
         )}
@@ -128,7 +121,7 @@ export default async function StudentSessionsPage() {
               Past Sessions ({past.length})
             </h2>
             {past.map((session) => (
-              <SessionCard key={session.id} session={session} userTimezone={userTimezone} />
+              <SessionCard key={session.id} session={session} userTimezone={userTimezone} serverNowMs={serverNowMs} />
             ))}
           </section>
         )}
@@ -150,14 +143,18 @@ export default async function StudentSessionsPage() {
 function SessionCard({
   session,
   userTimezone,
+  serverNowMs,
 }: {
   session: SessionRow
   userTimezone: string
+  serverNowMs: number
 }) {
   const match = session.matches
   const tutorName =
     (match?.tutor_profiles?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
   const subjectName = (match?.requests?.subjects as { name: string } | null)?.name ?? '—'
+  const levelLabel = getLevelLabel(match?.requests?.level)
+  const isUpcoming = session.status === 'scheduled' || session.status === 'rescheduled'
 
   return (
     <div className="rounded-xl bg-white px-5 py-4 shadow-sm dark:bg-zinc-900">
@@ -167,9 +164,9 @@ function SessionCard({
             {formatSessionTime(session.scheduled_start_utc, userTimezone)}
           </p>
           <p className="text-sm text-zinc-500">
-            {subjectName} · {tutorName}
+            {subjectName} — {levelLabel} · {tutorName}
           </p>
-          {session.tutor_notes && session.status !== 'scheduled' && (
+          {session.tutor_notes && !isUpcoming && (
             <p className="mt-1 text-xs text-zinc-400 italic">Note: {session.tutor_notes}</p>
           )}
         </div>
@@ -179,7 +176,7 @@ function SessionCard({
           >
             {SESSION_STATUS_LABELS[session.status] ?? session.status}
           </span>
-          {match?.meet_link && session.status === 'scheduled' && (
+          {match?.meet_link && isUpcoming && (
             <a
               href={match.meet_link}
               target="_blank"
@@ -188,6 +185,15 @@ function SessionCard({
             >
               Join Meet →
             </a>
+          )}
+          {isUpcoming && (
+            <RescheduleButton
+              subject={subjectName}
+              level={levelLabel}
+              scheduledStartUtc={session.scheduled_start_utc}
+              studentTimezone={userTimezone}
+              serverNowMs={serverNowMs}
+            />
           )}
         </div>
       </div>
