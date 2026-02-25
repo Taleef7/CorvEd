@@ -40,6 +40,16 @@ export default function AdminPage() {
           title="Sessions"
           description="Monitor session status and attendance."
         />
+        <AdminCard
+          href="/admin/audit"
+          title="Audit Log"
+          description="View recent platform events: payments, approvals, session updates."
+        />
+        <AdminCard
+          href="/admin/analytics"
+          title="Analytics"
+          description="Active students, upcoming sessions, missed sessions, and pending action items."
+        />
       </div>
     </div>
   )

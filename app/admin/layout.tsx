@@ -79,6 +79,18 @@ export default async function AdminLayout({
               >
                 Sessions
               </Link>
+              <Link
+                href="/admin/audit"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Audit Log
+              </Link>
+              <Link
+                href="/admin/analytics"
+                className="hover:text-zinc-900 dark:hover:text-zinc-100"
+              >
+                Analytics
+              </Link>
             </nav>
           </div>
           <form action="/auth/sign-out" method="post">

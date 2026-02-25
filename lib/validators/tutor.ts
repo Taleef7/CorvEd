@@ -1,5 +1,6 @@
 // E6 T6.1: Zod schema for tutor profile / application form
-// Closes #40
+// E12 T12.2: Added conductAcknowledged field (required before submit)
+// Closes #40 #79
 
 import { z } from 'zod'
 
@@ -25,6 +26,10 @@ export const tutorProfileSchema = z.object({
       })
     )
     .min(1, 'Please add at least one availability window'),
+  // E12 T12.2: tutor must acknowledge the code of conduct before submitting
+  conductAcknowledged: z.literal(true, {
+    error: 'You must read and agree to the CorvEd Tutor Code of Conduct',
+  }),
 })
 
 export type TutorProfileFormData = z.infer<typeof tutorProfileSchema>

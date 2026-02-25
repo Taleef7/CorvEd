@@ -1,9 +1,11 @@
 // E6 T6.1 T6.3: Tutor profile form — subjects, levels, availability, bio, timezone
-// Closes #40 #42
+// E12 T12.2: Added code of conduct acknowledgement checkbox
+// Closes #40 #42 #79
 
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { tutorProfileSchema, TutorProfileFormData } from '@/lib/validators/tutor'
@@ -319,6 +321,36 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
           {approved === false && 'Your application is now pending admin approval.'}
         </p>
       )}
+
+      {/* E12 T12.2: Code of conduct acknowledgement (required) */}
+      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            aria-required="true"
+            aria-invalid={errors.conductAcknowledged ? 'true' : 'false'}
+            {...register('conductAcknowledged')}
+            className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="text-sm text-zinc-700 dark:text-zinc-300">
+            I have read and agree to the{' '}
+            <Link
+              href="/tutor/conduct"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2 dark:text-indigo-400 dark:hover:text-indigo-300"
+            >
+              CorvEd Tutor Code of Conduct
+            </Link>{' '}
+            <span className="text-red-500" aria-hidden="true">*</span>
+          </span>
+        </label>
+        {errors.conductAcknowledged && (
+          <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+            {errors.conductAcknowledged.message}
+          </p>
+        )}
+      </div>
 
       <button
         type="submit"
