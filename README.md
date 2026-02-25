@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E7)
+### What the app can do right now (after E8)
 
 | Area | Status |
 |---|---|
@@ -178,7 +178,17 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Admin: reassign tutor** | ✅ `reassignTutor` server action — updates `matches.tutor_user_id`, writes audit log with old/new tutor IDs + reason; RLS automatically updates session access |
 | **Admin: update match details** | ✅ `updateMatchDetails` server action — updates meet_link and schedule_pattern on existing match; writes audit log |
 | **DB: matches table + RLS** | ✅ `supabase/migrations/20260225000001_create_matches_table.sql` — matches table (request_id unique FK, tutor_user_id, status enum, meet_link, schedule_pattern JSONB, assigned_by/at); RLS: admin full access; tutor + request creator can select |
-| Sessions | 🚧 Coming in E8–E10 |
+| **Admin: session generation** | ✅ `GenerateSessionsForm` on match detail page — creates N sessions from schedule_pattern + active package; advances match + request to `active`; writes audit log |
+| **Admin: sessions overview** | ✅ `app/admin/sessions/page.tsx` — lists all sessions grouped by upcoming/past; shows student, tutor, subject, time (PKT), status badge, Meet link |
+| **Admin: session status update** | ✅ `SessionStatusForm` — admin can mark sessions done/no-show-student/no-show-tutor; increments `packages.sessions_used` atomically via `increment_sessions_used` RPC |
+| **Admin: reschedule session** | ✅ `RescheduleForm` — admin sets new date+time (in admin timezone, converted to UTC); sets status to rescheduled; writes audit log; shows ⚠ warning if within 24 hours |
+| **Student: sessions list** | ✅ `app/dashboard/sessions/page.tsx` — next upcoming session card with Meet link join button; full list of upcoming + past sessions in student's timezone; status badges; tutor notes |
+| **Tutor: sessions list** | ✅ `app/tutor/sessions/page.tsx` — upcoming and past sessions in tutor's timezone; student name, subject, Meet link; inline session status update form |
+| **Session generation algorithm** | ✅ `lib/services/scheduling.ts` — `generateSessions()` using luxon; iterates days, converts local time → UTC; stops at tier_sessions limit |
+| **Session utilities** | ✅ `lib/utils/session.ts` — `SESSION_STATUS_LABELS`, `SESSION_STATUS_COLOURS`, `formatSessionTime()` (Intl.DateTimeFormat in viewer's timezone) |
+| **Session server actions** | ✅ `lib/services/sessions.ts` — `generateSessionsForMatch`, `updateSessionStatus`, `rescheduleSession` |
+| **DB: sessions table + RLS** | ✅ `supabase/migrations/20260225000002_create_sessions_table.sql` — sessions table (match_id FK, scheduled_start/end_utc, status enum, tutor_notes); 4 RLS policies (admin all, tutor select, student select, tutor update); `increment_sessions_used` RPC; `tutor_update_session` RPC |
+| Tutor dashboard (E10), WhatsApp templates (E11) | 🚧 Coming in E9–E11 |
 
 ---
 
@@ -228,6 +238,7 @@ Recommended workflow
 | `20260224000001_create_packages_payments.sql` | `packages` table (tier_sessions 8/12/20, start/end date, sessions_total/used, status enum, updated_at trigger, 3 RLS policies); `payments` table (amount_pkr, method, reference, proof_path, rejection_note, status enum, verified_by/at, updated_at trigger, 4 RLS policies); `audit_logs` table for admin payment actions. |
 | `20260224000002_create_tutor_tables.sql` | `tutor_profiles` (approved bool default false, bio, timezone, updated_at trigger); `tutor_subjects` (tutor × subject × level, composite PK); `tutor_availability` (JSONB windows array, updated_at trigger); RLS policies for all three tables — tutors manage own rows, admins read/update all. |
 | `20260225000001_create_matches_table.sql` | `matches` table with unique `request_id` FK, `tutor_user_id`, `status` enum (matched/active/paused/ended), `meet_link`, `schedule_pattern` JSONB, `assigned_by_user_id`/`assigned_at`; updated_at trigger; RLS: admin full access, tutor and request creator can select. |
+| `20260225000002_create_sessions_table.sql` | `sessions` table (match_id FK, scheduled_start/end_utc, status enum, tutor_notes, updated_by_user_id); indexes on (match_id, start_utc) and (status, start_utc); 4 RLS policies (admin all, tutor select, student select via match→request, tutor update own); `increment_sessions_used(p_request_id)` RPC for atomic sessions_used increment; `tutor_update_session(p_session_id, p_status, p_notes)` security-definer RPC. |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
