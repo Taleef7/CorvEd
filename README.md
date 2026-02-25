@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 
 ---
 
-### What the app can do right now (after E5)
+### What the app can do right now (after E7)
 
 | Area | Status |
 |---|---|
@@ -169,8 +169,16 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Tutor approval workflow** | ✅ `app/admin/tutors/actions.ts` — `approveTutor` sets `approved = true`; `revokeTutorApproval` sets `approved = false`; both write audit log entries |
 | **DB: tutor tables** | ✅ `supabase/migrations/20260224000002_create_tutor_tables.sql` — `tutor_profiles` (approved, bio, timezone), `tutor_subjects` (subject_id × level per tutor), `tutor_availability` (JSONB windows); RLS policies for all three tables |
 | **Tutor Zod schema** | ✅ `lib/validators/tutor.ts` — validates bio (min 50 chars), timezone, subjects array, availability windows |
-| **Matching query helper** | ✅ `lib/services/matching.ts` — `fetchApprovedTutors()` shared query filtered to `approved = true`; ready for E7 matching screen |
-| Sessions | 🚧 Coming in E7–E10 |
+| **Matching query helper** | ✅ `lib/services/matching.ts` — `fetchApprovedTutors()` correctly filters approved tutors by subject × level (same row); used in E7 matching screen |
+| **Admin: requests inbox** | ✅ `app/admin/requests/page.tsx` — filterable list (status tabs, subject/level selects); priority sort (`ready_to_match` first); status badges; "Match →" CTA for actionable requests |
+| **Admin: matching screen** | ✅ `app/admin/requests/[id]/page.tsx` — two-panel layout: request details (all fields) + eligible approved tutor cards filtered by subject × level; `AssignTutorForm` client component with Meet link + schedule fields |
+| **Admin: assign tutor** | ✅ `assignTutor` server action — creates `matches` row (status=matched, optional meet_link + schedule_pattern), advances `requests.status → matched`, writes audit log |
+| **Admin: matches list** | ✅ `app/admin/matches/page.tsx` — lists all matches with student, tutor, subject/level, status, meet link, assigned date; links to match detail |
+| **Admin: match detail** | ✅ `app/admin/matches/[id]/page.tsx` — full match record; edit meet link + schedule pattern; reassign tutor with optional reason |
+| **Admin: reassign tutor** | ✅ `reassignTutor` server action — updates `matches.tutor_user_id`, writes audit log with old/new tutor IDs + reason; RLS automatically updates session access |
+| **Admin: update match details** | ✅ `updateMatchDetails` server action — updates meet_link and schedule_pattern on existing match; writes audit log |
+| **DB: matches table + RLS** | ✅ `supabase/migrations/20260225000001_create_matches_table.sql` — matches table (request_id unique FK, tutor_user_id, status enum, meet_link, schedule_pattern JSONB, assigned_by/at); RLS: admin full access; tutor + request creator can select |
+| Sessions | 🚧 Coming in E8–E10 |
 
 ---
 
@@ -219,6 +227,7 @@ Recommended workflow
 | `20260223000007_create_requests_table.sql` | `requests` table with all fields from the data model; indexes on `(status, created_at desc)` and `created_by_user_id`; `updated_at` trigger; 4 RLS policies (creator insert, creator/admin select, creator update limited to `new`/`payment_pending`, admin update). |
 | `20260224000001_create_packages_payments.sql` | `packages` table (tier_sessions 8/12/20, start/end date, sessions_total/used, status enum, updated_at trigger, 3 RLS policies); `payments` table (amount_pkr, method, reference, proof_path, rejection_note, status enum, verified_by/at, updated_at trigger, 4 RLS policies); `audit_logs` table for admin payment actions. |
 | `20260224000002_create_tutor_tables.sql` | `tutor_profiles` (approved bool default false, bio, timezone, updated_at trigger); `tutor_subjects` (tutor × subject × level, composite PK); `tutor_availability` (JSONB windows array, updated_at trigger); RLS policies for all three tables — tutors manage own rows, admins read/update all. |
+| `20260225000001_create_matches_table.sql` | `matches` table with unique `request_id` FK, `tutor_user_id`, `status` enum (matched/active/paused/ended), `meet_link`, `schedule_pattern` JSONB, `assigned_by_user_id`/`assigned_at`; updated_at trigger; RLS: admin full access, tutor and request creator can select. |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >

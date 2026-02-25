@@ -46,12 +46,16 @@ export async function fetchApprovedTutors(subjectId?: number, level?: string) {
   let tutors = (data ?? []) as unknown as TutorWithSubjects[]
 
   // Client-side filtering by subject/level (small dataset for MVP)
-  if (subjectId) {
+  // When both are provided, require the same row to match both (correct composite filter)
+  if (subjectId && level) {
+    tutors = tutors.filter((t) =>
+      t.tutor_subjects.some((s) => s.subject_id === subjectId && s.level === level)
+    )
+  } else if (subjectId) {
     tutors = tutors.filter((t) =>
       t.tutor_subjects.some((s) => s.subject_id === subjectId)
     )
-  }
-  if (level) {
+  } else if (level) {
     tutors = tutors.filter((t) =>
       t.tutor_subjects.some((s) => s.level === level)
     )
