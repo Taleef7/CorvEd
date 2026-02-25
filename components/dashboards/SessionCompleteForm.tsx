@@ -5,11 +5,13 @@
 
 import { useActionState, useState } from 'react'
 import { tutorUpdateSessionStatus } from '@/lib/services/sessions'
-import { type SessionStatus } from '@/lib/utils/session'
 
 type UpdateResult = { error?: string } | undefined
 
-const STATUS_OPTIONS: { value: SessionStatus; label: string; icon: string }[] = [
+type TutorStatus = 'done' | 'no_show_student' | 'no_show_tutor'
+const ALLOWED_STATUSES = ['done', 'no_show_student', 'no_show_tutor'] as const
+
+const STATUS_OPTIONS: { value: TutorStatus; label: string; icon: string }[] = [
   { value: 'done', label: 'Done', icon: '✅' },
   { value: 'no_show_student', label: 'Student No-show', icon: '❌' },
   { value: 'no_show_tutor', label: 'My No-show', icon: '🤒' },
@@ -19,10 +21,28 @@ async function tutorUpdateStatusAction(
   _prev: UpdateResult,
   formData: FormData,
 ): Promise<UpdateResult> {
-  const sessionId = formData.get('sessionId') as string
-  const status = formData.get('status') as 'done' | 'no_show_student' | 'no_show_tutor'
-  const tutorNotes = (formData.get('tutorNotes') as string) || undefined
-  return tutorUpdateSessionStatus({ sessionId, status, tutorNotes })
+  const rawSessionId = formData.get('sessionId')
+  const rawStatus = formData.get('status')
+  const tutorNotesValue = formData.get('tutorNotes')
+
+  if (typeof rawSessionId !== 'string' || !rawSessionId.trim()) {
+    return { error: 'Missing session ID. Please refresh the page and try again.' }
+  }
+
+  if (typeof rawStatus !== 'string' || !ALLOWED_STATUSES.includes(rawStatus as TutorStatus)) {
+    return { error: 'Invalid status selected. Please choose an option and resubmit.' }
+  }
+
+  const tutorNotes =
+    typeof tutorNotesValue === 'string' && tutorNotesValue.trim().length > 0
+      ? tutorNotesValue
+      : undefined
+
+  return tutorUpdateSessionStatus({
+    sessionId: rawSessionId,
+    status: rawStatus as TutorStatus,
+    tutorNotes,
+  })
 }
 
 interface Props {
@@ -71,9 +91,13 @@ export function SessionCompleteForm({ sessionId }: Props) {
         ))}
       </div>
 
+      <label htmlFor={`notes-${sessionId}`} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+        Session notes <span className="font-normal text-zinc-400">(optional)</span>
+      </label>
       <textarea
+        id={`notes-${sessionId}`}
         name="tutorNotes"
-        placeholder="Session notes (optional) — e.g. topics covered, homework set"
+        placeholder="e.g. topics covered, homework set"
         rows={2}
         className="w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
       />

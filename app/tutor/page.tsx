@@ -2,6 +2,7 @@
 // E10: Full tutor dashboard — next session card, session counts, links
 // Closes #21 #65
 
+import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatSessionTime } from '@/lib/utils/session'
@@ -13,17 +14,19 @@ export default async function TutorPage() {
     data: { user },
   } = await supabase.auth.getUser()
 
+  if (!user) redirect('/auth/sign-in')
+
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('display_name')
-    .eq('user_id', user?.id ?? '')
+    .eq('user_id', user.id)
     .single()
 
   // Get tutor's timezone
   const { data: tutorProfile } = await supabase
     .from('tutor_profiles')
     .select('timezone')
-    .eq('tutor_user_id', user?.id ?? '')
+    .eq('tutor_user_id', user.id)
     .single()
 
   const tutorTimezone = tutorProfile?.timezone ?? 'UTC'
@@ -49,15 +52,19 @@ export default async function TutorPage() {
     .limit(1)
     .maybeSingle()
 
-  // Fetch session counts for this tutor
-  const { data: allSessions } = await supabase
+  // Fetch session counts using count-only queries (no row data transfer)
+  const { count: upcomingCountRaw } = await supabase
     .from('sessions')
-    .select('id, scheduled_start_utc, status')
-    .order('scheduled_start_utc', { ascending: true })
+    .select('id', { count: 'exact', head: true })
+    .gte('scheduled_start_utc', nowIso)
 
-  const sessions = allSessions ?? []
-  const upcomingCount = sessions.filter((s) => s.scheduled_start_utc >= nowIso).length
-  const pastCount = sessions.filter((s) => s.scheduled_start_utc < nowIso).length
+  const { count: completedCountRaw } = await supabase
+    .from('sessions')
+    .select('id', { count: 'exact', head: true })
+    .in('status', ['done', 'no_show_student'])
+
+  const upcomingCount = upcomingCountRaw ?? 0
+  const completedCount = completedCountRaw ?? 0
 
   type NextSessionShape = {
     id: string
@@ -151,7 +158,7 @@ export default async function TutorPage() {
         </div>
         <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Completed</p>
-          <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">{pastCount}</p>
+          <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">{completedCount}</p>
           <p className="text-xs text-zinc-400">sessions taught</p>
         </div>
       </div>
