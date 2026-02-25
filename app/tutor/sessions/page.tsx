@@ -63,8 +63,9 @@ export default async function TutorSessionsPage() {
     .order('scheduled_start_utc', { ascending: true })
 
   const sessions = (sessionsData ?? []) as unknown as SessionRow[]
-  const upcoming = sessions.filter((s) => s.status === 'scheduled')
-  const past = sessions.filter((s) => s.status !== 'scheduled')
+  const nowIso = new Date().toISOString()
+  const upcoming = sessions.filter((s) => s.scheduled_start_utc >= nowIso)
+  const past = sessions.filter((s) => s.scheduled_start_utc < nowIso)
 
   return (
     <div className="space-y-6">
@@ -172,6 +173,7 @@ function TutorSessionCard({
             matchId={session.match_id}
             requestId={requestId}
             currentStatus={session.status}
+            mode="tutor"
           />
         </div>
       )}

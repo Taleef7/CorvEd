@@ -27,11 +27,28 @@ export function generateSessions(
   tierSessions: number,
 ): { start_utc: string; end_utc: string }[] {
   const { timezone, days, time, duration_mins } = schedulePattern
-  const [hour, minute] = time.split(':').map(Number)
+
+  // Validate time format "HH:mm"
+  const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(time)
+  if (!timeMatch) throw new Error(`Invalid time format: "${time}". Expected "HH:mm".`)
+  const hour = parseInt(timeMatch[1], 10)
+  const minute = parseInt(timeMatch[2], 10)
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+    throw new Error(`Time "${time}" is out of range. Hour must be 0–23, minute 0–59.`)
+  }
+
   const sessions: { start_utc: string; end_utc: string }[] = []
 
   let current = DateTime.fromISO(startDate, { zone: timezone }).startOf('day')
   const end = DateTime.fromISO(endDate, { zone: timezone }).startOf('day')
+
+  // Validate timezone — luxon sets isValid=false for unknown zones
+  if (!current.isValid) {
+    throw new Error(`Invalid timezone or start date: timezone="${timezone}", startDate="${startDate}".`)
+  }
+  if (!end.isValid) {
+    throw new Error(`Invalid timezone or end date: timezone="${timezone}", endDate="${endDate}".`)
+  }
 
   while (current <= end && sessions.length < tierSessions) {
     // luxon weekday: 1=Mon…7=Sun → convert to 0=Sun,1=Mon…6=Sat

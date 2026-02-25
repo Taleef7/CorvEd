@@ -4,17 +4,17 @@
 'use client'
 
 import { useActionState, useState } from 'react'
-import { updateSessionStatus, rescheduleSession } from '@/lib/services/sessions'
+import { updateSessionStatus, tutorUpdateSessionStatus, rescheduleSession } from '@/lib/services/sessions'
 import { SESSION_STATUS_LABELS, SESSION_STATUS_COLOURS, type SessionStatus } from '@/lib/utils/session'
 import { DateTime } from 'luxon'
 
-// ── Status Update Form ────────────────────────────────────────────────────────
+// ── Status Update Form (Admin) ────────────────────────────────────────────────
 
 type UpdateResult = { error?: string } | undefined
 
 const TUTOR_STATUSES: SessionStatus[] = ['done', 'no_show_student', 'no_show_tutor']
 
-async function updateStatusAction(
+async function adminUpdateStatusAction(
   _prev: UpdateResult,
   formData: FormData,
 ): Promise<UpdateResult> {
@@ -26,19 +26,33 @@ async function updateStatusAction(
   return updateSessionStatus({ sessionId, matchId, requestId, status, tutorNotes })
 }
 
+async function tutorUpdateStatusAction(
+  _prev: UpdateResult,
+  formData: FormData,
+): Promise<UpdateResult> {
+  const sessionId = formData.get('sessionId') as string
+  const status = formData.get('status') as 'done' | 'no_show_student' | 'no_show_tutor'
+  const tutorNotes = (formData.get('tutorNotes') as string) || undefined
+  return tutorUpdateSessionStatus({ sessionId, status, tutorNotes })
+}
+
 export function SessionStatusForm({
   sessionId,
   matchId,
   requestId,
   currentStatus,
+  mode = 'admin',
 }: {
   sessionId: string
   matchId: string
   requestId: string
   currentStatus: SessionStatus
+  /** 'admin' calls updateSessionStatus (admin client); 'tutor' calls tutorUpdateSessionStatus (RPC via RLS) */
+  mode?: 'admin' | 'tutor'
 }) {
   const [open, setOpen] = useState(false)
-  const [state, formAction, isPending] = useActionState(updateStatusAction, undefined)
+  const action = mode === 'tutor' ? tutorUpdateStatusAction : adminUpdateStatusAction
+  const [state, formAction, isPending] = useActionState(action, undefined)
 
   if (state && !state.error) {
     return (
@@ -60,8 +74,12 @@ export function SessionStatusForm({
   return (
     <form action={formAction} className="space-y-2">
       <input type="hidden" name="sessionId" value={sessionId} />
-      <input type="hidden" name="matchId" value={matchId} />
-      <input type="hidden" name="requestId" value={requestId} />
+      {mode === 'admin' && (
+        <>
+          <input type="hidden" name="matchId" value={matchId} />
+          <input type="hidden" name="requestId" value={requestId} />
+        </>
+      )}
 
       <select
         name="status"
@@ -119,15 +137,12 @@ async function rescheduleAction(
   const newTime = formData.get('newTime') as string
   const timezone = formData.get('timezone') as string
   const reason = (formData.get('reason') as string) || undefined
+  const durationMins = parseInt(formData.get('durationMins') as string, 10) || 60
 
   // Convert local date+time to UTC
-  const newStartUtc = DateTime.fromISO(`${newDate}T${newTime}`, { zone: timezone })
-    .toUTC()
-    .toISO()
-  const newEndUtc = DateTime.fromISO(`${newDate}T${newTime}`, { zone: timezone })
-    .plus({ minutes: 60 })
-    .toUTC()
-    .toISO()
+  const newStartDt = DateTime.fromISO(`${newDate}T${newTime}`, { zone: timezone })
+  const newStartUtc = newStartDt.toUTC().toISO()
+  const newEndUtc = newStartDt.plus({ minutes: durationMins }).toUTC().toISO()
 
   if (!newStartUtc || !newEndUtc) {
     return { error: 'Invalid date/time or timezone.' }
@@ -140,10 +155,13 @@ export function RescheduleForm({
   sessionId,
   scheduledStartUtc,
   adminTimezone,
+  durationMins = 60,
 }: {
   sessionId: string
   scheduledStartUtc: string
   adminTimezone: string
+  /** Session duration in minutes — read from schedule_pattern.duration_mins */
+  durationMins?: number
 }) {
   const [open, setOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(rescheduleAction, undefined)
@@ -168,10 +186,14 @@ export function RescheduleForm({
     )
   }
 
+  // Compute today's date in the admin timezone as the min date for the date picker
+  const todayLocal = DateTime.now().setZone(adminTimezone).toFormat('yyyy-MM-dd')
+
   return (
     <form action={formAction} className="mt-2 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/10">
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="timezone" value={adminTimezone} />
+      <input type="hidden" name="durationMins" value={durationMins} />
 
       {isWithin24h && (
         <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
@@ -188,6 +210,7 @@ export function RescheduleForm({
             type="date"
             name="newDate"
             required
+            min={todayLocal}
             className="mt-0.5 w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
           />
         </div>
@@ -251,3 +274,4 @@ export function SessionStatusBadge({ status }: { status: SessionStatus }) {
     </span>
   )
 }
+

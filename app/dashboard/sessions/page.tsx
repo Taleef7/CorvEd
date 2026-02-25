@@ -65,8 +65,9 @@ export default async function StudentSessionsPage() {
 
   const sessions = (sessionsData ?? []) as unknown as SessionRow[]
 
-  const upcoming = sessions.filter((s) => s.status === 'scheduled')
-  const past = sessions.filter((s) => s.status !== 'scheduled')
+  const nowIso = new Date().toISOString()
+  const upcoming = sessions.filter((s) => s.scheduled_start_utc >= nowIso)
+  const past = sessions.filter((s) => s.scheduled_start_utc < nowIso)
 
   // Next upcoming session
   const nextSession = upcoming[0] ?? null

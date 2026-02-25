@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateSessions as generateSessionSlots } from '@/lib/services/scheduling'
 import { revalidatePath } from 'next/cache'
 
-// ── Auth helper ────────────────────────────────────────────────────────────────
+// ── Auth helpers ───────────────────────────────────────────────────────────────
 
 async function requireAdmin(): Promise<string> {
   const supabase = await createClient()
@@ -27,6 +27,15 @@ async function requireAdmin(): Promise<string> {
   const isAdmin = roles?.some((r) => r.role === 'admin') ?? false
   if (!isAdmin) throw new Error('Unauthorized: admin role required')
 
+  return user.id
+}
+
+async function requireAuthenticatedUser(): Promise<string> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized: not authenticated')
   return user.id
 }
 
@@ -100,9 +109,26 @@ export async function generateSessionsForMatch(
     const { error: insertErr } = await admin.from('sessions').insert(rows)
     if (insertErr) throw new Error(`Failed to insert sessions: ${insertErr.message}`)
 
-    // Advance match and request to active
-    await admin.from('matches').update({ status: 'active' }).eq('id', matchId)
-    await admin.from('requests').update({ status: 'active' }).eq('id', match.request_id)
+    // Advance match to active — roll back sessions if this fails
+    const { error: matchUpdateErr } = await admin
+      .from('matches')
+      .update({ status: 'active' })
+      .eq('id', matchId)
+    if (matchUpdateErr) {
+      await admin.from('sessions').delete().eq('match_id', matchId)
+      throw new Error(`Failed to activate match: ${matchUpdateErr.message}`)
+    }
+
+    // Advance request to active — roll back sessions and match status if this fails
+    const { error: requestUpdateErr } = await admin
+      .from('requests')
+      .update({ status: 'active' })
+      .eq('id', match.request_id)
+    if (requestUpdateErr) {
+      await admin.from('sessions').delete().eq('match_id', matchId)
+      await admin.from('matches').update({ status: match.status }).eq('id', matchId)
+      throw new Error(`Failed to activate request: ${requestUpdateErr.message}`)
+    }
 
     // Audit log
     await admin.from('audit_logs').insert([
@@ -125,13 +151,19 @@ export async function generateSessionsForMatch(
   }
 }
 
-// ── T8.3: Session Status Update ───────────────────────────────────────────────
+// ── T8.3: Session Status Update (admin) ──────────────────────────────────────
 
 const SESSION_CONSUMING_STATUSES = ['done', 'no_show_student'] as const
+type ConsumingStatus = (typeof SESSION_CONSUMING_STATUSES)[number]
+
+function isConsuming(status: string): status is ConsumingStatus {
+  return SESSION_CONSUMING_STATUSES.includes(status as ConsumingStatus)
+}
 
 /**
- * Update a session's status (and optionally tutor notes).
- * Atomically increments packages.sessions_used when the status consumes a session.
+ * Admin: update a session's status (and optionally tutor notes).
+ * Guards against double-incrementing sessions_used when transitioning
+ * between two consuming statuses (done ↔ no_show_student).
  */
 export async function updateSessionStatus({
   sessionId,
@@ -150,6 +182,14 @@ export async function updateSessionStatus({
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
 
+    // Fetch current session status to guard against double-incrementing
+    const { data: current, error: fetchErr } = await admin
+      .from('sessions')
+      .select('status')
+      .eq('id', sessionId)
+      .single()
+    if (fetchErr || !current) throw new Error('Session not found.')
+
     // Update session
     const { error: updateErr } = await admin
       .from('sessions')
@@ -163,14 +203,14 @@ export async function updateSessionStatus({
 
     if (updateErr) throw new Error(`Failed to update session: ${updateErr.message}`)
 
-    // Increment sessions_used atomically if status consumes a session
-    if (SESSION_CONSUMING_STATUSES.includes(status as (typeof SESSION_CONSUMING_STATUSES)[number])) {
+    // Increment sessions_used only when transitioning INTO a consuming status
+    // from a non-consuming status — prevents double-incrementing.
+    const wasAlreadyConsuming = isConsuming(current.status)
+    if (isConsuming(status) && !wasAlreadyConsuming) {
       const { error: rpcErr } = await admin.rpc('increment_sessions_used', {
         p_request_id: requestId,
       })
-      if (rpcErr) {
-        console.error('increment_sessions_used RPC failed:', rpcErr.message)
-      }
+      if (rpcErr) throw new Error(`Failed to increment sessions_used: ${rpcErr.message}`)
     }
 
     // Audit log
@@ -180,12 +220,55 @@ export async function updateSessionStatus({
         action: 'session_status_updated',
         entity_type: 'session',
         entity_id: sessionId,
-        details: { status, tutor_notes: tutorNotes ?? null, match_id: matchId },
+        details: {
+          previous_status: current.status,
+          status,
+          tutor_notes: tutorNotes ?? null,
+          match_id: matchId,
+        },
       },
     ])
 
     revalidatePath('/admin/sessions')
     revalidatePath('/tutor/sessions')
+    revalidatePath('/dashboard/sessions')
+
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+  }
+}
+
+/**
+ * Tutor: update a session's status using the tutor_update_session RPC.
+ * The RPC enforces authorization (only the assigned tutor or admin).
+ * Allowed statuses: done, no_show_student, no_show_tutor.
+ */
+export async function tutorUpdateSessionStatus({
+  sessionId,
+  status,
+  tutorNotes,
+}: {
+  sessionId: string
+  status: 'done' | 'no_show_student' | 'no_show_tutor'
+  tutorNotes?: string
+}): Promise<{ error?: string }> {
+  try {
+    await requireAuthenticatedUser()
+    const supabase = await createClient()
+
+    // Use the security-definer RPC which handles authorization and sessions_used increment
+    const { error } = await supabase.rpc('tutor_update_session', {
+      p_session_id: sessionId,
+      p_status: status,
+      p_notes: tutorNotes ?? null,
+    })
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/tutor/sessions')
+    revalidatePath('/admin/sessions')
+    revalidatePath('/dashboard/sessions')
 
     return {}
   } catch (err) {
@@ -197,7 +280,8 @@ export async function updateSessionStatus({
 
 /**
  * Reschedule a session: update scheduled_start_utc, scheduled_end_utc,
- * set status to 'rescheduled', and write an audit log.
+ * and reset status to 'scheduled' so the session can still be marked done/no-show.
+ * The reschedule event is recorded in the audit log.
  * Does NOT increment sessions_used.
  */
 export async function rescheduleSession({
@@ -215,12 +299,18 @@ export async function rescheduleSession({
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
 
+    // Prevent rescheduling to a past datetime
+    if (new Date(newStartUtc) < new Date()) {
+      throw new Error('Cannot reschedule a session to a past date and time.')
+    }
+
     const { error: updateErr } = await admin
       .from('sessions')
       .update({
         scheduled_start_utc: newStartUtc,
         scheduled_end_utc: newEndUtc,
-        status: 'rescheduled',
+        // Reset to 'scheduled' so the session can still be marked done/no-show
+        status: 'scheduled',
         updated_by_user_id: adminUserId,
         updated_at: new Date().toISOString(),
       })

@@ -9,7 +9,7 @@ export type SessionStatus =
   | 'no_show_tutor'
 
 export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
-  scheduled: 'Upcoming',
+  scheduled: 'Scheduled',
   done: 'Done',
   rescheduled: 'Rescheduled',
   no_show_student: 'Student No-show',

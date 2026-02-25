@@ -21,6 +21,7 @@ type SessionRow = {
     meet_link: string | null
     request_id: string
     tutor_user_id: string
+    schedule_pattern: { duration_mins?: number } | null
     tutor_profiles: {
       user_profiles: { display_name: string } | null
     } | null
@@ -41,7 +42,7 @@ export default async function AdminSessionsPage() {
     .select(
       `id, scheduled_start_utc, scheduled_end_utc, status, tutor_notes, match_id,
        matches!sessions_match_id_fkey (
-         meet_link, request_id, tutor_user_id,
+         meet_link, request_id, tutor_user_id, schedule_pattern,
          tutor_profiles!matches_tutor_user_id_fkey (
            user_profiles!tutor_user_id ( display_name )
          ),
@@ -56,8 +57,9 @@ export default async function AdminSessionsPage() {
 
   const sessions = (sessionsData ?? []) as unknown as SessionRow[]
 
-  const upcoming = sessions.filter((s) => s.status === 'scheduled')
-  const past = sessions.filter((s) => s.status !== 'scheduled')
+  const nowIso = new Date().toISOString()
+  const upcoming = sessions.filter((s) => s.scheduled_start_utc >= nowIso)
+  const past = sessions.filter((s) => s.scheduled_start_utc < nowIso)
 
   return (
     <div className="space-y-6">
@@ -143,6 +145,7 @@ function SessionCard({
   const subjectName = (req?.subjects as { name: string } | null)?.name ?? '—'
   const timeDisplay = formatSessionTime(session.scheduled_start_utc, adminTimezone)
   const requestId = match?.request_id ?? ''
+  const durationMins = match?.schedule_pattern?.duration_mins ?? 60
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -185,6 +188,7 @@ function SessionCard({
             sessionId={session.id}
             scheduledStartUtc={session.scheduled_start_utc}
             adminTimezone={adminTimezone}
+            durationMins={durationMins}
           />
         </div>
       )}
