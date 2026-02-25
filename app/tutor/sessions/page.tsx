@@ -1,5 +1,6 @@
 // E8 S8.1 S8.2: Tutor sessions list — upcoming and past sessions with status update
-// Closes #52 #53
+// E10 T10.1: Full tutor session list with SessionCompleteForm
+// Closes #52 #53 #68
 
 export const dynamic = 'force-dynamic'
 
@@ -11,7 +12,7 @@ import {
   formatSessionTime,
   type SessionStatus,
 } from '@/lib/utils/session'
-import { SessionStatusForm } from '@/app/admin/sessions/SessionActions'
+import { SessionCompleteForm } from '@/components/dashboards/SessionCompleteForm'
 
 type SessionRow = {
   id: string
@@ -19,13 +20,11 @@ type SessionRow = {
   scheduled_end_utc: string
   status: SessionStatus
   tutor_notes: string | null
-  match_id: string
   matches: {
     meet_link: string | null
-    request_id: string
     requests: {
       subjects: { name: string } | null
-      user_profiles: { display_name: string; timezone: string } | null
+      user_profiles: { display_name: string } | null
     } | null
   } | null
 }
@@ -51,12 +50,12 @@ export default async function TutorSessionsPage() {
   const { data: sessionsData } = await supabase
     .from('sessions')
     .select(
-      `id, scheduled_start_utc, scheduled_end_utc, status, tutor_notes, match_id,
+      `id, scheduled_start_utc, scheduled_end_utc, status, tutor_notes,
        matches!sessions_match_id_fkey (
-         meet_link, request_id,
+         meet_link,
          requests!matches_request_id_fkey (
            subjects ( name ),
-           user_profiles!requests_created_by_user_id_fkey ( display_name, timezone )
+           user_profiles!requests_created_by_user_id_fkey ( display_name )
          )
        )`
     )
@@ -133,7 +132,6 @@ function TutorSessionCard({
   const studentName =
     (req?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
   const subjectName = (req?.subjects as { name: string } | null)?.name ?? '—'
-  const requestId = match?.request_id ?? ''
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -168,13 +166,7 @@ function TutorSessionCard({
 
       {showStatusForm && (
         <div className="mt-3">
-          <SessionStatusForm
-            sessionId={session.id}
-            matchId={session.match_id}
-            requestId={requestId}
-            currentStatus={session.status}
-            mode="tutor"
-          />
+          <SessionCompleteForm sessionId={session.id} />
         </div>
       )}
     </div>
