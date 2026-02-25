@@ -69,6 +69,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<TutorProfileFormData>({
     resolver: zodResolver(tutorProfileSchema),
@@ -89,6 +90,12 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       } else {
         next.add(key)
       }
+      // Sync into RHF so zodResolver can validate the subjects array
+      const entries = Array.from(next).map((k) => {
+        const [sid, lvl] = k.split(':')
+        return { subject_id: Number(sid), level: lvl as 'o_levels' | 'a_levels' }
+      })
+      setValue('subjects', entries, { shouldValidate: true })
       return next
     })
   }
@@ -102,6 +109,12 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       } else {
         next.add(key)
       }
+      // Sync into RHF so zodResolver can validate the availability array
+      const windows = Array.from(next).map((k) => {
+        const [d, s, e] = k.split(':')
+        return { day: Number(d), start: s, end: e }
+      })
+      setValue('availability', windows, { shouldValidate: true })
       return next
     })
   }
@@ -110,29 +123,9 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
     setServerError(null)
     setSaved(false)
 
-    // Build subjects array from selected set
-    const subjectEntries = Array.from(selectedSubjects).map((key) => {
-      const [sid, lvl] = key.split(':')
-      return { subject_id: Number(sid), level: lvl as 'o_levels' | 'a_levels' }
-    })
-
-    // Build availability array from selected set
-    const availWindows = Array.from(selectedAvail).map((key) => {
-      const [d, s, e] = key.split(':')
-      return { day: Number(d), start: s, end: e }
-    })
-
-    // Validate locally before sending
-    if (subjectEntries.length === 0) {
-      setServerError('Please select at least one subject and level.')
-      return
-    }
-    if (availWindows.length === 0) {
-      setServerError('Please add at least one availability window.')
-      return
-    }
-
-    const result = await saveTutorProfile(data.bio, data.timezone, subjectEntries, availWindows)
+    // data.subjects and data.availability are already validated by zodResolver
+    // and kept in sync with the checkbox/grid state via setValue in the toggle handlers.
+    const result = await saveTutorProfile(data.bio, data.timezone, data.subjects, data.availability)
 
     if (result.error) {
       setServerError(result.error)
@@ -211,15 +204,15 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       </div>
 
       {/* Subjects × Levels */}
-      <div>
-        <p className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+      <div role="group" aria-labelledby="subjects-label" aria-describedby={errors.subjects ? 'subjects-error' : undefined}>
+        <p id="subjects-label" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
           Subjects &amp; Levels <span className="text-red-500" aria-hidden="true">*</span>
         </p>
         <p className="mt-0.5 text-xs text-zinc-500">
           Select every subject and level combination you are able to teach.
         </p>
-        {selectedSubjects.size === 0 && (
-          <p className="mt-1 text-xs text-red-600">Please select at least one subject and level.</p>
+        {errors.subjects && (
+          <p id="subjects-error" role="alert" className="mt-1 text-xs text-red-600">{errors.subjects.message}</p>
         )}
         <div className="mt-3 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
           <table className="min-w-full text-sm">
@@ -261,15 +254,15 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       </div>
 
       {/* Availability grid */}
-      <div>
-        <p className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+      <div role="group" aria-labelledby="availability-label" aria-describedby={errors.availability ? 'availability-error' : undefined}>
+        <p id="availability-label" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
           Availability <span className="text-red-500" aria-hidden="true">*</span>
         </p>
         <p className="mt-0.5 text-xs text-zinc-500">
           Tick every day and time block when you are generally available to teach (all times in your chosen timezone).
         </p>
-        {selectedAvail.size === 0 && (
-          <p className="mt-1 text-xs text-red-600">Please select at least one availability window.</p>
+        {errors.availability && (
+          <p id="availability-error" role="alert" className="mt-1 text-xs text-red-600">{errors.availability.message}</p>
         )}
         <div className="mt-3 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
           <table className="min-w-full text-sm">

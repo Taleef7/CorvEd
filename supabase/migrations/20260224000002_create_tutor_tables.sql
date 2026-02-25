@@ -69,19 +69,29 @@ create policy "tutor_profiles_select"
 
 create policy "tutor_profiles_insert"
   on public.tutor_profiles for insert to authenticated
-  with check (tutor_user_id = auth.uid());
+  with check (
+    tutor_user_id = auth.uid()
+    and (approved = false or public.is_admin(auth.uid()))
+  );
 
 create policy "tutor_profiles_update_own"
   on public.tutor_profiles for update to authenticated
   using (tutor_user_id = auth.uid())
-  with check (tutor_user_id = auth.uid());
+  with check (
+    tutor_user_id = auth.uid()
+    and approved = (
+      select p.approved
+      from public.tutor_profiles p
+      where p.tutor_user_id = auth.uid()
+    )
+  );
 
 create policy "tutor_profiles_admin_update"
   on public.tutor_profiles for update to authenticated
   using (public.is_admin(auth.uid()))
   with check (public.is_admin(auth.uid()));
 
--- tutor_subjects: tutor manages own rows; admin reads all
+-- tutor_subjects: tutor manages own rows; admin reads/writes all
 create policy "tutor_subjects_select"
   on public.tutor_subjects for select to authenticated
   using (tutor_user_id = auth.uid() or public.is_admin(auth.uid()));
@@ -91,7 +101,12 @@ create policy "tutor_subjects_write_own"
   using (tutor_user_id = auth.uid())
   with check (tutor_user_id = auth.uid());
 
--- tutor_availability: tutor manages own row; admin reads all
+create policy "tutor_subjects_admin_write"
+  on public.tutor_subjects for all to authenticated
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));
+
+-- tutor_availability: tutor manages own row; admin reads/writes all
 create policy "tutor_availability_select"
   on public.tutor_availability for select to authenticated
   using (tutor_user_id = auth.uid() or public.is_admin(auth.uid()));
@@ -100,3 +115,8 @@ create policy "tutor_availability_write_own"
   on public.tutor_availability for all to authenticated
   using (tutor_user_id = auth.uid())
   with check (tutor_user_id = auth.uid());
+
+create policy "tutor_availability_admin_write"
+  on public.tutor_availability for all to authenticated
+  using (public.is_admin(auth.uid()))
+  with check (public.is_admin(auth.uid()));

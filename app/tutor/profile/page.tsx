@@ -18,9 +18,14 @@ export default async function TutorProfilePage() {
 
   if (!user) redirect('/auth/sign-in')
 
+  // subjects table has no RLS — readable by any authenticated user via the user-scoped client.
+  // tutor_profiles / tutor_subjects / tutor_availability are read via the user-scoped client,
+  // which enforces RLS (tutor reads own rows). createAdminClient() is only used for subjects
+  // where it doesn't matter (no RLS), kept as adminClient to avoid an extra DB round-trip for
+  // the anon key path — but any of the calls below could equally use supabase directly.
   const adminClient = createAdminClient()
 
-  // Fetch subjects list and existing tutor profile in parallel
+  // Fetch subjects list (no RLS) via admin client; tutor-owned data via user-scoped client.
   const [
     { data: subjectsData },
     { data: profileData },
@@ -29,21 +34,21 @@ export default async function TutorProfilePage() {
     { data: userProfile },
   ] = await Promise.all([
     adminClient.from('subjects').select('id, name, code').eq('active', true).order('sort_order'),
-    adminClient
+    supabase
       .from('tutor_profiles')
       .select('approved, bio, timezone')
       .eq('tutor_user_id', user.id)
       .maybeSingle(),
-    adminClient
+    supabase
       .from('tutor_subjects')
       .select('subject_id, level')
       .eq('tutor_user_id', user.id),
-    adminClient
+    supabase
       .from('tutor_availability')
       .select('windows')
       .eq('tutor_user_id', user.id)
       .maybeSingle(),
-    adminClient
+    supabase
       .from('user_profiles')
       .select('display_name, timezone')
       .eq('user_id', user.id)

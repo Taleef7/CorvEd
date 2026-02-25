@@ -30,18 +30,41 @@ export async function saveTutorProfile(
   })
   if (profileError) return { error: `Failed to save profile: ${profileError.message}` }
 
-  // 2. Replace tutor_subjects: delete existing rows then re-insert
-  const { error: deleteError } = await supabase
-    .from('tutor_subjects')
-    .delete()
-    .eq('tutor_user_id', user.id)
-  if (deleteError) return { error: `Failed to update subjects: ${deleteError.message}` }
-
+  // 2. Update tutor_subjects safely: upsert provided rows, then delete stale ones.
+  //    This avoids the partial-failure window of delete-then-insert (where a failed
+  //    insert would leave the tutor with no subjects).
   if (subjects.length > 0) {
-    const { error: insertError } = await supabase.from('tutor_subjects').insert(
-      subjects.map((s) => ({ tutor_user_id: user.id, subject_id: s.subject_id, level: s.level }))
+    const { error: upsertError } = await supabase.from('tutor_subjects').upsert(
+      subjects.map((s) => ({ tutor_user_id: user.id, subject_id: s.subject_id, level: s.level })),
+      { onConflict: 'tutor_user_id,subject_id,level' }
     )
-    if (insertError) return { error: `Failed to save subjects: ${insertError.message}` }
+    if (upsertError) return { error: `Failed to save subjects: ${upsertError.message}` }
+  }
+
+  // Remove stale (subject_id, level) combinations that are no longer in the new list.
+  // Fetch current subjects, compute the diff, and delete only the removed ones.
+  const { data: currentSubjects, error: fetchError } = await supabase
+    .from('tutor_subjects')
+    .select('subject_id, level')
+    .eq('tutor_user_id', user.id)
+  if (fetchError) return { error: `Failed to read subjects: ${fetchError.message}` }
+
+  const newKeys = new Set(subjects.map((s) => `${s.subject_id}:${s.level}`))
+  const toDelete = (currentSubjects ?? []).filter(
+    (row) => !newKeys.has(`${row.subject_id}:${row.level}`)
+  )
+  if (toDelete.length > 0) {
+    // Build a single OR-filter to remove all stale rows in one round-trip instead of N.
+    // Syntax: and(subject_id.eq.X,level.eq.Y) per stale pair, joined by comma = OR.
+    const orFilter = toDelete
+      .map((row) => `and(subject_id.eq.${row.subject_id},level.eq.${row.level})`)
+      .join(',')
+    const { error: delError } = await supabase
+      .from('tutor_subjects')
+      .delete()
+      .eq('tutor_user_id', user.id)
+      .or(orFilter)
+    if (delError) return { error: `Failed to remove old subjects: ${delError.message}` }
   }
 
   // 3. Upsert tutor_availability
