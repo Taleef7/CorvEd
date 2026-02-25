@@ -136,8 +136,8 @@ export default async function AdminMatchDetailPage({
     tutorName,
     level: levelLabel,
     subject: subjectName,
-    slot1: '[Day] [Time] [TZ]',
-    slot2: '[Day] [Time] [TZ]',
+    slot1: '[e.g. Mon 5:00 PM PKT]',
+    slot2: '[e.g. Wed 5:00 PM PKT]',
   })
 
   const assignedDate = new Date(match.assigned_at).toLocaleDateString('en-GB', {

@@ -16,9 +16,30 @@ export function CopyMessageButton({ message, whatsappNumber, label }: CopyMessag
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(message)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    try {
+      if (navigator && 'clipboard' in navigator && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(message)
+      } else {
+        // Fallback for older browsers or when Clipboard API is unavailable
+        const textarea = document.createElement('textarea')
+        textarea.value = message
+        textarea.style.position = 'fixed'
+        textarea.style.opacity = '0'
+        document.body.appendChild(textarea)
+        textarea.focus()
+        textarea.select()
+        try {
+          document.execCommand('copy')
+        } finally {
+          document.body.removeChild(textarea)
+        }
+      }
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy message to clipboard:', error)
+      setCopied(false)
+    }
   }
 
   const waHref = whatsappNumber ? buildWaLink(whatsappNumber, message) : null

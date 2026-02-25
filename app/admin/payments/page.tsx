@@ -175,27 +175,29 @@ export default async function AdminPaymentsPage({
                   </div>
                 )}
 
-                {/* WhatsApp message buttons */}
-                <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-                  <WhatsAppLink number={profile?.whatsapp_number ?? null} label="Open chat" />
-                  <CopyMessageButton
-                    message={templates.paid({ subject: subjectName })}
-                    whatsappNumber={profile?.whatsapp_number ?? undefined}
-                    label="Copy payment confirmed"
-                  />
-                  <CopyMessageButton
-                    message={templates.paybank({
-                      accountTitle: PAYMENT_INSTRUCTIONS.accountTitle,
-                      bank: PAYMENT_INSTRUCTIONS.bankName,
-                      accountNumber: PAYMENT_INSTRUCTIONS.accountNumber,
-                      studentName: profile?.display_name ?? '—',
-                      level,
-                      subject: subjectName,
-                    })}
-                    whatsappNumber={profile?.whatsapp_number ?? undefined}
-                    label="Copy payment instructions"
-                  />
-                </div>
+                {/* WhatsApp message buttons — only when student and subject data are available */}
+                {profile?.display_name && subjectName !== '—' && (
+                  <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+                    <WhatsAppLink number={profile?.whatsapp_number ?? null} label="Open chat" />
+                    <CopyMessageButton
+                      message={templates.paid({ subject: subjectName })}
+                      whatsappNumber={profile?.whatsapp_number ?? undefined}
+                      label="Copy payment confirmed"
+                    />
+                    <CopyMessageButton
+                      message={templates.paybank({
+                        accountTitle: PAYMENT_INSTRUCTIONS.accountTitle,
+                        bank: PAYMENT_INSTRUCTIONS.bankName,
+                        accountNumber: PAYMENT_INSTRUCTIONS.accountNumber,
+                        studentName: profile.display_name,
+                        level,
+                        subject: subjectName,
+                      })}
+                      whatsappNumber={profile?.whatsapp_number ?? undefined}
+                      label="Copy payment instructions"
+                    />
+                  </div>
+                )}
               </div>
             )
           })}

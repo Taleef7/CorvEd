@@ -154,36 +154,30 @@ function SessionCard({
   const levelLabel = req?.level ?? ''
   const timeDisplay = formatSessionTime(session.scheduled_start_utc, adminTimezone)
   const scheduleTz = match?.schedule_pattern?.timezone ?? adminTimezone
+  // Format session time in the schedule/student timezone for WhatsApp messages
+  const waTimeDisplay = formatSessionTime(session.scheduled_start_utc, scheduleTz)
   const requestId = match?.request_id ?? ''
   const durationMins = match?.schedule_pattern?.duration_mins ?? 60
   const meetLink = match?.meet_link ?? ''
 
-  // Template strings for WhatsApp buttons
+  // Template strings for WhatsApp buttons (use waTimeDisplay so tz label matches the time)
   const rem1hMsg = meetLink
     ? templates.rem1h({
         level: levelLabel,
         subject: subjectName,
         tutorName,
-        time: timeDisplay,
+        time: waTimeDisplay,
         tz: scheduleTz,
         meetLink,
       })
     : null
 
   const lateJoinMsg = meetLink
-    ? templates.lateJoin({ name: studentName, time: timeDisplay, meetLink })
+    ? templates.lateJoin({ name: studentName, time: waTimeDisplay, meetLink })
     : null
 
-  const studentNoShowMsg = templates.studentNoShow({ name: studentName, time: timeDisplay })
+  const studentNoShowMsg = templates.studentNoShow({ name: studentName, time: waTimeDisplay })
   const tutorNoShowMsg = templates.tutorNoShow({ name: studentName })
-  const reschedConfirmedMsg = meetLink
-    ? templates.reschedConfirmed({
-        day: '[Day]',
-        time: '[Time]',
-        tz: scheduleTz,
-        meetLink,
-      })
-    : null
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
@@ -257,13 +251,6 @@ function SessionCard({
           whatsappNumber={studentWhatsApp ?? undefined}
           label="Copy tutor no-show apology"
         />
-        {reschedConfirmedMsg && (
-          <CopyMessageButton
-            message={reschedConfirmedMsg}
-            whatsappNumber={studentWhatsApp ?? undefined}
-            label="Copy reschedule confirmed"
-          />
-        )}
         {tutorWhatsApp && rem1hMsg && (
           <CopyMessageButton
             message={rem1hMsg}
