@@ -27,9 +27,11 @@ export const tutorProfileSchema = z.object({
     )
     .min(1, 'Please add at least one availability window'),
   // E12 T12.2: tutor must acknowledge the code of conduct before submitting
-  conductAcknowledged: z.literal(true, {
-    error: 'You must read and agree to the CorvEd Tutor Code of Conduct',
-  }),
+  conductAcknowledged: z
+    .boolean()
+    .refine((v) => v, {
+      message: 'You must read and agree to the CorvEd Tutor Code of Conduct',
+    }),
 })
 
 export type TutorProfileFormData = z.infer<typeof tutorProfileSchema>

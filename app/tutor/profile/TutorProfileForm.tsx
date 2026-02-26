@@ -324,27 +324,30 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
       {/* E12 T12.2: Code of conduct acknowledgement (required) */}
       <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-        <label className="flex items-start gap-3 cursor-pointer">
+        <div className="flex items-start gap-3">
           <input
+            id="conductAcknowledged"
             type="checkbox"
             aria-required="true"
             aria-invalid={errors.conductAcknowledged ? 'true' : 'false'}
             {...register('conductAcknowledged')}
             className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
           />
-          <span className="text-sm text-zinc-700 dark:text-zinc-300">
-            I have read and agree to the{' '}
+          <div className="text-sm text-zinc-700 dark:text-zinc-300">
+            <label htmlFor="conductAcknowledged" className="cursor-pointer">
+              I have read and agree to the CorvEd Tutor Code of Conduct
+            </label>{' '}
             <Link
               href="/tutor/conduct"
               target="_blank"
               rel="noopener noreferrer"
               className="font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2 dark:text-indigo-400 dark:hover:text-indigo-300"
             >
-              CorvEd Tutor Code of Conduct
+              View Code of Conduct →
             </Link>{' '}
             <span className="text-red-500" aria-hidden="true">*</span>
-          </span>
-        </label>
+          </div>
+        </div>
         {errors.conductAcknowledged && (
           <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
             {errors.conductAcknowledged.message}

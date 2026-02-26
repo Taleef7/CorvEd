@@ -10,7 +10,7 @@ const ADMIN_TIMEZONE = 'Asia/Karachi'
 // Human-readable labels for known audit actions
 const AUDIT_ACTION_LABELS: Record<string, string> = {
   payment_marked_paid: '💳 Payment marked paid',
-  payment_rejected: '❌ Payment rejected',
+  payment_marked_rejected: '❌ Payment rejected',
   tutor_approved: '✅ Tutor approved',
   tutor_approval_revoked: '🚫 Tutor approval revoked',
   tutor_assigned: '🎓 Tutor assigned to request',
@@ -18,7 +18,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   sessions_generated: '📅 Sessions generated',
   session_rescheduled: '📅 Session rescheduled',
   session_status_updated: '📝 Session status updated',
-  meet_link_updated: '🔗 Meet link updated',
+  match_details_updated: '🔗 Match details updated',
 }
 
 function formatAuditTime(iso: string) {
@@ -103,7 +103,13 @@ export default async function AdminAuditPage() {
                 const actionLabel = AUDIT_ACTION_LABELS[log.action] ?? log.action
                 const detailsStr = log.details
                   ? Object.entries(log.details)
-                      .map(([k, v]) => `${k}: ${String(v)}`)
+                      .map(([k, v]) => {
+                        const str =
+                          v !== null && typeof v === 'object'
+                            ? JSON.stringify(v)
+                            : String(v)
+                        return `${k}: ${str.length > 80 ? str.slice(0, 77) + '…' : str}`
+                      })
                       .join(' · ')
                   : '—'
                 // Truncate entity_id to first 8 chars for readability (UUID)

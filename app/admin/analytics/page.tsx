@@ -58,6 +58,19 @@ export default async function AdminAnalyticsPage() {
       .eq('approved', false),
   ])
 
+  const firstError =
+    activeStudents.error ||
+    activeTutors.error ||
+    upcomingSessions.error ||
+    missedSessions.error ||
+    unmarkedSessions.error ||
+    pendingPayments.error ||
+    pendingTutors.error
+
+  if (firstError) {
+    throw new Error(`Failed to load analytics metrics: ${firstError.message}`)
+  }
+
   const metrics = {
     activeStudents: activeStudents.count ?? 0,
     activeTutors: activeTutors.count ?? 0,
