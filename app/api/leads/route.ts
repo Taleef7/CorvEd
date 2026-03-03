@@ -1,11 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { leadSchema, LeadFormData } from '@/lib/validators/lead'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // The raw request body may include the honeypot field alongside form data
 type RequestBody = LeadFormData & { _hp?: string }
 
 export async function POST(req: NextRequest) {
+  // Rate limit: 10 requests per minute per IP
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+  const { success: withinLimit } = checkRateLimit(`leads:${ip}`, 10, 60_000)
+  if (!withinLimit) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.' },
+      { status: 429 }
+    )
+  }
+
   let body: unknown
   try {
     body = await req.json()

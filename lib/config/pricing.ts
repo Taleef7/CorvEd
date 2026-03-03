@@ -27,9 +27,9 @@ export const PACKAGES: PackageConfig[] = [
 ]
 
 export const PAYMENT_INSTRUCTIONS = {
-  bankName: 'CONFIGURE_BEFORE_LAUNCH',           // ← Fill in before launch
-  accountTitle: 'CONFIGURE_BEFORE_LAUNCH',       // ← Fill in before launch
-  accountNumber: 'CONFIGURE_BEFORE_LAUNCH',      // ← Fill in before launch
+  bankName: process.env.NEXT_PUBLIC_BANK_NAME || 'Not configured',
+  accountTitle: process.env.NEXT_PUBLIC_BANK_ACCOUNT_TITLE || 'Not configured',
+  accountNumber: process.env.NEXT_PUBLIC_BANK_ACCOUNT_NUMBER || 'Not configured',
   referenceFormat: 'CorvEd | {StudentName} | {Subject} | {Level}',
   notes:
     'After transferring, send your screenshot or transaction reference to our WhatsApp for faster verification.',

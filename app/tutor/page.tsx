@@ -90,94 +90,98 @@ export default async function TutorPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Tutor Dashboard</h1>
-        <p className="text-sm text-zinc-500">
+      {/* Page header */}
+      <div className="border-b-4 border-[#121212] pb-4">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Tutor Portal</p>
+        <h1 className="mt-1 text-4xl font-black uppercase tracking-tighter text-[#121212] leading-none">
+          Dashboard
+        </h1>
+        <p className="mt-1 text-sm text-[#121212]/60">
           Welcome back, {profile?.display_name ?? 'Tutor'}.
         </p>
       </div>
 
-      {/* Next Session Card */}
+      {/* Next Session */}
       {nextSession ? (
-        <div className="rounded-2xl bg-indigo-50 px-6 py-5 shadow-sm dark:bg-indigo-900/20">
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-            📅 Your Next Session
-          </p>
-          <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-50">
+        <div className="relative border-4 border-[#121212] bg-[#1040C0] p-6 shadow-[6px_6px_0px_0px_#121212]">
+          {/* Geometric decoration */}
+          <div className="absolute top-4 right-4 h-8 w-8 rounded-full border-2 border-white opacity-40" aria-hidden="true" />
+          <p className="text-xs font-bold uppercase tracking-widest text-white/70">Your Next Session</p>
+          <p className="mt-2 text-2xl font-black uppercase tracking-tight text-white">
             {formatSessionTime(nextSession.scheduled_start_utc, tutorTimezone)}
           </p>
-          <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
-            Student: {nextStudentName}
-          </p>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            {nextSubjectName} — {nextLevel}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
+          <p className="mt-1 text-sm font-medium text-white/80">Student: {nextStudentName}</p>
+          <p className="text-sm text-white/70">{nextSubjectName} — {nextLevel}</p>
+          <div className="mt-4 flex flex-wrap gap-3">
             {nextMatch?.meet_link && (
               <a
                 href={nextMatch.meet_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+                aria-label="Join Google Meet session"
+                className="inline-flex min-h-[44px] items-center gap-2 border-2 border-white bg-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#1040C0] transition hover:bg-white/90 active:translate-y-px"
               >
-                🔗 Join Google Meet
+                Join Google Meet
               </a>
             )}
             <Link
               href="/tutor/sessions"
-              className="inline-flex items-center rounded-lg border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-900/30"
+              className="inline-flex min-h-[44px] items-center gap-2 border-2 border-white px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition hover:bg-white/10"
             >
-              View all sessions →
+              View All Sessions
             </Link>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl bg-white px-6 py-5 shadow-sm dark:bg-zinc-900">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-            📅 Your Next Session
-          </p>
-          <p className="mt-2 text-sm text-zinc-500">
-            You have no sessions scheduled yet. Your first student will appear here once matched.
+        <div className="border-4 border-[#121212] bg-white p-6 shadow-[6px_6px_0px_0px_#121212]">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Your Next Session</p>
+          <p className="mt-2 text-sm text-[#121212]/70">
+            No sessions scheduled yet. Your first student will appear here once matched.
           </p>
           <Link
             href="/tutor/sessions"
-            className="mt-2 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+            className="mt-3 inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
           >
-            View sessions →
+            View Sessions
           </Link>
         </div>
       )}
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Upcoming</p>
-          <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">{upcomingCount}</p>
-          <p className="text-xs text-zinc-400">sessions scheduled</p>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
+        <div className="border-4 border-[#121212] bg-white p-5 shadow-[4px_4px_0px_0px_#121212]">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Upcoming</p>
+          <p className="mt-1 text-5xl font-black text-[#121212]">{upcomingCount}</p>
+          <p className="text-xs text-[#121212]/50">sessions scheduled</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500">Completed</p>
-          <p className="mt-1 text-3xl font-bold text-zinc-900 dark:text-zinc-50">{completedCount}</p>
-          <p className="text-xs text-zinc-400">sessions taught</p>
+        <div className="border-4 border-[#121212] bg-[#F0C020] p-5 shadow-[4px_4px_0px_0px_#121212]">
+          <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/70">Completed</p>
+          <p className="mt-1 text-5xl font-black text-[#121212]">{completedCount}</p>
+          <p className="text-xs text-[#121212]/70">sessions taught</p>
         </div>
       </div>
 
       {/* Quick Links */}
-      <div className="rounded-xl border border-zinc-200 bg-white px-5 py-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 mb-3">Quick links</p>
+      <div className="border-4 border-[#121212] bg-white p-5 shadow-[4px_4px_0px_0px_#121212]">
+        <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#121212]/50">Quick Links</p>
         <div className="flex flex-wrap gap-3">
           <Link
             href="/tutor/sessions"
-            className="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-300"
+            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
           >
-            📋 All Sessions
+            All Sessions
           </Link>
           <Link
             href="/tutor/profile"
-            className="inline-flex items-center rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-300"
+            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
           >
-            👤 My Profile
+            My Profile
+          </Link>
+          <Link
+            href="/tutor/conduct"
+            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
+          >
+            Code of Conduct
           </Link>
         </div>
       </div>

@@ -2,58 +2,68 @@
 // Closes #18 #20
 
 import Link from 'next/link'
+import { BauhausLogo, BauhausGeometricPanel } from '@/components/ui/bauhaus'
 
 export default function VerifyPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-950">
-      <div className="w-full max-w-md rounded-2xl bg-white px-8 py-10 text-center shadow-md dark:bg-zinc-900">
-        {/* Email icon */}
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30">
-          <svg
-            className="h-8 w-8 text-indigo-600 dark:text-indigo-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Left — content */}
+      <div className="flex flex-col items-center justify-center bg-[#F0F0F0] px-6 py-12">
+        <div className="w-full max-w-sm">
+          <BauhausLogo size="lg" />
+
+          {/* Envelope icon (Bauhaus-styled square container) */}
+          <div
             aria-hidden="true"
+            className="mt-8 mb-6 flex h-20 w-20 items-center justify-center border-4 border-[#121212] bg-[#1040C0] shadow-[4px_4px_0px_0px_#121212]"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
-            />
-          </svg>
-        </div>
+            <svg
+              className="h-10 w-10 text-white"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
 
-        <h1 className="mb-2 text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Check your inbox
-        </h1>
-        <p className="mb-6 text-sm text-zinc-500 dark:text-zinc-400">
-          We&apos;ve sent a confirmation link to your email address. Click the
-          link to verify your account and access your dashboard.
-        </p>
-
-        <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-left text-sm text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-          <p className="font-medium text-zinc-700 dark:text-zinc-300">
-            Didn&apos;t receive the email?
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212] leading-tight">
+            Check Your Inbox
+          </h1>
+          <p className="mt-3 text-sm text-[#121212]/70 leading-relaxed">
+            We sent a confirmation link to your email address. Click it to verify your account and access your dashboard.
           </p>
-          <ul className="mt-1 list-disc pl-4 space-y-1">
-            <li>Check your spam or junk folder</li>
-            <li>Make sure you entered the correct email</li>
-            <li>The link expires after 1 hour</li>
-          </ul>
-        </div>
 
-        <p className="mt-6 text-sm text-zinc-500">
-          Wrong email?{' '}
-          <Link
-            href="/auth/sign-up"
-            className="font-medium text-indigo-600 hover:underline dark:text-indigo-400"
-          >
-            Go back and sign up again
-          </Link>
-        </p>
+          <div className="mt-6 border-l-4 border-[#F0C020] bg-[#F0C020]/20 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#121212] mb-1">
+              Didn&apos;t receive it?
+            </p>
+            <ul className="space-y-1 text-sm text-[#121212]/70">
+              <li>Check your spam or junk folder</li>
+              <li>Make sure you entered the correct email</li>
+              <li>The link expires after 1 hour</li>
+            </ul>
+          </div>
+
+          <p className="mt-6 text-sm text-[#121212]/60">
+            Wrong email?{' '}
+            <Link
+              href="/auth/sign-up"
+              className="font-bold text-[#1040C0] underline underline-offset-2 hover:text-[#D02020]"
+            >
+              Go back and sign up again
+            </Link>
+          </p>
+        </div>
       </div>
+
+      {/* Right — geometric panel */}
+      <BauhausGeometricPanel bg="#F0C020" />
     </div>
   )
 }

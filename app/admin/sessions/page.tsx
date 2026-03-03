@@ -1,4 +1,4 @@
-// E8 T8.4 S8.2 E11 T11.2: Admin sessions overview — list all sessions, update status, reschedule, WhatsApp actions
+﻿// E8 T8.4 S8.2 E11 T11.2: Admin sessions overview — list all sessions, update status, reschedule, WhatsApp actions
 // Closes #57 #53 #75
 
 export const dynamic = 'force-dynamic'
@@ -9,6 +9,7 @@ import { SessionStatusForm, RescheduleForm } from './SessionActions'
 import Link from 'next/link'
 import { CopyMessageButton } from '@/components/CopyMessageButton'
 import { templates } from '@/lib/whatsapp/templates'
+import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
 
 const ADMIN_TIMEZONE = 'Asia/Karachi'
 
@@ -36,10 +37,19 @@ type SessionRow = {
   } | null
 }
 
-export default async function AdminSessionsPage() {
+export default async function AdminSessionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page } = await searchParams
+  const currentPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   const admin = createAdminClient()
 
-  const { data: sessionsData } = await admin
+  const { data: sessionsData, count: totalCount } = await admin
     .from('sessions')
     .select(
       `id, scheduled_start_utc, scheduled_end_utc, status, tutor_notes, match_id,
@@ -53,9 +63,11 @@ export default async function AdminSessionsPage() {
            subjects ( name ),
            user_profiles!requests_created_by_user_id_fkey ( display_name, whatsapp_number )
          )
-       )`
+       )`,
+      { count: 'exact' }
     )
     .order('scheduled_start_utc', { ascending: true })
+    .range(from, to)
 
   const sessions = (sessionsData ?? []) as unknown as SessionRow[]
 
@@ -66,18 +78,18 @@ export default async function AdminSessionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Sessions</h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Sessions</h1>
+        <p className="text-sm text-[#121212]/60">
           {upcoming.length} upcoming · {past.length} past
         </p>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-sm dark:bg-zinc-900">
-          <p className="text-zinc-500">No sessions yet.</p>
-          <p className="mt-1 text-sm text-zinc-400">
+        <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center">
+          <p className="text-[#121212]/60">No sessions yet.</p>
+          <p className="mt-1 text-sm text-[#121212]/40">
             Generate sessions from a{' '}
-            <Link href="/admin/matches" className="text-indigo-600 hover:underline dark:text-indigo-400">
+            <Link href="/admin/matches" className="font-bold text-[#1040C0] underline-offset-4 hover:underline">
               match detail page
             </Link>{' '}
             once the schedule and Meet link are set.
@@ -88,7 +100,7 @@ export default async function AdminSessionsPage() {
           {/* Upcoming sessions */}
           {upcoming.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
                 Upcoming ({upcoming.length})
               </h2>
               <div className="space-y-3">
@@ -107,7 +119,7 @@ export default async function AdminSessionsPage() {
           {/* Past sessions */}
           {past.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
                 Past ({past.length})
               </h2>
               <div className="space-y-3">
@@ -124,6 +136,12 @@ export default async function AdminSessionsPage() {
           )}
         </>
       )}
+
+      <AdminPagination
+        currentPage={currentPage}
+        totalCount={totalCount ?? 0}
+        baseHref="/admin/sessions"
+      />
     </div>
   )
 }
@@ -180,29 +198,30 @@ function SessionCard({
   const tutorNoShowMsg = templates.tutorNoShow({ name: studentName })
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="border-4 border-[#121212] bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">{timeDisplay}</p>
-          <p className="text-sm text-zinc-500">
+          <p className="font-medium text-[#121212]">{timeDisplay}</p>
+          <p className="text-sm text-[#121212]/60">
             {subjectName} · {studentName} ↔ {tutorName}
           </p>
           {session.tutor_notes && (
-            <p className="text-xs text-zinc-400 italic">Note: {session.tutor_notes}</p>
+            <p className="text-xs text-[#121212]/40 italic">Note: {session.tutor_notes}</p>
           )}
           {match?.meet_link && (
             <a
               href={match.meet_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+              aria-label="Join Google Meet session"
+              className="text-xs font-bold uppercase tracking-widest text-[#1040C0] underline-offset-4 hover:underline"
             >
               Join Meet →
             </a>
           )}
         </div>
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${SESSION_STATUS_COLOURS[session.status] ?? 'bg-zinc-100 text-zinc-700'}`}
+          className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 ${SESSION_STATUS_COLOURS[session.status] ?? 'bg-[#E0E0E0] text-[#121212]/80'}`}
         >
           {SESSION_STATUS_LABELS[session.status] ?? session.status}
         </span>
@@ -226,7 +245,7 @@ function SessionCard({
       )}
 
       {/* WhatsApp message buttons */}
-      <div className="mt-3 flex flex-wrap gap-2 border-t border-zinc-100 pt-3 dark:border-zinc-800">
+      <div className="mt-3 flex flex-wrap gap-2 border-t border-[#E0E0E0] pt-3">
         {rem1hMsg && (
           <CopyMessageButton
             message={rem1hMsg}

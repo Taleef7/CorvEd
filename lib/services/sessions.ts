@@ -1,42 +1,23 @@
 // E8 T8.1 T8.3 T8.4: Session server actions — generate, status update, reschedule
 // Closes #54 #56 #57
 
-'use server'
+"use server";
 
-import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
-import { generateSessions as generateSessionSlots } from '@/lib/services/scheduling'
-import { revalidatePath } from 'next/cache'
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { generateSessions as generateSessionSlots } from "@/lib/services/scheduling";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
+import { revalidatePath } from "next/cache";
 
 // ── Auth helpers ───────────────────────────────────────────────────────────────
 
-async function requireAdmin(): Promise<string> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) throw new Error('Unauthorized: not authenticated')
-
-  const admin = createAdminClient()
-  const { data: roles } = await admin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-
-  const isAdmin = roles?.some((r) => r.role === 'admin') ?? false
-  if (!isAdmin) throw new Error('Unauthorized: admin role required')
-
-  return user.id
-}
-
 async function requireAuthenticatedUser(): Promise<string> {
-  const supabase = await createClient()
+  const supabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) throw new Error('Unauthorized: not authenticated')
-  return user.id
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized: not authenticated");
+  return user.id;
 }
 
 // ── T8.1: Session Generation ──────────────────────────────────────────────────
@@ -50,40 +31,43 @@ export async function generateSessionsForMatch(
   matchId: string,
 ): Promise<{ error?: string; count?: number }> {
   try {
-    const adminUserId = await requireAdmin()
-    const admin = createAdminClient()
+    const adminUserId = await requireAdmin();
+    const admin = createAdminClient();
 
     // Fetch match
     const { data: match, error: matchErr } = await admin
-      .from('matches')
-      .select('schedule_pattern, request_id, meet_link, status')
-      .eq('id', matchId)
-      .single()
+      .from("matches")
+      .select("schedule_pattern, request_id, meet_link, status")
+      .eq("id", matchId)
+      .single();
 
-    if (matchErr || !match) throw new Error('Match not found.')
-    if (!match.schedule_pattern) throw new Error('Match has no schedule pattern set.')
-    if (!match.meet_link) throw new Error('Match has no Meet link set. Set the Meet link first.')
+    if (matchErr || !match) throw new Error("Match not found.");
+    if (!match.schedule_pattern)
+      throw new Error("Match has no schedule pattern set.");
+    if (!match.meet_link)
+      throw new Error("Match has no Meet link set. Set the Meet link first.");
 
     // Fetch active package
     const { data: pkg, error: pkgErr } = await admin
-      .from('packages')
-      .select('tier_sessions, start_date, end_date')
-      .eq('request_id', match.request_id)
-      .eq('status', 'active')
-      .maybeSingle()
+      .from("packages")
+      .select("tier_sessions, start_date, end_date")
+      .eq("request_id", match.request_id)
+      .eq("status", "active")
+      .maybeSingle();
 
-    if (pkgErr || !pkg) throw new Error('No active package found for this match.')
+    if (pkgErr || !pkg)
+      throw new Error("No active package found for this match.");
 
     // Check if sessions already exist
     const { count: existingCount } = await admin
-      .from('sessions')
-      .select('id', { count: 'exact', head: true })
-      .eq('match_id', matchId)
+      .from("sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("match_id", matchId);
 
     if ((existingCount ?? 0) > 0) {
       throw new Error(
         `Sessions already generated for this match (${existingCount} sessions exist). Delete them first if you need to regenerate.`,
-      )
+      );
     }
 
     const sessionTimes = generateSessionSlots(
@@ -91,73 +75,82 @@ export async function generateSessionsForMatch(
       pkg.start_date,
       pkg.end_date,
       pkg.tier_sessions,
-    )
+    );
 
     if (sessionTimes.length === 0) {
       throw new Error(
-        'No sessions could be generated. Check that the schedule days fall within the package date range.',
-      )
+        "No sessions could be generated. Check that the schedule days fall within the package date range.",
+      );
     }
 
     const rows = sessionTimes.map((s) => ({
       match_id: matchId,
       scheduled_start_utc: s.start_utc,
       scheduled_end_utc: s.end_utc,
-      status: 'scheduled' as const,
-    }))
+      status: "scheduled" as const,
+    }));
 
-    const { error: insertErr } = await admin.from('sessions').insert(rows)
-    if (insertErr) throw new Error(`Failed to insert sessions: ${insertErr.message}`)
+    const { error: insertErr } = await admin.from("sessions").insert(rows);
+    if (insertErr)
+      throw new Error(`Failed to insert sessions: ${insertErr.message}`);
 
     // Advance match to active — roll back sessions if this fails
     const { error: matchUpdateErr } = await admin
-      .from('matches')
-      .update({ status: 'active' })
-      .eq('id', matchId)
+      .from("matches")
+      .update({ status: "active" })
+      .eq("id", matchId);
     if (matchUpdateErr) {
-      await admin.from('sessions').delete().eq('match_id', matchId)
-      throw new Error(`Failed to activate match: ${matchUpdateErr.message}`)
+      await admin.from("sessions").delete().eq("match_id", matchId);
+      throw new Error(`Failed to activate match: ${matchUpdateErr.message}`);
     }
 
     // Advance request to active — roll back sessions and match status if this fails
     const { error: requestUpdateErr } = await admin
-      .from('requests')
-      .update({ status: 'active' })
-      .eq('id', match.request_id)
+      .from("requests")
+      .update({ status: "active" })
+      .eq("id", match.request_id);
     if (requestUpdateErr) {
-      await admin.from('sessions').delete().eq('match_id', matchId)
-      await admin.from('matches').update({ status: match.status }).eq('id', matchId)
-      throw new Error(`Failed to activate request: ${requestUpdateErr.message}`)
+      await admin.from("sessions").delete().eq("match_id", matchId);
+      await admin
+        .from("matches")
+        .update({ status: match.status })
+        .eq("id", matchId);
+      throw new Error(
+        `Failed to activate request: ${requestUpdateErr.message}`,
+      );
     }
 
     // Audit log
-    await admin.from('audit_logs').insert([
+    await admin.from("audit_logs").insert([
       {
         actor_user_id: adminUserId,
-        action: 'sessions_generated',
-        entity_type: 'match',
+        action: "sessions_generated",
+        entity_type: "match",
         entity_id: matchId,
         details: { session_count: rows.length },
       },
-    ])
+    ]);
 
-    revalidatePath(`/admin/matches/${matchId}`)
-    revalidatePath('/admin/sessions')
-    revalidatePath('/admin/matches')
+    revalidatePath(`/admin/matches/${matchId}`);
+    revalidatePath("/admin/sessions");
+    revalidatePath("/admin/matches");
 
-    return { count: rows.length }
+    return { count: rows.length };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+    return {
+      error:
+        err instanceof Error ? err.message : "An unexpected error occurred.",
+    };
   }
 }
 
 // ── T8.3: Session Status Update (admin) ──────────────────────────────────────
 
-const SESSION_CONSUMING_STATUSES = ['done', 'no_show_student'] as const
-type ConsumingStatus = (typeof SESSION_CONSUMING_STATUSES)[number]
+const SESSION_CONSUMING_STATUSES = ["done", "no_show_student"] as const;
+type ConsumingStatus = (typeof SESSION_CONSUMING_STATUSES)[number];
 
 function isConsuming(status: string): status is ConsumingStatus {
-  return SESSION_CONSUMING_STATUSES.includes(status as ConsumingStatus)
+  return SESSION_CONSUMING_STATUSES.includes(status as ConsumingStatus);
 }
 
 /**
@@ -172,53 +165,55 @@ export async function updateSessionStatus({
   status,
   tutorNotes,
 }: {
-  sessionId: string
-  matchId: string
-  requestId: string
-  status: 'done' | 'no_show_student' | 'no_show_tutor' | 'rescheduled'
-  tutorNotes?: string
+  sessionId: string;
+  matchId: string;
+  requestId: string;
+  status: "done" | "no_show_student" | "no_show_tutor" | "rescheduled";
+  tutorNotes?: string;
 }): Promise<{ error?: string }> {
   try {
-    const adminUserId = await requireAdmin()
-    const admin = createAdminClient()
+    const adminUserId = await requireAdmin();
+    const admin = createAdminClient();
 
     // Fetch current session status to guard against double-incrementing
     const { data: current, error: fetchErr } = await admin
-      .from('sessions')
-      .select('status')
-      .eq('id', sessionId)
-      .single()
-    if (fetchErr || !current) throw new Error('Session not found.')
+      .from("sessions")
+      .select("status")
+      .eq("id", sessionId)
+      .single();
+    if (fetchErr || !current) throw new Error("Session not found.");
 
     // Update session
     const { error: updateErr } = await admin
-      .from('sessions')
+      .from("sessions")
       .update({
         status,
         tutor_notes: tutorNotes ?? null,
         updated_by_user_id: adminUserId,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', sessionId)
+      .eq("id", sessionId);
 
-    if (updateErr) throw new Error(`Failed to update session: ${updateErr.message}`)
+    if (updateErr)
+      throw new Error(`Failed to update session: ${updateErr.message}`);
 
     // Increment sessions_used only when transitioning INTO a consuming status
     // from a non-consuming status — prevents double-incrementing.
-    const wasAlreadyConsuming = isConsuming(current.status)
+    const wasAlreadyConsuming = isConsuming(current.status);
     if (isConsuming(status) && !wasAlreadyConsuming) {
-      const { error: rpcErr } = await admin.rpc('increment_sessions_used', {
+      const { error: rpcErr } = await admin.rpc("increment_sessions_used", {
         p_request_id: requestId,
-      })
-      if (rpcErr) throw new Error(`Failed to increment sessions_used: ${rpcErr.message}`)
+      });
+      if (rpcErr)
+        throw new Error(`Failed to increment sessions_used: ${rpcErr.message}`);
     }
 
     // Audit log
-    await admin.from('audit_logs').insert([
+    await admin.from("audit_logs").insert([
       {
         actor_user_id: adminUserId,
-        action: 'session_status_updated',
-        entity_type: 'session',
+        action: "session_status_updated",
+        entity_type: "session",
         entity_id: sessionId,
         details: {
           previous_status: current.status,
@@ -227,15 +222,18 @@ export async function updateSessionStatus({
           match_id: matchId,
         },
       },
-    ])
+    ]);
 
-    revalidatePath('/admin/sessions')
-    revalidatePath('/tutor/sessions')
-    revalidatePath('/dashboard/sessions')
+    revalidatePath("/admin/sessions");
+    revalidatePath("/tutor/sessions");
+    revalidatePath("/dashboard/sessions");
 
-    return {}
+    return {};
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+    return {
+      error:
+        err instanceof Error ? err.message : "An unexpected error occurred.",
+    };
   }
 }
 
@@ -249,30 +247,33 @@ export async function tutorUpdateSessionStatus({
   status,
   tutorNotes,
 }: {
-  sessionId: string
-  status: 'done' | 'no_show_student' | 'no_show_tutor'
-  tutorNotes?: string
+  sessionId: string;
+  status: "done" | "no_show_student" | "no_show_tutor";
+  tutorNotes?: string;
 }): Promise<{ error?: string }> {
   try {
-    await requireAuthenticatedUser()
-    const supabase = await createClient()
+    await requireAuthenticatedUser();
+    const supabase = await createClient();
 
     // Use the security-definer RPC which handles authorization and sessions_used increment
-    const { error } = await supabase.rpc('tutor_update_session', {
+    const { error } = await supabase.rpc("tutor_update_session", {
       p_session_id: sessionId,
       p_status: status,
       p_notes: tutorNotes ?? null,
-    })
+    });
 
-    if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message);
 
-    revalidatePath('/tutor/sessions')
-    revalidatePath('/admin/sessions')
-    revalidatePath('/dashboard/sessions')
+    revalidatePath("/tutor/sessions");
+    revalidatePath("/admin/sessions");
+    revalidatePath("/dashboard/sessions");
 
-    return {}
+    return {};
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+    return {
+      error:
+        err instanceof Error ? err.message : "An unexpected error occurred.",
+    };
   }
 }
 
@@ -290,39 +291,40 @@ export async function rescheduleSession({
   newEndUtc,
   reason,
 }: {
-  sessionId: string
-  newStartUtc: string   // ISO UTC string
-  newEndUtc: string     // ISO UTC string
-  reason?: string
+  sessionId: string;
+  newStartUtc: string; // ISO UTC string
+  newEndUtc: string; // ISO UTC string
+  reason?: string;
 }): Promise<{ error?: string }> {
   try {
-    const adminUserId = await requireAdmin()
-    const admin = createAdminClient()
+    const adminUserId = await requireAdmin();
+    const admin = createAdminClient();
 
     // Prevent rescheduling to a past datetime
     if (new Date(newStartUtc) < new Date()) {
-      throw new Error('Cannot reschedule a session to a past date and time.')
+      throw new Error("Cannot reschedule a session to a past date and time.");
     }
 
     const { error: updateErr } = await admin
-      .from('sessions')
+      .from("sessions")
       .update({
         scheduled_start_utc: newStartUtc,
         scheduled_end_utc: newEndUtc,
         // Reset to 'scheduled' so the session can still be marked done/no-show
-        status: 'scheduled',
+        status: "scheduled",
         updated_by_user_id: adminUserId,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', sessionId)
+      .eq("id", sessionId);
 
-    if (updateErr) throw new Error(`Failed to reschedule session: ${updateErr.message}`)
+    if (updateErr)
+      throw new Error(`Failed to reschedule session: ${updateErr.message}`);
 
-    await admin.from('audit_logs').insert([
+    await admin.from("audit_logs").insert([
       {
         actor_user_id: adminUserId,
-        action: 'session_rescheduled',
-        entity_type: 'session',
+        action: "session_rescheduled",
+        entity_type: "session",
         entity_id: sessionId,
         details: {
           new_start_utc: newStartUtc,
@@ -330,14 +332,17 @@ export async function rescheduleSession({
           reason: reason ?? null,
         },
       },
-    ])
+    ]);
 
-    revalidatePath('/admin/sessions')
-    revalidatePath('/tutor/sessions')
-    revalidatePath('/dashboard/sessions')
+    revalidatePath("/admin/sessions");
+    revalidatePath("/tutor/sessions");
+    revalidatePath("/dashboard/sessions");
 
-    return {}
+    return {};
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+    return {
+      error:
+        err instanceof Error ? err.message : "An unexpected error occurred.",
+    };
   }
 }

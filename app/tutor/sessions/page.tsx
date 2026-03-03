@@ -1,4 +1,4 @@
-// E8 S8.1 S8.2: Tutor sessions list — upcoming and past sessions with status update
+﻿// E8 S8.1 S8.2: Tutor sessions list — upcoming and past sessions with status update
 // E10 T10.1: Full tutor session list with SessionCompleteForm
 // Closes #52 #53 #68
 
@@ -69,21 +69,21 @@ export default async function TutorSessionsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My Sessions</h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">My Sessions</h1>
+        <p className="text-sm text-[#121212]/60">
           {upcoming.length} upcoming · {past.length} past
         </p>
       </div>
 
       {sessions.length === 0 ? (
-        <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-sm dark:bg-zinc-900">
-          <p className="text-zinc-500">No sessions scheduled yet.</p>
+        <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center">
+          <p className="text-[#121212]/60">No sessions scheduled yet.</p>
         </div>
       ) : (
         <>
           {upcoming.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
                 Upcoming ({upcoming.length})
               </h2>
               {upcoming.map((session) => (
@@ -99,7 +99,7 @@ export default async function TutorSessionsPage() {
 
           {past.length > 0 && (
             <section className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
                 Past ({past.length})
               </h2>
               {past.map((session) => (
@@ -134,31 +134,32 @@ function TutorSessionCard({
   const subjectName = (req?.subjects as { name: string } | null)?.name ?? '—'
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="border-4 border-[#121212] bg-white p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+          <p className="font-medium text-[#121212]">
             {formatSessionTime(session.scheduled_start_utc, tutorTimezone)}
           </p>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-[#121212]/60">
             {subjectName} · Student: {studentName}
           </p>
           {session.tutor_notes && (
-            <p className="text-xs text-zinc-400 italic">Note: {session.tutor_notes}</p>
+            <p className="text-xs text-[#121212]/40 italic">Note: {session.tutor_notes}</p>
           )}
           {match?.meet_link && (
             <a
               href={match.meet_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+              aria-label="Join Google Meet session"
+              className="text-xs font-bold uppercase tracking-widest text-[#1040C0] underline-offset-4 hover:underline"
             >
               Join Meet →
             </a>
           )}
         </div>
         <span
-          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${SESSION_STATUS_COLOURS[session.status] ?? 'bg-zinc-100 text-zinc-700'}`}
+          className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 ${SESSION_STATUS_COLOURS[session.status] ?? 'bg-[#E0E0E0] text-[#121212]/80'}`}
         >
           {SESSION_STATUS_LABELS[session.status] ?? session.status}
         </span>
