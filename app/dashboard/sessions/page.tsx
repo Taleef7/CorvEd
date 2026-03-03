@@ -1,4 +1,4 @@
-// E8 S8.1: Student sessions list — upcoming and past sessions with timezone display and Meet link
+﻿// E8 S8.1: Student sessions list — upcoming and past sessions with timezone display and Meet link
 // E9 T9.2: Sessions list with Reschedule button (T9.4)
 // Closes #52, #62, #64
 
@@ -82,9 +82,9 @@ export default async function StudentSessionsPage() {
   const nextSession = upcoming[0] ?? null
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+    <div className="min-h-screen bg-[#F0F0F0] px-4 py-10">
       <div className="mx-auto w-full max-w-2xl space-y-6">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">My Sessions</h1>
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">My Sessions</h1>
 
         {/* Next session card */}
         {nextSession ? (
@@ -94,9 +94,9 @@ export default async function StudentSessionsPage() {
             serverNowMs={serverNowMs}
           />
         ) : (
-          <div className="rounded-2xl bg-white px-6 py-8 text-center shadow-sm dark:bg-zinc-900">
-            <p className="text-zinc-500">No upcoming sessions scheduled.</p>
-            <p className="mt-1 text-sm text-zinc-400">
+          <div className="border-4 border-[#121212] bg-white px-6 py-8 text-center ">
+            <p className="text-[#121212]/60">No upcoming sessions scheduled.</p>
+            <p className="mt-1 text-sm text-[#121212]/40">
               Your sessions will appear here once your schedule is confirmed.
             </p>
           </div>
@@ -105,7 +105,7 @@ export default async function StudentSessionsPage() {
         {/* Upcoming sessions list */}
         {upcoming.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
               Upcoming Sessions ({upcoming.length})
             </h2>
             {upcoming.map((session) => (
@@ -117,7 +117,7 @@ export default async function StudentSessionsPage() {
         {/* Past sessions */}
         {past.length > 0 && (
           <section className="space-y-3">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
               Past Sessions ({past.length})
             </h2>
             {past.map((session) => (
@@ -127,9 +127,9 @@ export default async function StudentSessionsPage() {
         )}
 
         {sessions.length === 0 && (
-          <div className="rounded-2xl bg-white px-6 py-8 text-center shadow-sm dark:bg-zinc-900">
-            <p className="text-zinc-500">No sessions found.</p>
-            <p className="mt-1 text-sm text-zinc-400">
+          <div className="border-4 border-[#121212] bg-white px-6 py-8 text-center ">
+            <p className="text-[#121212]/60">No sessions found.</p>
+            <p className="mt-1 text-sm text-[#121212]/40">
               Sessions will appear here once your tutor match is confirmed and sessions are
               generated.
             </p>
@@ -157,22 +157,22 @@ function SessionCard({
   const isUpcoming = session.status === 'scheduled' || session.status === 'rescheduled'
 
   return (
-    <div className="rounded-xl bg-white px-5 py-4 shadow-sm dark:bg-zinc-900">
+    <div className="border-2 border-[#121212] bg-white px-5 py-4 ">
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-0.5">
-          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+          <p className="font-medium text-[#121212]">
             {formatSessionTime(session.scheduled_start_utc, userTimezone)}
           </p>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-[#121212]/60">
             {subjectName} — {levelLabel} · {tutorName}
           </p>
           {session.tutor_notes && !isUpcoming && (
-            <p className="mt-1 text-xs text-zinc-400 italic">Note: {session.tutor_notes}</p>
+            <p className="mt-1 text-xs text-[#121212]/40 italic">Note: {session.tutor_notes}</p>
           )}
         </div>
         <div className="flex flex-col items-end gap-2">
           <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${SESSION_STATUS_COLOURS[session.status] ?? 'bg-zinc-100 text-zinc-700'}`}
+            className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 ${SESSION_STATUS_COLOURS[session.status] ?? 'bg-[#E0E0E0] text-[#121212]/80'}`}
           >
             {SESSION_STATUS_LABELS[session.status] ?? session.status}
           </span>
@@ -181,7 +181,8 @@ function SessionCard({
               href={match.meet_link}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+              aria-label="Join Google Meet session"
+              className="text-xs font-bold uppercase tracking-widest text-[#1040C0] underline-offset-4 hover:underline"
             >
               Join Meet →
             </a>

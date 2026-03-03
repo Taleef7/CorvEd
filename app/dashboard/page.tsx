@@ -13,11 +13,13 @@ import { createClient } from '@/lib/supabase/server'
 import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
 import { PackageSummary } from '@/components/dashboards/PackageSummary'
 import { NextSessionCard, type NextSessionData } from '@/components/dashboards/NextSessionCard'
+import { OnboardingChecklist, type OnboardingStep } from '@/components/dashboards/OnboardingChecklist'
+import { StatusBanner, getRequestStatusBanner } from '@/components/dashboards/StatusBanner'
 
 function StatusBadge({ status }: { status: RequestStatus }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${STATUS_COLOURS[status]}`}
+      className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider ${STATUS_COLOURS[status]}`}
     >
       {STATUS_LABELS[status]}
     </span>
@@ -50,36 +52,36 @@ export default async function DashboardPage() {
 
   const userTimezone = profile?.timezone ?? 'UTC'
 
-  // Fetch next upcoming session for this student (scheduled or rescheduled)
-  const { data: nextSessionData } = await supabase
-    .from('sessions')
-    .select(
-      `id, scheduled_start_utc, scheduled_end_utc, status,
-       matches!sessions_match_id_fkey (
-         meet_link,
-         tutor_profiles!matches_tutor_user_id_fkey (
-           user_profiles!tutor_user_id ( display_name )
-         ),
-         requests!matches_request_id_fkey (
-           level,
-           subjects ( name )
-         )
-       )`,
-    )
-    .gt('scheduled_start_utc', new Date().toISOString())
-    .in('status', ['scheduled', 'rescheduled'])
-    .order('scheduled_start_utc', { ascending: true })
-    .limit(1)
-    .maybeSingle()
+  // Fetch next session and requests in parallel (both independent)
+  const [{ data: nextSessionData }, { data: requests }] = await Promise.all([
+    supabase
+      .from('sessions')
+      .select(
+        `id, scheduled_start_utc, scheduled_end_utc, status,
+         matches!sessions_match_id_fkey (
+           meet_link,
+           tutor_profiles!matches_tutor_user_id_fkey (
+             user_profiles!tutor_user_id ( display_name )
+           ),
+           requests!matches_request_id_fkey (
+             level,
+             subjects ( name )
+           )
+         )`,
+      )
+      .gt('scheduled_start_utc', new Date().toISOString())
+      .in('status', ['scheduled', 'rescheduled'])
+      .order('scheduled_start_utc', { ascending: true })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('requests')
+      .select('id, level, subject_id, subjects(name), status, preferred_package_tier, created_at')
+      .eq('created_by_user_id', user.id)
+      .order('created_at', { ascending: false }),
+  ])
 
   const nextSession = nextSessionData as NextSessionData | null
-
-  // Fetch student's requests
-  const { data: requests } = await supabase
-    .from('requests')
-    .select('id, level, subject_id, subjects(name), status, created_at')
-    .eq('created_by_user_id', user.id)
-    .order('created_at', { ascending: false })
 
   // Fetch packages for these requests (for summary cards)
   type PackageRow = {
@@ -112,22 +114,78 @@ export default async function DashboardPage() {
     }
   }
 
+  // Check for onboarding progress
+  const hasRequests = requests && requests.length > 0
+  const hasPayment = hasRequests && Object.values(packagesByRequestId).some(
+    (p) => p.status === 'active'
+  )
+  const { data: matchCheck } = hasRequests
+    ? await supabase.from('matches').select('id').limit(1).maybeSingle()
+    : { data: null }
+  const hasMatch = !!matchCheck
+  const { data: sessionCheck } = hasMatch
+    ? await supabase.from('sessions').select('id').eq('status', 'done').limit(1).maybeSingle()
+    : { data: null }
+  const hasCompletedSession = !!sessionCheck
+
+  const onboardingSteps: OnboardingStep[] = [
+    {
+      label: 'Complete your profile',
+      completed: !!profile?.whatsapp_number,
+      href: '/auth/profile-setup',
+      ctaLabel: 'Set up profile',
+    },
+    {
+      label: 'Submit a tutoring request',
+      completed: !!hasRequests,
+      href: '/dashboard/requests/new',
+      ctaLabel: 'Create request',
+    },
+    {
+      label: 'Make your payment',
+      completed: !!hasPayment,
+    },
+    {
+      label: 'Get matched with a tutor',
+      completed: hasMatch,
+    },
+    {
+      label: 'Complete your first session',
+      completed: hasCompletedSession,
+    },
+  ]
+
+  // Get status banner for the most recent active request
+  const primaryRequest = requests?.[0]
+  const statusBanner = primaryRequest ? getRequestStatusBanner(primaryRequest.status) : null
+
   // Compute server-side "now" timestamp for renewal alert (avoids impure Date.now() in render)
   const serverNowMs = new Date().getTime()
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+    <div className="min-h-screen bg-[#F0F0F0] px-4 py-10">
       <div className="mx-auto w-full max-w-2xl space-y-6">
+        {/* Status banner */}
+        {statusBanner && (
+          <StatusBanner message={statusBanner.message} variant={statusBanner.variant} />
+        )}
+
+        {/* Onboarding checklist */}
+        <OnboardingChecklist steps={onboardingSteps} />
+
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            My tutoring requests
-          </h1>
+        <div className="flex items-start justify-between border-b-4 border-[#121212] pb-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Student</p>
+            <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212] leading-tight">
+              My Requests
+            </h1>
+          </div>
           <Link
             href="/dashboard/requests/new"
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] bg-[#D02020] px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#121212] transition active:translate-x-[2px] active:translate-y-[2px] active:shadow-none hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#121212]"
           >
-            + New request
+            + New Request
           </Link>
         </div>
 
@@ -140,31 +198,33 @@ export default async function DashboardPage() {
             viewAllHref="/dashboard/sessions"
           />
         ) : (
-          <div className="rounded-2xl bg-white px-6 py-5 shadow-sm dark:bg-zinc-900">
-            <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
-              🎓 Your Next Session
+          <div className="border-4 border-[#121212] bg-white p-6 shadow-[6px_6px_0px_0px_#121212]">
+            <p className="text-xs font-bold uppercase tracking-widest text-[#1040C0]">
+              Your Next Session
             </p>
-            <p className="mt-2 text-sm text-zinc-500">
-              Your sessions will appear here once your schedule is confirmed.
+            <p className="mt-2 text-sm text-[#121212]/60">
+              Sessions will appear here once your schedule is confirmed.
             </p>
             <Link
               href="/dashboard/sessions"
-              className="mt-2 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+              className="mt-3 inline-flex min-h-[40px] items-center border-2 border-[#121212] bg-white px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[#121212] shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
             >
-              View sessions →
+              View All Sessions
             </Link>
           </div>
         )}
 
         {/* Requests list */}
         {!requests || requests.length === 0 ? (
-          <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-md dark:bg-zinc-900">
-            <p className="text-zinc-500">You haven&apos;t submitted any tutoring requests yet.</p>
+          <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center shadow-[8px_8px_0px_0px_#121212]">
+            <div aria-hidden="true" className="mx-auto mb-4 h-12 w-12 border-4 border-[#121212] bg-[#F0C020]" />
+            <p className="font-bold text-[#121212]">No requests yet.</p>
+            <p className="mt-1 text-sm text-[#121212]/60">Submit a tutoring request to get started.</p>
             <Link
               href="/dashboard/requests/new"
-              className="mt-4 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+              className="mt-6 inline-flex min-h-[44px] items-center border-2 border-[#121212] bg-[#D02020] px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
             >
-              Submit your first request
+              Submit First Request
             </Link>
           </div>
         ) : (
@@ -185,19 +245,17 @@ export default async function DashboardPage() {
                 <div key={req.id} className="space-y-2">
                   <Link
                     href={`/dashboard/requests/${req.id}`}
-                    className="flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow-sm transition hover:shadow-md dark:bg-zinc-900"
+                    className="flex items-center justify-between border-4 border-[#121212] bg-white px-6 py-4 shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#121212]"
                   >
                     <div>
-                      <p className="font-semibold text-zinc-900 dark:text-zinc-50">
-                        {subjectName}
-                      </p>
-                      <p className="mt-0.5 text-xs text-zinc-500">
+                      <p className="font-bold text-[#121212]">{subjectName}</p>
+                      <p className="mt-0.5 text-xs text-[#121212]/50">
                         {LEVEL_LABELS[req.level] ?? req.level} · Submitted {date}
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
                       <StatusBadge status={status} />
-                      <span className="text-zinc-400">→</span>
+                      <span className="text-[#121212]/40 text-sm font-bold">›</span>
                     </div>
                   </Link>
 
@@ -218,15 +276,21 @@ export default async function DashboardPage() {
                       )}
                     />
                   ) : status === 'new' ? (
-                    <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-900 dark:bg-indigo-900/20">
-                      <p className="text-sm text-indigo-700 dark:text-indigo-300">
-                        Select a package to begin the matching process.
+                    <div className="border-l-4 border-[#1040C0] bg-[#1040C0]/5 px-4 py-3">
+                      <p className="text-sm font-medium text-[#1040C0]">
+                        {req.preferred_package_tier
+                          ? `Confirm your ${req.preferred_package_tier}-session package and pay to begin matching.`
+                          : 'Select a package to begin the matching process.'}
                       </p>
                       <Link
-                        href={`/dashboard/packages/new?requestId=${req.id}`}
-                        className="mt-2 inline-flex items-center rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                        href={
+                          req.preferred_package_tier
+                            ? `/dashboard/packages/new?requestId=${req.id}&tier=${req.preferred_package_tier}`
+                            : `/dashboard/packages/new?requestId=${req.id}`
+                        }
+                        className="mt-2 inline-flex min-h-[36px] items-center border-2 border-[#1040C0] bg-[#1040C0] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
                       >
-                        Select Package →
+                        {req.preferred_package_tier ? 'Continue to Payment' : 'Select Package'}
                       </Link>
                     </div>
                   ) : null}

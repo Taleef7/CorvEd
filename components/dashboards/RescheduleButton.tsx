@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 // E9 T9.4: "Reschedule via WhatsApp" button with prefilled message and 24-hour warning
 // Closes #64
@@ -67,12 +67,12 @@ export function RescheduleButton({
         target="_blank"
         rel="noopener noreferrer"
         aria-label={`Reschedule ${subject} session via WhatsApp`}
-        className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 hover:underline dark:text-emerald-400"
+        className="inline-flex min-h-[36px] items-center gap-1 border-2 border-[#121212] bg-white px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#121212] shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
       >
         📲 Reschedule
       </a>
       {isWithin24Hours && (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
+        <p className="text-xs font-bold text-[#D02020]">
           ⚠️ Less than 24 hours away — late reschedule may apply policy
         </p>
       )}
