@@ -10,6 +10,16 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import {
+  BauhausLabel,
+  BauhausInput,
+  BauhausSelect,
+  BauhausFieldError,
+  BauhausServerError,
+  BauhausButton,
+  BauhausLogo,
+  BauhausGeometricPanel,
+} from '@/components/ui/bauhaus'
 
 function normalizeWhatsApp(input: string): string {
   const stripped = input.replace(/[\s\-()]/g, '')
@@ -102,87 +112,77 @@ export default function ProfileSetupPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
-      <div className="w-full max-w-md rounded-2xl bg-white px-8 py-10 shadow-md dark:bg-zinc-900">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-            Complete your profile
+    <div className="grid min-h-screen lg:grid-cols-2">
+      {/* Left — form */}
+      <div className="flex flex-col items-center justify-center bg-[#F0F0F0] px-6 py-12">
+        <div className="w-full max-w-sm">
+          <BauhausLogo size="lg" />
+          <h1 className="mt-4 text-3xl font-black uppercase tracking-tighter text-[#121212] leading-tight">
+            Complete Profile
           </h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-1 text-sm text-[#121212]/60">
             We need a few details before you can access your dashboard.
           </p>
+
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="mt-8 space-y-4">
+            {serverError && (
+              <BauhausServerError message={serverError} />
+            )}
+
+            <div>
+              <BauhausLabel htmlFor="ps-name">Full name</BauhausLabel>
+              <BauhausInput
+                id="ps-name"
+                type="text"
+                autoComplete="name"
+                placeholder="Ahmed Khan"
+                hasError={!!errors.display_name}
+                {...register('display_name')}
+              />
+              <BauhausFieldError message={errors.display_name?.message} />
+            </div>
+
+            <div>
+              <BauhausLabel htmlFor="ps-wa">WhatsApp number</BauhausLabel>
+              <BauhausInput
+                id="ps-wa"
+                type="tel"
+                autoComplete="tel"
+                placeholder="+92 300 1234567 or 0300 1234567"
+                hasError={!!errors.whatsapp_number}
+                {...register('whatsapp_number')}
+              />
+              <p className="mt-1 text-xs text-[#121212]/50">
+                Used by our team to send schedule updates. Local 03xx numbers are converted automatically.
+              </p>
+              <BauhausFieldError message={errors.whatsapp_number?.message} />
+            </div>
+
+            <div>
+              <BauhausLabel htmlFor="ps-tz">Timezone</BauhausLabel>
+              <BauhausSelect
+                id="ps-tz"
+                hasError={!!errors.timezone}
+                {...register('timezone')}
+              >
+                {TIMEZONES.map((tz) => (
+                  <option key={tz.value} value={tz.value}>
+                    {tz.label}
+                  </option>
+                ))}
+              </BauhausSelect>
+              <BauhausFieldError message={errors.timezone?.message} />
+            </div>
+
+            <BauhausButton type="submit" variant="red" fullWidth disabled={isSubmitting}>
+              {isSubmitting ? 'Saving...' : 'Save and Continue'}
+            </BauhausButton>
+          </form>
         </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
-          {serverError && (
-            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-              {serverError}
-            </p>
-          )}
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Full name
-            </label>
-            <input
-              type="text"
-              autoComplete="name"
-              {...register('display_name')}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              placeholder="Ahmed Khan"
-            />
-            {errors.display_name && (
-              <p className="mt-1 text-xs text-red-600">{errors.display_name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              WhatsApp number
-            </label>
-            <input
-              type="tel"
-              autoComplete="tel"
-              {...register('whatsapp_number')}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              placeholder="+92 300 1234567 or 0300 1234567"
-            />
-            <p className="mt-1 text-xs text-zinc-500">
-              Used by our team to send schedule updates. Local Pakistani numbers (03xx…) are converted automatically.
-            </p>
-            {errors.whatsapp_number && (
-              <p className="mt-1 text-xs text-red-600">{errors.whatsapp_number.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Timezone
-            </label>
-            <select
-              {...register('timezone')}
-              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-            >
-              {TIMEZONES.map((tz) => (
-                <option key={tz.value} value={tz.value}>
-                  {tz.label}
-                </option>
-              ))}
-            </select>
-            {errors.timezone && (
-              <p className="mt-1 text-xs text-red-600">{errors.timezone.message}</p>
-            )}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-60"
-          >
-            {isSubmitting ? 'Saving…' : 'Save and continue'}
-          </button>
-        </form>
       </div>
+
+      {/* Right — geometric panel */}
+      <BauhausGeometricPanel bg="#D02020" />
     </div>
   )
 }
