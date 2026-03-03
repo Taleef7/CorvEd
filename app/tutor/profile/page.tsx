@@ -1,4 +1,4 @@
-// E6 T6.1 T6.3: Tutor profile / application page
+﻿// E6 T6.1 T6.3: Tutor profile / application page
 // Closes #40 #42
 
 export const dynamic = 'force-dynamic'
@@ -18,14 +18,10 @@ export default async function TutorProfilePage() {
 
   if (!user) redirect('/auth/sign-in')
 
-  // subjects table has no RLS — readable by any authenticated user via the user-scoped client.
-  // tutor_profiles / tutor_subjects / tutor_availability are read via the user-scoped client,
-  // which enforces RLS (tutor reads own rows). createAdminClient() is only used for subjects
-  // where it doesn't matter (no RLS), kept as adminClient to avoid an extra DB round-trip for
-  // the anon key path — but any of the calls below could equally use supabase directly.
+  // All reads use adminClient scoped to user.id so RLS policies on tutor_*
+  // tables don't silently block loading existing data.
   const adminClient = createAdminClient()
 
-  // Fetch subjects list (no RLS) via admin client; tutor-owned data via user-scoped client.
   const [
     { data: subjectsData },
     { data: profileData },
@@ -34,21 +30,21 @@ export default async function TutorProfilePage() {
     { data: userProfile },
   ] = await Promise.all([
     adminClient.from('subjects').select('id, name, code').eq('active', true).order('sort_order'),
-    supabase
+    adminClient
       .from('tutor_profiles')
       .select('approved, bio, timezone')
       .eq('tutor_user_id', user.id)
       .maybeSingle(),
-    supabase
+    adminClient
       .from('tutor_subjects')
       .select('subject_id, level')
       .eq('tutor_user_id', user.id),
-    supabase
+    adminClient
       .from('tutor_availability')
       .select('windows')
       .eq('tutor_user_id', user.id)
       .maybeSingle(),
-    supabase
+    adminClient
       .from('user_profiles')
       .select('display_name, timezone')
       .eq('user_id', user.id)
@@ -80,14 +76,14 @@ export default async function TutorProfilePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Tutor Profile</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Tutor Profile</h1>
+        <p className="mt-1 text-sm text-[#121212]/60">
           Welcome, {userProfile?.display_name ?? 'Tutor'}. Fill in your teaching profile and
           availability so the admin can review and approve your application.
         </p>
       </div>
 
-      <div className="rounded-2xl bg-white px-6 py-8 shadow-sm dark:bg-zinc-900">
+      <div className="border-4 border-[#121212] bg-white px-6 py-8 ">
         <TutorProfileForm
           subjects={subjects}
           defaultValues={defaultValues}
