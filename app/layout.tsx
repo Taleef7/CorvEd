@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
 const outfit = Outfit({
@@ -21,7 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${outfit.className} antialiased`}>{children}</body>
+      <body className={`${outfit.className} antialiased`}>
+        <TooltipProvider>
+          {children}
+        </TooltipProvider>
+        <Toaster position="top-right" />
+      </body>
     </html>
   );
 }
