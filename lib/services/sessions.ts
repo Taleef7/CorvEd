@@ -5,7 +5,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { generateSessions as generateSessionSlots } from "@/lib/services/scheduling";
+import { generateSessions as generateSessionSlots, SchedulePattern } from "@/lib/services/scheduling";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath } from "next/cache";
 
@@ -71,7 +71,7 @@ export async function generateSessionsForMatch(
     }
 
     const sessionTimes = generateSessionSlots(
-      match.schedule_pattern as Parameters<typeof generateSessionSlots>[0],
+      match.schedule_pattern as unknown as SchedulePattern,
       pkg.start_date,
       pkg.end_date,
       pkg.tier_sessions,
@@ -259,7 +259,7 @@ export async function tutorUpdateSessionStatus({
     const { error } = await supabase.rpc("tutor_update_session", {
       p_session_id: sessionId,
       p_status: status,
-      p_notes: tutorNotes ?? null,
+      p_notes: tutorNotes ?? "",
     });
 
     if (error) throw new Error(error.message);

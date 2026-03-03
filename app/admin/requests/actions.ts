@@ -6,6 +6,8 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
+import type { Json } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/supabase/database.types'
 
 /** Create a match record, advance request to 'matched', and write audit log. */
 export async function assignTutor({
@@ -212,7 +214,7 @@ export async function updateMatchDetails({
         action: 'match_details_updated',
         entity_type: 'match',
         entity_id: matchId,
-        details: auditDetails,
+        details: auditDetails as Json,
       },
     ])
     if (auditError) {
@@ -294,7 +296,7 @@ export async function adminCancelRequest(
       for (const pkgId of pkgIds) {
         await admin
           .from('payments')
-          .update({ status: 'cancelled' })
+          .update({ status: 'rejected' as Database['public']['Enums']['payment_status_enum'] })
           .eq('package_id', pkgId)
           .in('status', ['pending'])
       }
@@ -353,7 +355,7 @@ export async function adminUpdateRequestStatus(
 
     const { error: updateError } = await admin
       .from('requests')
-      .update({ status: newStatus })
+      .update({ status: newStatus as Database['public']['Enums']['request_status_enum'] })
       .eq('id', requestId)
 
     if (updateError) throw new Error(`Failed to update status: ${updateError.message}`)

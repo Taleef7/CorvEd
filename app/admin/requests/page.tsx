@@ -8,6 +8,10 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS } from '@/lib/utils/request'
 import { RequestFilters } from './RequestFilters'
 import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
+import type { Database } from '@/lib/supabase/database.types'
+
+type RequestStatusEnum = Database['public']['Enums']['request_status_enum']
+type LevelEnum = Database['public']['Enums']['level_enum']
 
 const ALL_STATUSES = [
   'new',
@@ -61,16 +65,16 @@ export default async function AdminRequestsPage({
 
   // Apply filters at DB level
   if (activeStatus !== 'all') {
-    countQuery = countQuery.eq('status', activeStatus)
-    dataQuery = dataQuery.eq('status', activeStatus)
+    countQuery = countQuery.eq('status', activeStatus as RequestStatusEnum)
+    dataQuery = dataQuery.eq('status', activeStatus as RequestStatusEnum)
   }
   if (subject) {
     countQuery = countQuery.eq('subject_id', Number(subject))
     dataQuery = dataQuery.eq('subject_id', Number(subject))
   }
   if (level) {
-    countQuery = countQuery.eq('level', level)
-    dataQuery = dataQuery.eq('level', level)
+    countQuery = countQuery.eq('level', level as LevelEnum)
+    dataQuery = dataQuery.eq('level', level as LevelEnum)
   }
 
   dataQuery = dataQuery.range(from, to)

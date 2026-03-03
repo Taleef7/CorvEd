@@ -4,6 +4,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import type { Database } from '@/lib/supabase/database.types'
 
 /**
  * Student can cancel their own request if it hasn't been paid for.
@@ -53,7 +54,7 @@ export async function cancelRequest(requestId: string): Promise<{ error?: string
     for (const pkgId of pkgIds) {
       await admin
         .from('payments')
-        .update({ status: 'cancelled' })
+        .update({ status: 'rejected' as Database['public']['Enums']['payment_status_enum'] })
         .eq('package_id', pkgId)
         .eq('status', 'pending')
     }
