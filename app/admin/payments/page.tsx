@@ -1,4 +1,4 @@
-// E5 T5.3 S5.2 E11 T11.2 T11.3: Admin payments list — view, mark paid, mark rejected, WhatsApp actions
+﻿// E5 T5.3 S5.2 E11 T11.2 T11.3: Admin payments list — view, mark paid, mark rejected, WhatsApp actions
 // Closes #35 #32 #75 #76
 
 export const dynamic = 'force-dynamic'
@@ -6,16 +6,17 @@ export const dynamic = 'force-dynamic'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { LEVEL_LABELS } from '@/lib/utils/request'
 import { MarkPaidForm, RejectForm } from './PaymentActions'
+import { ViewProofButton } from './ViewProofButton'
+import { PaymentQuickActions } from './PaymentQuickActions'
 import Link from 'next/link'
-import { CopyMessageButton } from '@/components/CopyMessageButton'
-import { WhatsAppLink } from '@/components/WhatsAppLink'
 import { templates } from '@/lib/whatsapp/templates'
 import { PAYMENT_INSTRUCTIONS } from '@/lib/config/pricing'
+import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
 
 const STATUS_COLOURS: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  paid: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-800',
+  pending: 'border-2 border-[#F0C020] bg-[#F0C020] text-[#121212]',
+  paid: 'border-2 border-[#121212] bg-[#121212] text-white',
+  rejected: 'border-2 border-[#D02020] bg-[#D02020]/10 text-[#D02020]',
   refunded: 'bg-gray-100 text-gray-700',
 }
 
@@ -45,15 +46,24 @@ type PaymentRow = {
 export default async function AdminPaymentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ filter?: string }>
+  searchParams: Promise<{ filter?: string; page?: string }>
 }) {
-  const { filter } = await searchParams
+  const { filter, page } = await searchParams
   const activeFilter: FilterStatus =
     filter === 'paid' || filter === 'rejected' ? filter : filter === 'all' ? 'all' : 'pending'
+  const currentPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
 
   const admin = createAdminClient()
 
-  let query = admin
+  // Separate count query (complex joins + range interact badly)
+  let countQuery = admin
+    .from('payments')
+    .select('id', { count: 'exact', head: true })
+  if (activeFilter !== 'all') countQuery = countQuery.eq('status', activeFilter)
+
+  let dataQuery = admin
     .from('payments')
     .select(
       `id, amount_pkr, status, reference, proof_path, created_at, rejection_note,
@@ -67,12 +77,13 @@ export default async function AdminPaymentsPage({
        )`
     )
     .order('created_at', { ascending: false })
+    .range(from, to)
 
   if (activeFilter !== 'all') {
-    query = query.eq('status', activeFilter)
+    dataQuery = dataQuery.eq('status', activeFilter)
   }
 
-  const { data: payments } = await query
+  const [{ count: totalCount }, { data: payments }] = await Promise.all([countQuery, dataQuery])
 
   const rows = (payments ?? []) as unknown as PaymentRow[]
 
@@ -86,7 +97,7 @@ export default async function AdminPaymentsPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Payments</h1>
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Payments</h1>
       </div>
 
       {/* Filter tabs */}
@@ -95,10 +106,10 @@ export default async function AdminPaymentsPage({
           <Link
             key={value}
             href={`/admin/payments?filter=${value}`}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+            className={` px-3 py-1.5 text-sm font-medium transition ${
               activeFilter === value
-                ? 'bg-indigo-600 text-white'
-                : 'bg-white text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                ? 'bg-[#1040C0] text-white'
+                : 'bg-white text-[#121212]/70 hover:bg-[#E0E0E0] '
             }`}
           >
             {label}
@@ -107,8 +118,8 @@ export default async function AdminPaymentsPage({
       </div>
 
       {rows.length === 0 ? (
-        <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-md dark:bg-zinc-900">
-          <p className="text-zinc-500">No {activeFilter === 'all' ? '' : activeFilter} payments found.</p>
+        <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center ">
+          <p className="text-[#121212]/60">No {activeFilter === 'all' ? '' : activeFilter} payments found.</p>
         </div>
       ) : (
         <div className="space-y-4">
@@ -127,32 +138,32 @@ export default async function AdminPaymentsPage({
             return (
               <div
                 key={payment.id}
-                className="rounded-2xl bg-white px-6 py-5 shadow-md dark:bg-zinc-900"
+                className="border-4 border-[#121212] bg-white px-6 py-5 "
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <p className="font-semibold text-zinc-900 dark:text-zinc-50">
+                    <p className="font-semibold text-[#121212]">
                       {profile?.display_name ?? '—'}
                     </p>
-                    <p className="text-sm text-zinc-500">
+                    <p className="text-sm text-[#121212]/60">
                       {subjectName} · {level} · {pkg?.tier_sessions ?? '?'} sessions/month
                     </p>
-                    <p className="text-sm text-zinc-500">
-                      Amount: <span className="font-medium text-zinc-800 dark:text-zinc-200">PKR {payment.amount_pkr.toLocaleString()}</span>
+                    <p className="text-sm text-[#121212]/60">
+                      Amount: <span className="font-bold text-[#121212]">PKR {payment.amount_pkr.toLocaleString()}</span>
                     </p>
-                    <p className="text-xs text-zinc-400">Submitted: {submittedDate}</p>
+                    <p className="text-xs text-[#121212]/40">Submitted: {submittedDate}</p>
                     {payment.reference && (
-                      <p className="text-xs text-zinc-500">Ref: {payment.reference}</p>
+                      <p className="text-xs text-[#121212]/60">Ref: {payment.reference}</p>
                     )}
                     {payment.rejection_note && (
-                      <p className="text-xs text-red-600 dark:text-red-400">
+                      <p className="text-xs text-red-600">
                         Note: {payment.rejection_note}
                       </p>
                     )}
                   </div>
 
                   <span
-                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLOURS[payment.status] ?? 'bg-zinc-100 text-zinc-700'}`}
+                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLOURS[payment.status] ?? 'bg-[#E0E0E0] text-[#121212]/80'}`}
                   >
                     {payment.status}
                   </span>
@@ -162,7 +173,7 @@ export default async function AdminPaymentsPage({
                 {payment.status === 'pending' && pkg?.id && req?.id && (
                   <div className="mt-4 flex flex-wrap items-center gap-3">
                     {payment.proof_path && (
-                      <ProofLinkButton proofPath={payment.proof_path} />
+                      <ViewProofButton proofPath={payment.proof_path} />
                     )}
 
                     <MarkPaidForm
@@ -175,17 +186,13 @@ export default async function AdminPaymentsPage({
                   </div>
                 )}
 
-                {/* WhatsApp message buttons — only when student and subject data are available */}
+                {/* Quick actions: WhatsApp + copy messages */}
                 {profile?.display_name && subjectName !== '—' && (
-                  <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-zinc-100 pt-3 dark:border-zinc-800">
-                    <WhatsAppLink number={profile?.whatsapp_number ?? null} label="Open chat" />
-                    <CopyMessageButton
-                      message={templates.paid({ subject: subjectName })}
-                      whatsappNumber={profile?.whatsapp_number ?? undefined}
-                      label="Copy payment confirmed"
-                    />
-                    <CopyMessageButton
-                      message={templates.paybank({
+                  <div className="mt-3 border-t border-[#E0E0E0] pt-3">
+                    <PaymentQuickActions
+                      whatsappNumber={profile?.whatsapp_number ?? null}
+                      confirmedMessage={templates.paid({ subject: subjectName })}
+                      instructionsMessage={templates.paybank({
                         accountTitle: PAYMENT_INSTRUCTIONS.accountTitle,
                         bank: PAYMENT_INSTRUCTIONS.bankName,
                         accountNumber: PAYMENT_INSTRUCTIONS.accountNumber,
@@ -193,8 +200,6 @@ export default async function AdminPaymentsPage({
                         level,
                         subject: subjectName,
                       })}
-                      whatsappNumber={profile?.whatsapp_number ?? undefined}
-                      label="Copy payment instructions"
                     />
                   </div>
                 )}
@@ -203,16 +208,14 @@ export default async function AdminPaymentsPage({
           })}
         </div>
       )}
+
+      <AdminPagination
+        currentPage={currentPage}
+        totalCount={totalCount ?? 0}
+        baseHref={`/admin/payments?filter=${activeFilter}`}
+      />
     </div>
   )
 }
 
-// Inline server component for proof indicator (signed URL generation is in PaymentActions)
-function ProofLinkButton({ proofPath }: { proofPath: string }) {
-  void proofPath
-  return (
-    <span className="text-xs text-zinc-400 italic">
-      Proof on file (view via Supabase Storage)
-    </span>
-  )
-}
+

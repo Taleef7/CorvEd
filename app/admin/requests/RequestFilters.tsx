@@ -1,4 +1,4 @@
-// E7 T7.1: Client component for request inbox filter selects (subject + level)
+﻿// E7 T7.1: Client component for request inbox filter selects (subject + level)
 // Closes #47
 
 'use client'
@@ -40,7 +40,7 @@ export function RequestFilters({
         onChange={(e) => {
           window.location.href = buildHref({ subject: e.target.value || undefined })
         }}
-        className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className=" border-2 border-[#121212] px-2 py-1.5 text-sm "
         aria-label="Filter by subject"
       >
         <option value="">All subjects</option>
@@ -57,7 +57,7 @@ export function RequestFilters({
         onChange={(e) => {
           window.location.href = buildHref({ level: e.target.value || undefined })
         }}
-        className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className=" border-2 border-[#121212] px-2 py-1.5 text-sm "
         aria-label="Filter by level"
       >
         <option value="">All levels</option>

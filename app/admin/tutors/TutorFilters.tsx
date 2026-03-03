@@ -1,4 +1,4 @@
-// E6 T6.4: Client component for tutor directory filter selects
+﻿// E6 T6.4: Client component for tutor directory filter selects
 // Closes #43
 
 'use client'
@@ -41,7 +41,7 @@ export function TutorFilters({
           const v = e.target.value
           window.location.href = buildHref({ subject: v || undefined })
         }}
-        className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className=" border-2 border-[#121212] px-2 py-1.5 text-sm "
         aria-label="Filter by subject"
       >
         <option value="">All subjects</option>
@@ -59,7 +59,7 @@ export function TutorFilters({
           const v = e.target.value
           window.location.href = buildHref({ level: v || undefined })
         }}
-        className="rounded-lg border border-zinc-300 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className=" border-2 border-[#121212] px-2 py-1.5 text-sm "
         aria-label="Filter by level"
       >
         <option value="">All levels</option>
