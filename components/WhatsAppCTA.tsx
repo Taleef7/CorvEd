@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { WHATSAPP_NUMBER } from '@/lib/config'
 
 const PREFILLED_MESSAGE = encodeURIComponent(
@@ -32,7 +32,7 @@ export function WhatsAppCTA({
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with CorvEd on WhatsApp"
-      className={`inline-flex items-center gap-2 rounded-lg bg-[#25D366] px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-[#1ebe57] focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 ${className}`}
+      className={`inline-flex items-center gap-2  bg-[#25D366] px-5 py-3 font-semibold text-white transition hover:bg-[#1ebe57] focus:outline-none focus:ring-2 focus:ring-[#25D366] focus:ring-offset-2 ${className}`}
     >
       <svg
         aria-hidden="true"

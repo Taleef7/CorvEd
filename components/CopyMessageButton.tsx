@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 // T11.2 / S11.2: "Copy message" and optional "Open WhatsApp" button component
 // Closes #75 #73
@@ -50,7 +50,7 @@ export function CopyMessageButton({ message, whatsappNumber, label }: CopyMessag
         type="button"
         onClick={handleCopy}
         aria-label={label ? `Copy: ${label}` : 'Copy message'}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        className="inline-flex items-center gap-1.5  border border-[#B0B0B0] bg-white px-3 py-1.5 text-xs font-medium text-[#121212]/80 transition hover:bg-[#F0F0F0] "
       >
         {copied ? '✅ Copied!' : `📋 ${label ?? 'Copy message'}`}
       </button>
@@ -61,7 +61,7 @@ export function CopyMessageButton({ message, whatsappNumber, label }: CopyMessag
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Open WhatsApp${label ? `: ${label}` : ''}`}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-[#1ebe57]"
+          className="inline-flex items-center gap-1.5  bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white transition hover:bg-[#1ebe57]"
         >
           💬 Open WhatsApp
         </a>
