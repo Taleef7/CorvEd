@@ -1,4 +1,4 @@
-﻿// E5 S5.1 T5.3: Package selection page — student selects 8/12/20 session tier
+// E5 S5.1 T5.3: Package selection page — student selects 8/12/20 session tier
 // Closes #31 #35
 
 'use client'

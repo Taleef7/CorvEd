@@ -1,4 +1,4 @@
-﻿// E8 S8.1 S8.2: Tutor sessions list — upcoming and past sessions with status update
+// E8 S8.1 S8.2: Tutor sessions list — upcoming and past sessions with status update
 // E10 T10.1: Full tutor session list with SessionCompleteForm
 // Closes #52 #53 #68
 

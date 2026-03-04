@@ -78,6 +78,7 @@ export function formatAvailabilityWindows(
   for (const w of windows as AvailWindow[]) {
     if (w.day == null || !w.start || !w.end) continue;
     const d = Number(w.day);
+    if (!Number.isInteger(d) || d < 0 || d > 6) continue;
     if (!byDay.has(d)) byDay.set(d, []);
     byDay.get(d)!.push(w);
   }

@@ -1,4 +1,4 @@
-﻿// E6 T6.1 T6.3: Tutor profile / application page
+// E6 T6.1 T6.3: Tutor profile / application page
 // Closes #40 #42
 
 export const dynamic = 'force-dynamic'

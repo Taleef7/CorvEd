@@ -8,13 +8,19 @@ type RequestBody = LeadFormData & { _hp?: string }
 
 export async function POST(req: NextRequest) {
   // Rate limit: 10 requests per minute per IP
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-  const { success: withinLimit } = checkRateLimit(`leads:${ip}`, 10, 60_000)
-  if (!withinLimit) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      { status: 429 }
-    )
+  const forwardedFor = req.headers.get('x-forwarded-for')
+  const clientIp =
+    req.headers.get('x-real-ip') ??
+    (forwardedFor ? forwardedFor.split(',')[0]?.trim() || null : null)
+
+  if (clientIp) {
+    const { success: withinLimit } = checkRateLimit(`leads:${clientIp}`, 10, 60_000)
+    if (!withinLimit) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429 }
+      )
+    }
   }
 
   let body: unknown

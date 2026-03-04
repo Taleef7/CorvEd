@@ -1,4 +1,4 @@
-﻿// E6 T6.3 T6.4 S6.2 E11 T11.3: Admin tutor detail page — full profile view with approve/revoke + WhatsApp link
+// E6 T6.3 T6.4 S6.2 E11 T11.3: Admin tutor detail page — full profile view with approve/revoke + WhatsApp link
 // Closes #42 #43 #39 #76
 
 export const dynamic = 'force-dynamic'

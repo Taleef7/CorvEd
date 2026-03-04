@@ -1,4 +1,4 @@
-﻿// E12 T12.3: Admin audit log page — shows recent 200 audit events ordered newest first
+// E12 T12.3: Admin audit log page — shows recent 200 audit events ordered newest first
 // Closes #80
 
 export const dynamic = 'force-dynamic'

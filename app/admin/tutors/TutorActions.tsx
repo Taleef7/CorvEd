@@ -1,4 +1,4 @@
-﻿// E6 T6.2 T6.4: Client components for admin tutor approval/revoke buttons
+// E6 T6.2 T6.4: Client components for admin tutor approval/revoke buttons
 // Closes #41 #43
 
 'use client'

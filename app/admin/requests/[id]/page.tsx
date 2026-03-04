@@ -1,4 +1,4 @@
-﻿// E7 T7.2 E11 T11.3: Admin request detail + matching screen + WhatsApp link
+// E7 T7.2 E11 T11.3: Admin request detail + matching screen + WhatsApp link
 // Closes #48 #76
 
 export const dynamic = 'force-dynamic'

@@ -1,4 +1,4 @@
-﻿// E5 T5.3 S5.2 E11 T11.2 T11.3: Admin payments list — view, mark paid, mark rejected, WhatsApp actions
+// E5 T5.3 S5.2 E11 T11.2 T11.3: Admin payments list — view, mark paid, mark rejected, WhatsApp actions
 // Closes #35 #32 #75 #76
 
 export const dynamic = 'force-dynamic'

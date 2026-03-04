@@ -1,4 +1,4 @@
-﻿// E7 T7.4 S7.2 E8 T8.1: Client components for match detail actions (reassign tutor, edit details, generate sessions)
+// E7 T7.4 S7.2 E8 T8.1: Client components for match detail actions (reassign tutor, edit details, generate sessions)
 // Closes #50 #46 #54
 
 'use client'

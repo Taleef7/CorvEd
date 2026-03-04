@@ -1,4 +1,4 @@
-﻿// E7 T7.1 T7.4: Admin matches index — list all matches with status and key details
+// E7 T7.1 T7.4: Admin matches index — list all matches with status and key details
 // Closes #47 #50
 
 export const dynamic = 'force-dynamic'

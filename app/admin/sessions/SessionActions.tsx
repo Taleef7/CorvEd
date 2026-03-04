@@ -1,4 +1,4 @@
-﻿// E8 T8.3 T8.4 S8.2: Client components for session status update and reschedule
+// E8 T8.3 T8.4 S8.2: Client components for session status update and reschedule
 // Closes #56 #57 #53
 
 'use client'

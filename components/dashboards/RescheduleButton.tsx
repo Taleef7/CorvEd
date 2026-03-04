@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 // E9 T9.4: "Reschedule via WhatsApp" button with prefilled message and 24-hour warning
 // Closes #64

@@ -1,4 +1,4 @@
-﻿// E8 S8.1: Student sessions list — upcoming and past sessions with timezone display and Meet link
+// E8 S8.1: Student sessions list — upcoming and past sessions with timezone display and Meet link
 // E9 T9.2: Sessions list with Reschedule button (T9.4)
 // Closes #52, #62, #64
 

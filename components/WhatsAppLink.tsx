@@ -1,4 +1,4 @@
-﻿// T11.3: Standalone "Open WhatsApp" link component
+// T11.3: Standalone "Open WhatsApp" link component
 // Closes #76
 
 import { buildWaLink } from '@/lib/whatsapp/buildLink'

@@ -1,4 +1,4 @@
-﻿// E4 T4.2: Request detail / confirmation page
+// E4 T4.2: Request detail / confirmation page
 // E5 S5.1: links to package selection with requestId param
 // Closes #28 #31
 

@@ -1,4 +1,4 @@
-﻿// E7 T7.1: Client component for request inbox filter selects (subject + level)
+// E7 T7.1: Client component for request inbox filter selects (subject + level)
 // Closes #47
 
 'use client'

@@ -1,4 +1,4 @@
-﻿// E12 T12.4: Admin analytics dashboard — active students, upcoming/missed sessions, pending items
+// E12 T12.4: Admin analytics dashboard — active students, upcoming/missed sessions, pending items
 // Closes #81
 
 export const dynamic = 'force-dynamic'

@@ -1,4 +1,4 @@
-﻿// E10 T10.2: Session completion form — tutor marks a session done/no-show with optional note
+// E10 T10.2: Session completion form — tutor marks a session done/no-show with optional note
 // Closes #69
 
 'use client'
@@ -81,7 +81,7 @@ export function SessionCompleteForm({ sessionId }: Props) {
   }
 
   return (
-    <form action={formAction} className="mt-2 space-y-2  border border-[#D0D0D0] bg-[#F0F0F0] p-3 /50">
+    <form action={formAction} className="mt-2 space-y-2 border border-[#D0D0D0] bg-[#F0F0F0] p-3">
       <input type="hidden" name="sessionId" value={sessionId} />
 
       <p className="text-xs font-semibold text-[#121212]/80">Mark Session Complete</p>

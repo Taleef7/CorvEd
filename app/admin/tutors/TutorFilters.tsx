@@ -1,4 +1,4 @@
-﻿// E6 T6.4: Client component for tutor directory filter selects
+// E6 T6.4: Client component for tutor directory filter selects
 // Closes #43
 
 'use client'

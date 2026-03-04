@@ -1,4 +1,4 @@
-﻿// E5 S5.2: Client component for admin payment action buttons with error feedback
+// E5 S5.2: Client component for admin payment action buttons with error feedback
 // Addresses review comment: server action forms should display errors to admin
 
 'use client'

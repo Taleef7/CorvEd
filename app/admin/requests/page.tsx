@@ -1,4 +1,4 @@
-﻿// E7 T7.1: Admin requests inbox — filterable list of all requests
+// E7 T7.1: Admin requests inbox — filterable list of all requests
 // Closes #47
 
 export const dynamic = 'force-dynamic'

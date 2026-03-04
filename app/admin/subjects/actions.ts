@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
@@ -14,6 +15,12 @@ const addSubjectSchema = z.object({
 })
 
 export async function addSubject(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch {
+    return { error: 'Unauthorized' }
+  }
+
   const parsed = addSubjectSchema.safeParse({
     name: formData.get('name'),
     code: formData.get('code'),
@@ -52,6 +59,13 @@ export async function addSubject(formData: FormData) {
 }
 
 export async function toggleSubjectActive(id: number, active: boolean) {
+  try {
+    await requireAdmin()
+  } catch {
+    // Form action — must return void; unauthorized users are silently blocked
+    return
+  }
+
   const admin = createAdminClient()
   await admin
     .from('subjects')

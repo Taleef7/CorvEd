@@ -1,4 +1,4 @@
-﻿// E7 T7.2 T7.3: Client component for the tutor assignment form on the matching screen
+// E7 T7.2 T7.3: Client component for the tutor assignment form on the matching screen
 // Closes #48 #49
 
 'use client'

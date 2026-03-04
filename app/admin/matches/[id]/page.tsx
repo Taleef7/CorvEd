@@ -1,4 +1,4 @@
-﻿// E7 T7.4 S7.2 E8 T8.1 E11 T11.2: Admin match detail page — view match, reassign tutor, edit schedule, generate sessions, WhatsApp actions
+// E7 T7.4 S7.2 E8 T8.1 E11 T11.2: Admin match detail page — view match, reassign tutor, edit schedule, generate sessions, WhatsApp actions
 // Closes #50 #46 #54 #75
 
 export const dynamic = 'force-dynamic'

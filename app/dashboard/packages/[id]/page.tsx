@@ -1,4 +1,4 @@
-﻿// E5 T5.3 S5.1: Package payment submission page — bank instructions + optional proof upload
+// E5 T5.3 S5.1: Package payment submission page — bank instructions + optional proof upload
 // Closes #35 #31
 
 'use client'

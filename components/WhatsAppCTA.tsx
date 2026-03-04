@@ -1,4 +1,4 @@
-﻿import Link from 'next/link'
+import Link from 'next/link'
 import { WHATSAPP_NUMBER } from '@/lib/config'
 
 const PREFILLED_MESSAGE = encodeURIComponent(

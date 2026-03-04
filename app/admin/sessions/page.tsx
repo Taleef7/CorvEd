@@ -1,4 +1,4 @@
-﻿// E8 T8.4 S8.2 E11 T11.2: Admin sessions overview — list all sessions, update status, reschedule, WhatsApp actions
+// E8 T8.4 S8.2 E11 T11.2: Admin sessions overview — list all sessions, update status, reschedule, WhatsApp actions
 // Closes #57 #53 #75
 
 export const dynamic = 'force-dynamic'

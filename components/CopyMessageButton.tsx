@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 // T11.2 / S11.2: "Copy message" and optional "Open WhatsApp" button component
 // Closes #75 #73

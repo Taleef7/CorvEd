@@ -1,4 +1,4 @@
-﻿// E6 T6.4 S6.2: Admin tutor directory — list, filter, approve/revoke
+// E6 T6.4 S6.2: Admin tutor directory — list, filter, approve/revoke
 // Closes #43 #39
 
 export const dynamic = 'force-dynamic'

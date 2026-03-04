@@ -1,4 +1,4 @@
-﻿// E12 T12.2: Tutor code of conduct page — public, linked from tutor profile form
+// E12 T12.2: Tutor code of conduct page — public, linked from tutor profile form
 // Closes #79
 
 import Link from 'next/link'

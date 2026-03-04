@@ -1,4 +1,4 @@
-﻿// E4 T4.1: New tutoring request page (Server Component)
+// E4 T4.1: New tutoring request page (Server Component)
 // Loads subjects server-side for reliable data, then renders the client form.
 
 export const dynamic = 'force-dynamic'

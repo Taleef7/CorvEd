@@ -1,4 +1,4 @@
-﻿// E3 T3.4 E11 T11.3: admin user role management screen + WhatsApp links
+// E3 T3.4 E11 T11.3: admin user role management screen + WhatsApp links
 // Closes #19 #23 #76
 
 export const dynamic = 'force-dynamic'

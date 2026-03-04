@@ -1,4 +1,4 @@
-﻿// E6 T6.1 T6.3: Tutor profile form — subjects, levels, availability, bio, timezone
+// E6 T6.1 T6.3: Tutor profile form — subjects, levels, availability, bio, timezone
 // E12 T12.2: Added code of conduct acknowledgement checkbox
 // Closes #40 #42 #79
 
