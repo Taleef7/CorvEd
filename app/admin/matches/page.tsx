@@ -6,12 +6,13 @@ export const dynamic = 'force-dynamic'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { LEVEL_LABELS } from '@/lib/utils/request'
+import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
 
 const MATCH_STATUS_COLOURS: Record<string, string> = {
-  matched: 'bg-purple-100 text-purple-800',
-  active: 'bg-green-100 text-green-800',
-  paused: 'bg-orange-100 text-orange-800',
-  ended: 'bg-red-100 text-red-800',
+  matched: 'border-2 border-[#1040C0] bg-[#1040C0] text-white',
+  active: 'border-2 border-[#121212] bg-[#121212] text-white',
+  paused: 'border-2 border-[#F0C020] bg-[#F0C020] text-[#121212]',
+  ended: 'border-2 border-[#D02020] bg-[#D02020]/10 text-[#D02020]',
 }
 
 type MatchRow = {
@@ -31,10 +32,19 @@ type MatchRow = {
   } | null
 }
 
-export default async function AdminMatchesPage() {
+export default async function AdminMatchesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>
+}) {
+  const { page } = await searchParams
+  const currentPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
+  const from = (currentPage - 1) * PAGE_SIZE
+  const to = from + PAGE_SIZE - 1
+
   const admin = createAdminClient()
 
-  const { data: matchesData } = await admin
+  const { data: matchesData, count: totalCount } = await admin
     .from('matches')
     .select(
       `id, status, meet_link, assigned_at, tutor_user_id,
@@ -45,29 +55,31 @@ export default async function AdminMatchesPage() {
          id, level,
          subjects ( name ),
          user_profiles!requests_created_by_user_id_fkey ( display_name )
-       )`
+       )`,
+      { count: 'exact' }
     )
     .order('assigned_at', { ascending: false })
+    .range(from, to)
 
   const matches = (matchesData ?? []) as unknown as MatchRow[]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Matches</h1>
-        <p className="text-sm text-zinc-500">
-          {matches.length} match{matches.length !== 1 ? 'es' : ''}
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Matches</h1>
+        <p className="text-sm text-[#121212]/60">
+          {totalCount ?? matches.length} match{(totalCount ?? matches.length) !== 1 ? 'es' : ''}
         </p>
       </div>
 
       {matches.length === 0 ? (
-        <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-sm dark:bg-zinc-900">
-          <p className="text-zinc-500">No matches yet.</p>
-          <p className="mt-1 text-sm text-zinc-400">
+        <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center">
+          <p className="text-[#121212]/60">No matches yet.</p>
+          <p className="mt-1 text-sm text-[#121212]/40">
             Assign tutors to{' '}
             <Link
               href="/admin/requests?status=ready_to_match"
-              className="text-indigo-600 hover:underline dark:text-indigo-400"
+              className="font-bold text-[#1040C0] underline-offset-4 hover:underline"
             >
               ready-to-match requests
             </Link>{' '}
@@ -75,34 +87,34 @@ export default async function AdminMatchesPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <table className="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
+        <div className="overflow-x-auto border-4 border-[#121212] bg-white">
+          <table className="min-w-full divide-y divide-[#D0D0D0] text-sm">
+            <thead className="bg-[#121212]">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Student
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Subject / Level
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Tutor
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Meet Link
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Assigned
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[#E0E0E0]">
               {matches.map((match) => {
                 const req = match.requests
                 const subjectName = (req?.subjects as { name: string } | null)?.name ?? '—'
@@ -119,40 +131,40 @@ export default async function AdminMatchesPage() {
                 })
 
                 return (
-                  <tr key={match.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                    <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                  <tr key={match.id} className="hover:bg-[#F0F0F0]/50">
+                    <td className="px-4 py-3 font-medium text-[#121212]">
                       {studentName}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-[#121212]/70 ">
                       {subjectName} · {levelLabel}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">{tutorName}</td>
+                    <td className="px-4 py-3 text-[#121212]/70 ">{tutorName}</td>
                     <td className="px-4 py-3">
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${MATCH_STATUS_COLOURS[match.status] ?? 'bg-zinc-100 text-zinc-700'}`}
+                        className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 ${MATCH_STATUS_COLOURS[match.status] ?? 'bg-[#E0E0E0] text-[#121212]/80'}`}
                       >
                         {match.status}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-[#121212]/60 ">
                       {match.meet_link ? (
                         <a
                           href={match.meet_link}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-indigo-600 hover:underline dark:text-indigo-400"
+                          className="font-bold text-[#1040C0] underline-offset-4 hover:underline"
                         >
                           Link ↗
                         </a>
                       ) : (
-                        <span className="italic text-zinc-400">Not set</span>
+                        <span className="italic text-[#121212]/40">Not set</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{assignedDate}</td>
+                    <td className="px-4 py-3 text-[#121212]/60 ">{assignedDate}</td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/matches/${match.id}`}
-                        className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-300"
+                        className=" border border-[#B0B0B0] px-3 py-1.5 text-xs font-medium text-[#121212]/80 transition hover:border-[#1040C0] hover:text-[#1040C0] "
                       >
                         Manage →
                       </Link>
@@ -164,6 +176,12 @@ export default async function AdminMatchesPage() {
           </table>
         </div>
       )}
+
+      <AdminPagination
+        currentPage={currentPage}
+        totalCount={totalCount ?? 0}
+        baseHref="/admin/matches"
+      />
     </div>
   )
 }

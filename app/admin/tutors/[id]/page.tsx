@@ -77,31 +77,31 @@ export default async function AdminTutorDetailPage({
       {/* Back link */}
       <Link
         href="/admin/tutors"
-        className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+        className="inline-flex items-center gap-1 text-sm font-bold text-[#1040C0] underline-offset-4 hover:underline"
       >
         ← Back to Tutors
       </Link>
 
-      <div className="rounded-2xl bg-white px-6 py-8 shadow-sm dark:bg-zinc-900">
+      <div className="border-4 border-[#121212] bg-white px-6 py-8">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h1 className="text-xl font-bold text-[#121212]">
               {profile?.display_name ?? '—'}
             </h1>
-            <p className="mt-0.5 text-sm text-zinc-500">Applied {appliedDate}</p>
+            <p className="mt-0.5 text-sm text-[#121212]/60">Applied {appliedDate}</p>
           </div>
           <div className="flex items-center gap-3">
             {tutor.approved ? (
               <>
-                <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                <span className="inline-flex items-center border-2 border-[#121212] bg-[#121212] px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
                   ✅ Approved
                 </span>
                 <RevokeButton tutorUserId={tutor.tutor_user_id} />
               </>
             ) : (
               <>
-                <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                <span className="inline-flex items-center border-2 border-[#F0C020] bg-[#F0C020] px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#121212]">
                   ⏳ Pending approval
                 </span>
                 <ApproveButton tutorUserId={tutor.tutor_user_id} />
@@ -110,14 +110,14 @@ export default async function AdminTutorDetailPage({
           </div>
         </div>
 
-        <hr className="my-6 border-zinc-200 dark:border-zinc-700" />
+        <hr className="my-6 border-[#D0D0D0]" />
 
         {/* Contact */}
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
             Contact
           </h2>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm text-[#121212]/80">
             <span className="font-medium">WhatsApp:</span>{' '}
             {profile?.whatsapp_number ? (
               <span className="inline-flex items-center gap-2">
@@ -125,41 +125,41 @@ export default async function AdminTutorDetailPage({
                 <WhatsAppLink number={profile.whatsapp_number} label="Open chat" />
               </span>
             ) : (
-              <span className="italic text-zinc-400">not provided</span>
+              <span className="italic text-[#121212]/40">not provided</span>
             )}
           </p>
-          <p className="text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-sm text-[#121212]/80">
             <span className="font-medium">Timezone:</span> {tutor.timezone}
           </p>
         </section>
 
-        <hr className="my-6 border-zinc-200 dark:border-zinc-700" />
+        <hr className="my-6 border-[#D0D0D0]" />
 
         {/* Bio */}
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Bio</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Bio</h2>
           {tutor.bio ? (
-            <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
+            <p className="whitespace-pre-wrap text-sm text-[#121212]/80">
               {tutor.bio}
             </p>
           ) : (
-            <p className="italic text-sm text-zinc-400">No bio provided.</p>
+            <p className="italic text-sm text-[#121212]/40">No bio provided.</p>
           )}
         </section>
 
-        <hr className="my-6 border-zinc-200 dark:border-zinc-700" />
+        <hr className="my-6 border-[#D0D0D0]" />
 
         {/* Subjects */}
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
             Subjects &amp; Levels
           </h2>
           {subjectMap.size === 0 ? (
-            <p className="italic text-sm text-zinc-400">No subjects selected.</p>
+            <p className="italic text-sm text-[#121212]/40">No subjects selected.</p>
           ) : (
             <ul className="space-y-1">
               {Array.from(subjectMap.entries()).map(([name, levels]) => (
-                <li key={name} className="text-sm text-zinc-700 dark:text-zinc-300">
+                <li key={name} className="text-sm text-[#121212]/80">
                   <span className="font-medium">{name}</span> — {levels.join(', ')}
                 </li>
               ))}
@@ -167,21 +167,21 @@ export default async function AdminTutorDetailPage({
           )}
         </section>
 
-        <hr className="my-6 border-zinc-200 dark:border-zinc-700" />
+        <hr className="my-6 border-[#D0D0D0]" />
 
         {/* Availability */}
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">
             Availability
           </h2>
           {windows.length === 0 ? (
-            <p className="italic text-sm text-zinc-400">No availability set.</p>
+            <p className="italic text-sm text-[#121212]/40">No availability set.</p>
           ) : (
             <ul className="space-y-1">
               {windows
                 .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start))
                 .map((w, i) => (
-                  <li key={i} className="text-sm text-zinc-700 dark:text-zinc-300">
+                  <li key={i} className="text-sm text-[#121212]/80">
                     <span className="font-medium">{DAY_NAMES[w.day]}:</span>{' '}
                     {formatTime(w.start)} – {formatTime(w.end)}
                   </li>

@@ -56,7 +56,7 @@ export function SessionStatusForm({
 
   if (state && !state.error) {
     return (
-      <span className="text-xs text-emerald-600 dark:text-emerald-400">✅ Updated</span>
+      <span className="text-xs font-bold text-[#121212]">&#10003; Updated</span>
     )
   }
 
@@ -64,7 +64,7 @@ export function SessionStatusForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-400"
+        className="border-2 border-[#121212] px-2 py-1 text-xs font-medium text-[#121212]/70 transition hover:border-[#1040C0] hover:text-[#1040C0] "
       >
         Update Status
       </button>
@@ -84,7 +84,7 @@ export function SessionStatusForm({
       <select
         name="status"
         defaultValue={currentStatus}
-        className="w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className="w-full border-2 border-[#121212] px-2 py-1 text-xs focus:border-[#1040C0] focus:outline-none "
       >
         {TUTOR_STATUSES.map((s) => (
           <option key={s} value={s}>
@@ -97,25 +97,25 @@ export function SessionStatusForm({
         type="text"
         name="tutorNotes"
         placeholder="Notes (optional)"
-        className="w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className="w-full border-2 border-[#121212] px-2 py-1 text-xs focus:border-[#1040C0] focus:outline-none "
       />
 
       {state?.error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="text-xs text-red-600">{state.error}</p>
       )}
 
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={isPending}
-          className="rounded bg-indigo-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          className="rounded bg-[#1040C0] px-2 py-1 text-xs font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
         >
           {isPending ? 'Saving…' : 'Save'}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          className="text-xs text-[#121212]/60 hover:text-[#121212]/80"
         >
           Cancel
         </button>
@@ -171,7 +171,7 @@ export function RescheduleForm({
 
   if (state && !state.error) {
     return (
-      <span className="text-xs text-emerald-600 dark:text-emerald-400">✅ Rescheduled</span>
+      <span className="text-xs font-bold text-[#121212]">&#10003; Rescheduled</span>
     )
   }
 
@@ -179,7 +179,7 @@ export function RescheduleForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-600 transition hover:border-amber-400 hover:text-amber-600 dark:border-zinc-600 dark:text-zinc-400"
+        className="border-2 border-[#121212] px-2 py-1 text-xs font-medium text-[#121212]/70 transition hover:border-[#1040C0] hover:text-[#1040C0] "
       >
         Reschedule
       </button>
@@ -190,20 +190,20 @@ export function RescheduleForm({
   const todayLocal = DateTime.now().setZone(adminTimezone).toFormat('yyyy-MM-dd')
 
   return (
-    <form action={formAction} className="mt-2 space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/10">
+    <form action={formAction} className="mt-2 space-y-2  border border-l-4 border-[#F0C020] bg-[#F0C020]/10 p-3">
       <input type="hidden" name="sessionId" value={sessionId} />
       <input type="hidden" name="timezone" value={adminTimezone} />
       <input type="hidden" name="durationMins" value={durationMins} />
 
       {isWithin24h && (
-        <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+        <p className="text-xs font-medium text-[#121212]">
           ⚠️ This session starts in &lt; 24 hours. Late reschedule policy applies.
         </p>
       )}
 
       <div className="flex gap-2">
         <div className="flex-1">
-          <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <label className="block text-xs font-medium text-[#121212]/80">
             New Date
           </label>
           <input
@@ -211,50 +211,50 @@ export function RescheduleForm({
             name="newDate"
             required
             min={todayLocal}
-            className="mt-0.5 w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            className="mt-0.5 w-full border-2 border-[#121212] px-2 py-1 text-xs focus:border-[#1040C0] focus:outline-none "
           />
         </div>
         <div className="flex-1">
-          <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <label className="block text-xs font-medium text-[#121212]/80">
             New Time ({adminTimezone})
           </label>
           <input
             type="time"
             name="newTime"
             required
-            className="mt-0.5 w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            className="mt-0.5 w-full border-2 border-[#121212] px-2 py-1 text-xs focus:border-[#1040C0] focus:outline-none "
           />
         </div>
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          Reason <span className="font-normal text-zinc-400">(optional)</span>
+        <label className="block text-xs font-medium text-[#121212]/80">
+          Reason <span className="font-normal text-[#121212]/40">(optional)</span>
         </label>
         <input
           type="text"
           name="reason"
           placeholder="e.g. student requested alternative"
-          className="mt-0.5 w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-0.5 w-full border-2 border-[#121212] px-2 py-1 text-xs focus:border-[#1040C0] focus:outline-none "
         />
       </div>
 
       {state?.error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="text-xs text-red-600">{state.error}</p>
       )}
 
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={isPending}
-          className="rounded bg-amber-600 px-3 py-1 text-xs font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+          className="inline-flex min-h-[36px] items-center border-2 border-[#F0C020] bg-[#F0C020] px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#121212] shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 disabled:opacity-60"
         >
           {isPending ? 'Saving…' : 'Save Reschedule'}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          className="text-xs text-[#121212]/60 hover:text-[#121212]/80"
         >
           Cancel
         </button>
@@ -268,7 +268,7 @@ export function RescheduleForm({
 export function SessionStatusBadge({ status }: { status: SessionStatus }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${SESSION_STATUS_COLOURS[status] ?? 'bg-zinc-100 text-zinc-700'}`}
+      className={`inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 ${SESSION_STATUS_COLOURS[status] ?? 'bg-[#E0E0E0] text-[#121212]/80'}`}
     >
       {SESSION_STATUS_LABELS[status] ?? status}
     </span>

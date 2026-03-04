@@ -4,28 +4,10 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
-
-async function requireAdmin(): Promise<string> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) throw new Error('Unauthorized: not authenticated')
-
-  const admin = createAdminClient()
-  const { data: roles } = await admin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-
-  const isAdmin = roles?.some((r) => r.role === 'admin') ?? false
-  if (!isAdmin) throw new Error('Unauthorized: admin role required')
-
-  return user.id
-}
+import type { Json } from '@/lib/supabase/database.types'
+import type { Database } from '@/lib/supabase/database.types'
 
 /** Create a match record, advance request to 'matched', and write audit log. */
 export async function assignTutor({
@@ -232,7 +214,7 @@ export async function updateMatchDetails({
         action: 'match_details_updated',
         entity_type: 'match',
         entity_id: matchId,
-        details: auditDetails,
+        details: auditDetails as Json,
       },
     ])
     if (auditError) {
@@ -246,3 +228,150 @@ export async function updateMatchDetails({
   }
 }
 
+/** Update admin_notes on a match. */
+export async function updateMatchNotes({
+  matchId,
+  adminNotes,
+}: {
+  matchId: string
+  adminNotes: string
+}): Promise<{ error?: string; success?: boolean }> {
+  try {
+    const adminUserId = await requireAdmin()
+    const admin = createAdminClient()
+
+    const { error } = await admin
+      .from('matches')
+      .update({ admin_notes: adminNotes || null })
+      .eq('id', matchId)
+
+    if (error) throw new Error(`Failed to update notes: ${error.message}`)
+
+    await admin.from('audit_logs').insert([{
+      actor_user_id: adminUserId,
+      action: 'match_notes_updated',
+      entity_type: 'match',
+      entity_id: matchId,
+      details: { admin_notes: adminNotes || null },
+    }])
+
+    revalidatePath(`/admin/matches/${matchId}`)
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+  }
+}
+
+// ── Admin request management actions ─────────────────────────────────
+
+/** Admin cancels a request — works from any status. */
+export async function adminCancelRequest(
+  requestId: string,
+  reason?: string
+): Promise<{ error?: string }> {
+  try {
+    const adminUserId = await requireAdmin()
+    const admin = createAdminClient()
+
+    const { data: request } = await admin
+      .from('requests')
+      .select('id, status')
+      .eq('id', requestId)
+      .maybeSingle()
+
+    if (!request) throw new Error('Request not found.')
+    if (request.status === 'ended') throw new Error('Request is already ended.')
+
+    const previousStatus = request.status
+
+    // Cancel pending packages
+    const { data: packages } = await admin
+      .from('packages')
+      .select('id')
+      .eq('request_id', requestId)
+      .in('status', ['pending', 'active'])
+
+    if (packages && packages.length > 0) {
+      const pkgIds = packages.map((p) => p.id)
+      for (const pkgId of pkgIds) {
+        await admin
+          .from('payments')
+          .update({ status: 'rejected' as Database['public']['Enums']['payment_status_enum'] })
+          .eq('package_id', pkgId)
+          .in('status', ['pending'])
+      }
+      await admin
+        .from('packages')
+        .update({ status: 'expired' })
+        .in('id', pkgIds)
+    }
+
+    // Mark request as ended
+    const { error: updateError } = await admin
+      .from('requests')
+      .update({ status: 'ended' })
+      .eq('id', requestId)
+
+    if (updateError) throw new Error(`Failed to cancel: ${updateError.message}`)
+
+    // Audit log
+    await admin.from('audit_logs').insert([{
+      actor_user_id: adminUserId,
+      action: 'admin_cancel_request',
+      entity_type: 'request',
+      entity_id: requestId,
+      details: { previous_status: previousStatus, reason: reason || null },
+    }])
+
+    revalidatePath(`/admin/requests/${requestId}`)
+    revalidatePath('/admin/requests')
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+  }
+}
+
+/** Admin updates request status to any valid status. */
+export async function adminUpdateRequestStatus(
+  requestId: string,
+  newStatus: string
+): Promise<{ error?: string }> {
+  try {
+    const adminUserId = await requireAdmin()
+    const admin = createAdminClient()
+
+    const validStatuses = ['new', 'payment_pending', 'ready_to_match', 'matched', 'active', 'paused', 'ended']
+    if (!validStatuses.includes(newStatus)) throw new Error(`Invalid status: ${newStatus}`)
+
+    const { data: request } = await admin
+      .from('requests')
+      .select('id, status')
+      .eq('id', requestId)
+      .maybeSingle()
+
+    if (!request) throw new Error('Request not found.')
+
+    const previousStatus = request.status
+
+    const { error: updateError } = await admin
+      .from('requests')
+      .update({ status: newStatus as Database['public']['Enums']['request_status_enum'] })
+      .eq('id', requestId)
+
+    if (updateError) throw new Error(`Failed to update status: ${updateError.message}`)
+
+    await admin.from('audit_logs').insert([{
+      actor_user_id: adminUserId,
+      action: 'admin_update_request_status',
+      entity_type: 'request',
+      entity_id: requestId,
+      details: { previous_status: previousStatus, new_status: newStatus },
+    }])
+
+    revalidatePath(`/admin/requests/${requestId}`)
+    revalidatePath('/admin/requests')
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
+  }
+}

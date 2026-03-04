@@ -100,8 +100,8 @@ export default async function AdminTutorsPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Tutors</h1>
-        <p className="text-sm text-zinc-500">
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Tutors</h1>
+        <p className="text-sm text-[#121212]/60">
           {tutors.length} tutor{tutors.length !== 1 ? 's' : ''}
         </p>
       </div>
@@ -114,10 +114,10 @@ export default async function AdminTutorsPage({
             <Link
               key={value}
               href={buildStatusHref(value)}
-              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+              className={` px-3 py-1.5 text-sm font-medium transition ${
                 activeStatus === value
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-white text-zinc-600 hover:bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700'
+                  ? 'bg-[#1040C0] text-white'
+                  : 'bg-white text-[#121212]/70 hover:bg-[#E0E0E0] '
               }`}
             >
               {label}
@@ -136,35 +136,35 @@ export default async function AdminTutorsPage({
 
       {/* Table */}
       {tutors.length === 0 ? (
-        <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-sm dark:bg-zinc-900">
-          <p className="text-zinc-500">No tutors found matching the current filters.</p>
+        <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center">
+          <p className="text-[#121212]/60">No tutors found matching the current filters.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <table className="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-700">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
+        <div className="overflow-x-auto border-4 border-[#121212] bg-white">
+          <table className="min-w-full divide-y divide-[#D0D0D0] text-sm">
+            <thead className="bg-[#121212]">
               <tr>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Name
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Subjects &amp; Levels
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Timezone
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Applied
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Status
                 </th>
-                <th className="px-4 py-3 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left font-semibold text-white">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[#E0E0E0]">
               {tutors.map((tutor) => {
                 const profile = tutor.user_profiles as {
                   display_name: string
@@ -179,25 +179,25 @@ export default async function AdminTutorsPage({
                 return (
                   <tr
                     key={tutor.tutor_user_id}
-                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    className="hover:bg-[#F0F0F0]/50"
                   >
-                    <td className="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
+                    <td className="px-4 py-3 font-medium text-[#121212]">
                       {profile?.display_name ?? '—'}
                     </td>
-                    <td className="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-[#121212]/70 ">
                       {groupSubjects(tutor.tutor_subjects)}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-[#121212]/60 ">
                       {tutor.timezone}
                     </td>
-                    <td className="px-4 py-3 text-zinc-500 dark:text-zinc-400">{appliedDate}</td>
+                    <td className="px-4 py-3 text-[#121212]/60 ">{appliedDate}</td>
                     <td className="px-4 py-3">
                       {tutor.approved ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 border-[#121212] bg-[#121212] text-white">
                           ✅ Approved
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                        <span className="inline-flex items-center px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider border-2 border-[#F0C020] bg-[#F0C020] text-[#121212]">
                           ⏳ Pending
                         </span>
                       )}
@@ -211,7 +211,7 @@ export default async function AdminTutorsPage({
                         )}
                         <Link
                           href={`/admin/tutors/${tutor.tutor_user_id}`}
-                          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-300"
+                          className=" border border-[#B0B0B0] px-3 py-1.5 text-xs font-medium text-[#121212]/80 transition hover:border-[#1040C0] hover:text-[#1040C0] "
                         >
                           View
                         </Link>

@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { signOut } from '@/app/auth/actions'
 import Link from 'next/link'
 
 export default async function AdminLayout({
@@ -30,77 +31,80 @@ export default async function AdminLayout({
   const isAdmin = roles?.some((r) => r.role === 'admin') ?? false
   if (!isAdmin) redirect('/dashboard')
 
+  const navLinks = [
+    { href: '/admin', label: 'Dashboard' },
+    { href: '/admin/users', label: 'Users' },
+    { href: '/admin/requests', label: 'Requests' },
+    { href: '/admin/payments', label: 'Payments' },
+    { href: '/admin/tutors', label: 'Tutors' },
+    { href: '/admin/matches', label: 'Matches' },
+    { href: '/admin/sessions', label: 'Sessions' },
+    { href: '/admin/subjects', label: 'Subjects' },
+    { href: '/admin/audit', label: 'Audit Log' },
+    { href: '/admin/analytics', label: 'Analytics' },
+  ]
+
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      {/* Admin nav */}
-      <header className="border-b border-zinc-200 bg-white px-6 py-3 dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-bold text-zinc-900 dark:text-zinc-50">
-              CorvEd <span className="text-xs font-normal text-indigo-600">Admin</span>
+    <div className="min-h-screen bg-[#F0F0F0]">
+      {/* Admin nav — Bauhaus header */}
+      <header className="border-b-4 border-[#121212] bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+          {/* Brand */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1" aria-hidden="true">
+              <div className="h-4 w-4 rounded-full bg-[#D02020]" />
+              <div className="h-4 w-4 bg-[#F0C020]" />
+              <div className="h-4 w-4" style={{ clipPath: 'polygon(50% 0%, 0% 100%, 100% 100%)', background: '#1040C0' }} />
+            </div>
+            <Link href="/admin" className="font-black uppercase tracking-tighter text-[#121212]">
+              CorvEd
+            </Link>
+            <span className="border-2 border-[#D02020] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#D02020]">
+              Admin
             </span>
-            <nav className="hidden items-center gap-4 text-sm text-zinc-600 sm:flex dark:text-zinc-400">
-              <Link href="/admin" className="hover:text-zinc-900 dark:hover:text-zinc-100">
-                Dashboard
-              </Link>
-              <Link
-                href="/admin/users"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Users
-              </Link>
-              <Link
-                href="/admin/requests"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Requests
-              </Link>
-              <Link
-                href="/admin/payments"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Payments
-              </Link>
-              <Link
-                href="/admin/tutors"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Tutors
-              </Link>
-              <Link
-                href="/admin/matches"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Matches
-              </Link>
-              <Link
-                href="/admin/sessions"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Sessions
-              </Link>
-              <Link
-                href="/admin/audit"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Audit Log
-              </Link>
-              <Link
-                href="/admin/analytics"
-                className="hover:text-zinc-900 dark:hover:text-zinc-100"
-              >
-                Analytics
-              </Link>
-            </nav>
           </div>
-          <form action="/auth/sign-out" method="post">
+
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-1 lg:flex" aria-label="Admin navigation">
+            {navLinks.map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
+              >
+                {l.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Sign out */}
+          <form action={signOut}>
             <button
               type="submit"
-              className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+              className="border-2 border-[#121212] px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
             >
               Sign out
             </button>
           </form>
+        </div>
+
+        {/* Mobile nav — scrollable with fade indicators */}
+        <div className="relative lg:hidden">
+          <div className="overflow-x-auto border-t-2 border-[#121212]/10 scrollbar-hide">
+            <nav className="flex min-w-max gap-0" aria-label="Admin navigation">
+              {navLinks.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors whitespace-nowrap"
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          {/* Scroll fade indicators */}
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent" />
         </div>
       </header>
 

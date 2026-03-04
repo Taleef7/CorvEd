@@ -8,6 +8,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { toast } from 'sonner'
 import { tutorProfileSchema, TutorProfileFormData } from '@/lib/validators/tutor'
 import { saveTutorProfile } from './actions'
 
@@ -54,7 +55,6 @@ type TutorProfileFormProps = {
 
 export function TutorProfileForm({ subjects, defaultValues, approved }: TutorProfileFormProps) {
   const [serverError, setServerError] = useState<string | null>(null)
-  const [saved, setSaved] = useState(false)
 
   // Track selected subjects × levels as a set of "subjectId:level" strings
   const initialSubjectSet = new Set(
@@ -62,9 +62,10 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
   )
   const [selectedSubjects, setSelectedSubjects] = useState<Set<string>>(initialSubjectSet)
 
-  // Track selected availability as a set of "day:start:end" strings
+  // Track selected availability as a set of "day|start|end" strings
+  // Use '|' delimiter because start/end contain colons (HH:MM)
   const initialAvailSet = new Set(
-    (defaultValues?.availWindows ?? []).map((w) => `${w.day}:${w.start}:${w.end}`)
+    (defaultValues?.availWindows ?? []).map((w) => `${w.day}|${w.start}|${w.end}`)
   )
   const [selectedAvail, setSelectedAvail] = useState<Set<string>>(initialAvailSet)
 
@@ -80,6 +81,8 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       timezone: defaultValues?.timezone ?? 'Asia/Karachi',
       subjects: defaultValues?.subjectEntries ?? [],
       availability: defaultValues?.availWindows ?? [],
+      // Pre-check conduct if the tutor already has a profile (they agreed on first submit)
+      conductAcknowledged: approved !== null,
     },
   })
 
@@ -103,7 +106,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
   }
 
   function toggleAvail(day: number, start: string, end: string) {
-    const key = `${day}:${start}:${end}`
+    const key = `${day}|${start}|${end}`
     setSelectedAvail((prev) => {
       const next = new Set(prev)
       if (next.has(key)) {
@@ -113,7 +116,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       }
       // Sync into RHF so zodResolver can validate the availability array
       const windows = Array.from(next).map((k) => {
-        const [d, s, e] = k.split(':')
+        const [d, s, e] = k.split('|')
         return { day: Number(d), start: s, end: e }
       })
       setValue('availability', windows, { shouldValidate: true })
@@ -123,7 +126,6 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
   async function onSubmit(data: TutorProfileFormData) {
     setServerError(null)
-    setSaved(false)
 
     // data.subjects and data.availability are already validated by zodResolver
     // and kept in sync with the checkbox/grid state via setValue in the toggle handlers.
@@ -131,9 +133,12 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
     if (result.error) {
       setServerError(result.error)
+      toast.error('Failed to save profile', { description: result.error })
       return
     }
-    setSaved(true)
+    toast.success('Profile saved!', {
+      description: approved === false ? 'Your application is pending admin approval.' : 'Your changes have been saved.',
+    })
   }
 
   return (
@@ -141,17 +146,17 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       {/* Approval status badge */}
       <div>
         {approved === true && (
-          <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+          <span className="inline-flex items-center border-2 border-[#121212] bg-[#121212] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white">
             ✅ Approved — you can be matched with students
           </span>
         )}
         {approved === false && (
-          <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+          <span className="inline-flex items-center border-2 border-[#F0C020] bg-[#F0C020] px-3 py-1 text-xs font-bold uppercase tracking-widest text-[#121212]">
             ⏳ Pending approval — the admin will review your application
           </span>
         )}
         {approved === null && (
-          <span className="inline-flex items-center rounded-full bg-zinc-100 px-3 py-1 text-sm font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+          <span className="inline-flex items-center rounded-full bg-[#E0E0E0] px-3 py-1 text-sm font-medium text-[#121212]/70 ">
             Fill in your profile below and submit to apply
           </span>
         )}
@@ -159,10 +164,10 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
       {/* Bio */}
       <div>
-        <label htmlFor="bio" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="bio" className="block text-sm font-semibold text-[#121212]/80">
           Bio <span className="text-red-500" aria-hidden="true">*</span>
         </label>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-[#121212]/60">
           2–5 sentences: describe your teaching experience, style, and the subjects/levels you excel at.
         </p>
         <textarea
@@ -171,7 +176,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
           aria-required="true"
           aria-invalid={errors.bio ? 'true' : 'false'}
           {...register('bio')}
-          className="mt-2 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-2 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0] "
           placeholder="e.g. I have 5 years of experience teaching A Level Mathematics at Cambridge board, focusing on building conceptual foundations before exam technique..."
         />
         {errors.bio && (
@@ -183,14 +188,14 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
       {/* Timezone */}
       <div>
-        <label htmlFor="timezone" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        <label htmlFor="timezone" className="block text-sm font-semibold text-[#121212]/80">
           Timezone <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <select
           id="timezone"
           aria-required="true"
           {...register('timezone')}
-          className="mt-2 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-2 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0] "
         >
           {TIMEZONES.map((tz) => (
             <option key={tz.value} value={tz.value}>
@@ -207,34 +212,34 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
       {/* Subjects × Levels */}
       <div role="group" aria-labelledby="subjects-label" aria-describedby={errors.subjects ? 'subjects-error' : undefined}>
-        <p id="subjects-label" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        <p id="subjects-label" className="block text-sm font-semibold text-[#121212]/80">
           Subjects &amp; Levels <span className="text-red-500" aria-hidden="true">*</span>
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-[#121212]/60">
           Select every subject and level combination you are able to teach.
         </p>
         {errors.subjects && (
           <p id="subjects-error" role="alert" className="mt-1 text-xs text-red-600">{errors.subjects.message}</p>
         )}
-        <div className="mt-3 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+        <div className="mt-3 overflow-x-auto  border border-[#D0D0D0] ">
           <table className="min-w-full text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
+            <thead className="bg-[#121212]">
               <tr>
-                <th className="px-4 py-2 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-left font-semibold text-white">
                   Subject
                 </th>
-                <th className="px-4 py-2 text-center font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-center font-semibold text-white">
                   O Levels
                 </th>
-                <th className="px-4 py-2 text-center font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-center font-semibold text-white">
                   A Levels
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[#E0E0E0]">
               {subjects.map((subject) => (
-                <tr key={subject.id} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                  <td className="px-4 py-2 font-medium text-zinc-900 dark:text-zinc-100">
+                <tr key={subject.id} className="hover:bg-[#F0F0F0]/50">
+                  <td className="px-4 py-2 font-medium text-[#121212]">
                     {subject.name}
                   </td>
                   {(['o_levels', 'a_levels'] as const).map((lvl) => (
@@ -244,7 +249,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
                         aria-label={`${subject.name} — ${lvl === 'o_levels' ? 'O Levels' : 'A Levels'}`}
                         checked={selectedSubjects.has(`${subject.id}:${lvl}`)}
                         onChange={() => toggleSubject(subject.id, lvl)}
-                        className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                        className="h-4 w-4 rounded border-[#B0B0B0] text-[#1040C0] focus:ring-[#1040C0]"
                       />
                     </td>
                   ))}
@@ -257,36 +262,36 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
       {/* Availability grid */}
       <div role="group" aria-labelledby="availability-label" aria-describedby={errors.availability ? 'availability-error' : undefined}>
-        <p id="availability-label" className="block text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+        <p id="availability-label" className="block text-sm font-semibold text-[#121212]/80">
           Availability <span className="text-red-500" aria-hidden="true">*</span>
         </p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+        <p className="mt-0.5 text-xs text-[#121212]/60">
           Tick every day and time block when you are generally available to teach (all times in your chosen timezone).
         </p>
         {errors.availability && (
           <p id="availability-error" role="alert" className="mt-1 text-xs text-red-600">{errors.availability.message}</p>
         )}
-        <div className="mt-3 overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700">
+        <div className="mt-3 overflow-x-auto  border border-[#D0D0D0] ">
           <table className="min-w-full text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
+            <thead className="bg-[#121212]">
               <tr>
-                <th className="px-3 py-2 text-left font-semibold text-zinc-600 dark:text-zinc-400">
+                <th className="px-3 py-2 text-left font-semibold text-white">
                   Time block
                 </th>
                 {DAYS.map((day) => (
                   <th
                     key={day}
-                    className="px-3 py-2 text-center font-semibold text-zinc-600 dark:text-zinc-400"
+                    className="px-3 py-2 text-center font-semibold text-white"
                   >
                     {day}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[#E0E0E0]">
               {TIME_BLOCKS.map((block) => (
-                <tr key={block.start} className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
-                  <td className="whitespace-nowrap px-3 py-2 text-zinc-700 dark:text-zinc-300">
+                <tr key={block.start} className="hover:bg-[#F0F0F0]/50">
+                  <td className="whitespace-nowrap px-3 py-2 text-[#121212]/80">
                     {block.label}
                   </td>
                   {DAYS.map((_, dayIndex) => (
@@ -294,9 +299,9 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
                       <input
                         type="checkbox"
                         aria-label={`${DAYS[dayIndex]} ${block.label}`}
-                        checked={selectedAvail.has(`${dayIndex}:${block.start}:${block.end}`)}
+                        checked={selectedAvail.has(`${dayIndex}|${block.start}|${block.end}`)}
                         onChange={() => toggleAvail(dayIndex, block.start, block.end)}
-                        className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                        className="h-4 w-4 rounded border-[#B0B0B0] text-[#1040C0] focus:ring-[#1040C0]"
                       />
                     </td>
                   ))}
@@ -309,21 +314,13 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
 
       {/* Server error */}
       {serverError && (
-        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+        <p role="alert" className="text-sm text-red-600">
           {serverError}
         </p>
       )}
 
-      {/* Success */}
-      {saved && (
-        <p role="status" className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-          ✅ Profile saved successfully.{' '}
-          {approved === false && 'Your application is now pending admin approval.'}
-        </p>
-      )}
-
       {/* E12 T12.2: Code of conduct acknowledgement (required) */}
-      <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+      <div className=" border border-[#D0D0D0] bg-[#F0F0F0] p-4 /50">
         <div className="flex items-start gap-3">
           <input
             id="conductAcknowledged"
@@ -331,9 +328,9 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
             aria-required="true"
             aria-invalid={errors.conductAcknowledged ? 'true' : 'false'}
             {...register('conductAcknowledged')}
-            className="mt-0.5 h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+            className="mt-0.5 h-4 w-4 rounded border-[#B0B0B0] text-[#1040C0] focus:ring-[#1040C0]"
           />
-          <div className="text-sm text-zinc-700 dark:text-zinc-300">
+          <div className="text-sm text-[#121212]/80">
             <label htmlFor="conductAcknowledged" className="cursor-pointer">
               I have read and agree to the CorvEd Tutor Code of Conduct
             </label>{' '}
@@ -341,7 +338,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
               href="/tutor/conduct"
               target="_blank"
               rel="noopener noreferrer"
-              className="font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-2 dark:text-indigo-400 dark:hover:text-indigo-300"
+              className="font-bold text-[#1040C0] hover:text-[#0830A0] underline underline-offset-2"
             >
               View Code of Conduct →
             </Link>{' '}
@@ -349,7 +346,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
           </div>
         </div>
         {errors.conductAcknowledged && (
-          <p role="alert" className="mt-2 text-xs text-red-600 dark:text-red-400">
+          <p role="alert" className="mt-2 text-xs text-red-600">
             {errors.conductAcknowledged.message}
           </p>
         )}
@@ -358,7 +355,7 @@ export function TutorProfileForm({ subjects, defaultValues, approved }: TutorPro
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex items-center gap-2  bg-[#1040C0] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0830A0] focus:outline-none focus:ring-2 focus:ring-[#1040C0] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? 'Saving…' : 'Save profile'}
       </button>

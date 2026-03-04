@@ -5,7 +5,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
-import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS } from '@/lib/utils/request'
+import { STATUS_LABELS, STATUS_COLOURS, RequestStatus, LEVEL_LABELS, formatAvailabilityWindows } from '@/lib/utils/request'
+import { CancelRequestButton } from './CancelRequestButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,25 +20,30 @@ const EXAM_BOARD_LABELS: Record<string, string> = {
 function StatusBadge({ status }: { status: RequestStatus }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_COLOURS[status]}`}
+      className={`inline-flex items-center px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide ${STATUS_COLOURS[status]}`}
     >
       {STATUS_LABELS[status]}
     </span>
   )
 }
 
-function NextStepBanner({ status, requestId }: { status: RequestStatus; requestId: string }) {
+function NextStepBanner({ status, requestId, preferredTier }: { status: RequestStatus; requestId: string; preferredTier?: number | null }) {
   if (status === 'new') {
+    const packageUrl = preferredTier
+      ? `/dashboard/packages/new?requestId=${requestId}&tier=${preferredTier}`
+      : `/dashboard/packages/new?requestId=${requestId}`
     return (
-      <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/20">
-        <p className="text-sm font-medium text-indigo-800 dark:text-indigo-300">
-          Next step: Select a package and pay to begin the matching process.
+      <div className="border-l-4 border-[#1040C0] bg-[#1040C0]/5 p-4">
+        <p className="text-sm font-medium text-[#121212]">
+          {preferredTier
+            ? `Next step: Confirm your ${preferredTier}-session package and pay to begin matching.`
+            : 'Next step: Select a package and pay to begin the matching process.'}
         </p>
         <Link
-          href={`/dashboard/packages/new?requestId=${requestId}`}
-          className="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          href={packageUrl}
+          className="mt-3 inline-flex items-center border-2 border-[#121212] bg-[#1040C0] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5"
         >
-          Select Package →
+          {preferredTier ? 'Continue to Payment →' : 'Select Package →'}
         </Link>
       </div>
     )
@@ -45,8 +51,8 @@ function NextStepBanner({ status, requestId }: { status: RequestStatus; requestI
 
   if (status === 'payment_pending') {
     return (
-      <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-800 dark:bg-yellow-900/20">
-        <p className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+      <div className="border-l-4 border-[#F0C020] bg-[#F0C020]/20 p-4">
+        <p className="text-sm font-medium text-[#121212]">
           Payment pending verification. We&apos;ll notify you on WhatsApp once confirmed.
         </p>
       </div>
@@ -55,8 +61,8 @@ function NextStepBanner({ status, requestId }: { status: RequestStatus; requestI
 
   if (status === 'ready_to_match') {
     return (
-      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
-        <p className="text-sm font-medium text-blue-800 dark:text-blue-300">
+      <div className="border-l-4 border-[#1040C0] bg-[#1040C0]/5 p-4">
+        <p className="text-sm font-medium text-[#121212]">
           Payment confirmed ✅ We&apos;re finding the best teacher for you.
         </p>
       </div>
@@ -65,13 +71,13 @@ function NextStepBanner({ status, requestId }: { status: RequestStatus; requestI
 
   if (status === 'matched' || status === 'active') {
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-800 dark:bg-green-900/20">
-        <p className="text-sm font-medium text-green-800 dark:text-green-300">
+      <div className="border-2 border-[#121212] bg-white p-4">
+        <p className="text-sm font-medium text-[#121212]">
           You&apos;ve been matched! See your dashboard for session details.
         </p>
         <Link
           href="/dashboard"
-          className="mt-3 inline-flex items-center rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700"
+          className="mt-3 inline-flex items-center border-2 border-[#121212] bg-[#1040C0] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5"
         >
           Go to Dashboard →
         </Link>
@@ -81,8 +87,8 @@ function NextStepBanner({ status, requestId }: { status: RequestStatus; requestI
 
   if (status === 'paused') {
     return (
-      <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 dark:border-orange-800 dark:bg-orange-900/20">
-        <p className="text-sm font-medium text-orange-800 dark:text-orange-300">
+      <div className="border-l-4 border-[#F0C020] bg-[#F0C020]/10 p-4">
+        <p className="text-sm font-medium text-[#121212]">
           Your tutoring is currently paused. Contact us on WhatsApp to resume.
         </p>
       </div>
@@ -91,13 +97,13 @@ function NextStepBanner({ status, requestId }: { status: RequestStatus; requestI
 
   if (status === 'ended') {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
-        <p className="text-sm font-medium text-red-800 dark:text-red-300">
+      <div className="border-l-4 border-[#D02020] bg-[#D02020]/5 p-4">
+        <p className="text-sm font-medium text-[#D02020]">
           This tutoring engagement has ended.
         </p>
         <Link
           href="/dashboard/requests/new"
-          className="mt-3 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
+          className="mt-3 inline-flex items-center border-2 border-[#121212] bg-[#1040C0] px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5"
         >
           Start a new request →
         </Link>
@@ -134,19 +140,19 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
   })
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-4 py-10 dark:bg-zinc-950">
+    <div className="min-h-screen bg-[#F0F0F0] px-4 py-10">
       <div className="mx-auto w-full max-w-lg space-y-6">
         {/* Confirmation banner */}
-        <div className="rounded-2xl bg-white px-8 py-8 shadow-md dark:bg-zinc-900">
+        <div className="border-4 border-[#121212] bg-white px-8 py-8">
           <div className="mb-1 flex items-center gap-3">
             <span className="text-2xl">✅</span>
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+            <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">
               Request received
             </h1>
           </div>
-          <p className="text-sm text-zinc-500">
+          <p className="text-sm text-[#121212]/60">
             We&apos;ve received your request for{' '}
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+            <span className="font-semibold text-[#121212]/80">
               {LEVEL_LABELS[request.level] ?? request.level} — {subjectName}
             </span>
             .
@@ -154,79 +160,92 @@ export default async function RequestPage({ params }: { params: Promise<{ id: st
         </div>
 
         {/* Next step banner */}
-        <NextStepBanner status={status} requestId={request.id} />
+        <NextStepBanner status={status} requestId={request.id} preferredTier={request.preferred_package_tier} />
 
         {/* Request summary */}
-        <div className="rounded-2xl bg-white px-8 py-8 shadow-md dark:bg-zinc-900">
-          <h2 className="mb-4 text-base font-semibold text-zinc-900 dark:text-zinc-50">
+        <div className="border-4 border-[#121212] bg-white px-8 py-8">
+          <h2 className="mb-4 text-base font-semibold text-[#121212]">
             Request summary
           </h2>
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Level</dt>
-              <dd className="font-medium text-zinc-800 dark:text-zinc-200">
+              <dt className="text-[#121212]/60">Level</dt>
+              <dd className="font-medium text-[#121212]">
                 {LEVEL_LABELS[request.level] ?? request.level}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Subject</dt>
-              <dd className="font-medium text-zinc-800 dark:text-zinc-200">{subjectName}</dd>
+              <dt className="text-[#121212]/60">Subject</dt>
+              <dd className="font-medium text-[#121212]">{subjectName}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Exam board</dt>
-              <dd className="font-medium text-zinc-800 dark:text-zinc-200">
+              <dt className="text-[#121212]/60">Exam board</dt>
+              <dd className="font-medium text-[#121212]">
                 {EXAM_BOARD_LABELS[request.exam_board] ?? request.exam_board}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Timezone</dt>
-              <dd className="font-medium text-zinc-800 dark:text-zinc-200">{request.timezone}</dd>
+              <dt className="text-[#121212]/60">Timezone</dt>
+              <dd className="font-medium text-[#121212]">{request.timezone}</dd>
             </div>
             {request.availability_windows && (
               <div className="flex flex-col gap-1">
-                <dt className="text-zinc-500">Availability</dt>
-                <dd className="font-medium text-zinc-800 dark:text-zinc-200">
-                  {typeof request.availability_windows === 'string'
-                    ? request.availability_windows
-                    : JSON.stringify(request.availability_windows)}
+                <dt className="text-[#121212]/60">Availability</dt>
+                <dd className="whitespace-pre-line font-medium text-[#121212] text-xs">
+                  {formatAvailabilityWindows(request.availability_windows)}
                 </dd>
               </div>
             )}
             {request.goals && (
               <div className="flex flex-col gap-1">
-                <dt className="text-zinc-500">Goals</dt>
-                <dd className="font-medium text-zinc-800 dark:text-zinc-200">{request.goals}</dd>
+                <dt className="text-[#121212]/60">Goals</dt>
+                <dd className="font-medium text-[#121212]">{request.goals}</dd>
               </div>
             )}
             {request.preferred_start_date && (
               <div className="flex justify-between">
-                <dt className="text-zinc-500">Preferred start</dt>
-                <dd className="font-medium text-zinc-800 dark:text-zinc-200">
+                <dt className="text-[#121212]/60">Preferred start</dt>
+                <dd className="font-medium text-[#121212]">
                   {request.preferred_start_date}
                 </dd>
               </div>
             )}
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Status</dt>
+              <dt className="text-[#121212]/60">Status</dt>
               <dd>
                 <StatusBadge status={status} />
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-zinc-500">Submitted</dt>
-              <dd className="font-medium text-zinc-800 dark:text-zinc-200">{submittedAt}</dd>
+              <dt className="text-[#121212]/60">Submitted</dt>
+              <dd className="font-medium text-[#121212]">{submittedAt}</dd>
             </div>
           </dl>
         </div>
 
-        <div className="text-center">
-          <Link
-            href="/dashboard"
-            className="text-sm text-indigo-600 hover:underline dark:text-indigo-400"
-          >
-            ← Back to dashboard
-          </Link>
-        </div>
+        {/* Cancel button — only for unpaid requests */}
+        {(status === 'new' || status === 'payment_pending') && (
+          <div className="flex items-center justify-between">
+            <Link
+              href="/dashboard"
+              className="text-sm font-bold text-[#1040C0] underline-offset-4 hover:underline"
+            >
+              ← Back to dashboard
+            </Link>
+            <CancelRequestButton requestId={request.id} />
+          </div>
+        )}
+
+        {status !== 'new' && status !== 'payment_pending' && (
+          <div className="text-center">
+            <Link
+              href="/dashboard"
+              className="text-sm font-bold text-[#1040C0] underline-offset-4 hover:underline"
+            >
+              ← Back to dashboard
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

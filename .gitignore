@@ -140,3 +140,17 @@ vite.config.ts.timestamp-*
 
 # Copilot instructions file
 .github/copilot-instructions.md
+
+# Claude Code local tool state
+.claude/
+
+# MCP server state directories
+.playwright-mcp/
+.serena/
+
+# VS Code local MCP config (machine-specific)
+.vscode/
+
+# Playwright test output (generated)
+playwright-report/
+test-results/

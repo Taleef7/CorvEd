@@ -59,10 +59,10 @@ export function LeadForm() {
 
   if (isSubmitSuccessful) {
     return (
-      <div className="rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
+      <div className="border-4 border-[#121212] bg-white p-8 text-center">
         <div className="mb-3 text-4xl">✅</div>
-        <h3 className="text-xl font-bold text-zinc-900">Request received!</h3>
-        <p className="mt-2 text-zinc-600">
+        <h3 className="text-xl font-bold text-[#121212]">Request received!</h3>
+        <p className="mt-2 text-[#121212]/70">
           We&apos;ll contact you on WhatsApp within a few hours to confirm your details and begin
           the matching process.
         </p>
@@ -72,7 +72,7 @@ export function LeadForm() {
             reset()
             setSubmitError(null)
           }}
-          className="mt-6 rounded-lg border border-indigo-600 px-5 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          className="mt-6  border-2 border-[#1040C0] px-5 py-2 text-xs font-bold uppercase tracking-widest text-[#1040C0] transition hover:bg-[#1040C0] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1040C0] focus:ring-offset-2"
         >
           Submit another request
         </button>
@@ -89,7 +89,7 @@ export function LeadForm() {
     >
       {/* Full name */}
       <div>
-        <label htmlFor="full_name" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="full_name" className="block text-sm font-medium text-[#121212]/80">
           Full name <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input
@@ -100,7 +100,7 @@ export function LeadForm() {
           aria-invalid={errors.full_name ? 'true' : 'false'}
           aria-describedby={errors.full_name ? 'full_name-error' : undefined}
           {...register('full_name')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
           placeholder="Your full name"
         />
         {errors.full_name && (
@@ -112,7 +112,7 @@ export function LeadForm() {
 
       {/* WhatsApp number */}
       <div>
-        <label htmlFor="whatsapp_number" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="whatsapp_number" className="block text-sm font-medium text-[#121212]/80">
           WhatsApp number <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input
@@ -123,7 +123,7 @@ export function LeadForm() {
           aria-invalid={errors.whatsapp_number ? 'true' : 'false'}
           aria-describedby={errors.whatsapp_number ? 'whatsapp_number-error' : undefined}
           {...register('whatsapp_number')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
           placeholder="+923001234567 or 03001234567"
         />
         {errors.whatsapp_number && (
@@ -135,7 +135,7 @@ export function LeadForm() {
 
       {/* Role */}
       <fieldset aria-required="true">
-        <legend className="text-sm font-medium text-zinc-700">
+        <legend className="text-sm font-medium text-[#121212]/80">
           I am a <span className="text-red-500" aria-hidden="true">*</span>
         </legend>
         <div className="mt-2 flex gap-6">
@@ -145,7 +145,7 @@ export function LeadForm() {
                 type="radio"
                 value={r}
                 {...register('role')}
-                className="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 border-[#B0B0B0] text-[#1040C0] focus:ring-[#1040C0]"
               />
               {r === 'student' ? 'Student' : 'Parent'}
             </label>
@@ -161,14 +161,14 @@ export function LeadForm() {
       {/* Child name (parent only) */}
       {role === 'parent' && (
         <div>
-          <label htmlFor="child_name" className="block text-sm font-medium text-zinc-700">
-            Child&apos;s name <span className="text-zinc-400">(optional)</span>
+          <label htmlFor="child_name" className="block text-sm font-medium text-[#121212]/80">
+            Child&apos;s name <span className="text-[#121212]/40">(optional)</span>
           </label>
           <input
             id="child_name"
             type="text"
             {...register('child_name')}
-            className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
             placeholder="Your child's name"
           />
         </div>
@@ -176,7 +176,7 @@ export function LeadForm() {
 
       {/* Level */}
       <div>
-        <label htmlFor="level" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="level" className="block text-sm font-medium text-[#121212]/80">
           Level <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <select
@@ -185,7 +185,7 @@ export function LeadForm() {
           aria-invalid={errors.level ? 'true' : 'false'}
           aria-describedby={errors.level ? 'level-error' : undefined}
           {...register('level')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
         >
           <option value="">Select level</option>
           <option value="o_levels">O Levels</option>
@@ -200,7 +200,7 @@ export function LeadForm() {
 
       {/* Subject */}
       <div>
-        <label htmlFor="subject" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="subject" className="block text-sm font-medium text-[#121212]/80">
           Subject <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <select
@@ -209,7 +209,7 @@ export function LeadForm() {
           aria-invalid={errors.subject ? 'true' : 'false'}
           aria-describedby={errors.subject ? 'subject-error' : undefined}
           {...register('subject')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
         >
           <option value="">Select subject</option>
           {SUBJECTS.map((s) => (
@@ -227,8 +227,8 @@ export function LeadForm() {
 
       {/* Exam board (optional) */}
       <div>
-        <label htmlFor="exam_board" className="block text-sm font-medium text-zinc-700">
-          Exam board <span className="text-zinc-400">(optional)</span>
+        <label htmlFor="exam_board" className="block text-sm font-medium text-[#121212]/80">
+          Exam board <span className="text-[#121212]/40">(optional)</span>
         </label>
         {/* defaultValue="not_sure" ensures a valid enum is always submitted
             (never an empty string), consistent with the DB column default. */}
@@ -236,7 +236,7 @@ export function LeadForm() {
           id="exam_board"
           defaultValue="not_sure"
           {...register('exam_board')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
         >
           <option value="not_sure">Not sure / skip</option>
           <option value="cambridge">Cambridge</option>
@@ -247,7 +247,7 @@ export function LeadForm() {
 
       {/* Availability */}
       <div>
-        <label htmlFor="availability" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="availability" className="block text-sm font-medium text-[#121212]/80">
           Availability <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <textarea
@@ -257,7 +257,7 @@ export function LeadForm() {
           aria-invalid={errors.availability ? 'true' : 'false'}
           aria-describedby={errors.availability ? 'availability-error' : undefined}
           {...register('availability')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
           placeholder="e.g. Mon/Wed 6–8 PM PKT, or weekday evenings after 5 PM EST"
         />
         {errors.availability && (
@@ -269,7 +269,7 @@ export function LeadForm() {
 
       {/* City / Timezone */}
       <div>
-        <label htmlFor="city_timezone" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="city_timezone" className="block text-sm font-medium text-[#121212]/80">
           City / Timezone <span className="text-red-500" aria-hidden="true">*</span>
         </label>
         <input
@@ -279,7 +279,7 @@ export function LeadForm() {
           aria-invalid={errors.city_timezone ? 'true' : 'false'}
           aria-describedby={errors.city_timezone ? 'city_timezone-error' : undefined}
           {...register('city_timezone')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
           placeholder="e.g. Lahore (PKT) or Toronto (EST)"
         />
         {errors.city_timezone && (
@@ -291,22 +291,22 @@ export function LeadForm() {
 
       {/* Goals (optional) */}
       <div>
-        <label htmlFor="goals" className="block text-sm font-medium text-zinc-700">
-          Goals <span className="text-zinc-400">(optional)</span>
+        <label htmlFor="goals" className="block text-sm font-medium text-[#121212]/80">
+          Goals <span className="text-[#121212]/40">(optional)</span>
         </label>
         <textarea
           id="goals"
           rows={3}
           {...register('goals')}
-          className="mt-1 block w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          className="mt-1 block w-full  border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none focus:ring-1 focus:ring-[#1040C0]"
           placeholder="e.g. Aiming for A* in Physics, exam in May 2026, struggling with mechanics"
         />
       </div>
 
       {/* Preferred package (optional) */}
       <fieldset>
-        <legend className="text-sm font-medium text-zinc-700">
-          Preferred package <span className="text-zinc-400">(optional)</span>
+        <legend className="text-sm font-medium text-[#121212]/80">
+          Preferred package <span className="text-[#121212]/40">(optional)</span>
         </legend>
         <div className="mt-2 flex flex-wrap gap-4">
           {([
@@ -319,7 +319,7 @@ export function LeadForm() {
                 type="radio"
                 value={pkg.value}
                 {...register('preferred_package')}
-                className="h-4 w-4 border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                className="h-4 w-4 border-[#B0B0B0] text-[#1040C0] focus:ring-[#1040C0]"
               />
               {pkg.label}
             </label>
@@ -363,12 +363,12 @@ export function LeadForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-full inline-flex items-center justify-center gap-2  bg-[#1040C0] px-6 py-3 font-semibold text-white transition hover:bg-[#0830A0] focus:outline-none focus:ring-2 focus:ring-[#1040C0] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isSubmitting ? (
           <>
             <svg
-              className="h-5 w-5 animate-spin text-indigo-100"
+              className="h-5 w-5 animate-spin text-white/70"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

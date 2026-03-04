@@ -4,7 +4,7 @@
 'use server'
 
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createClient } from '@/lib/supabase/server'
+import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
 
 const VALID_ROLES = ['student', 'parent', 'tutor', 'admin'] as const
@@ -14,30 +14,6 @@ function assertValidRole(role: string): asserts role is Role {
   if (!VALID_ROLES.includes(role as Role)) {
     throw new Error(`Invalid role: ${role}`)
   }
-}
-
-/** Verify the calling user is authenticated and has the admin role.
- *  Throws if the caller is not an admin — prevents direct action invocations
- *  from bypassing the layout-level redirect guard.
- */
-async function requireAdmin(): Promise<string> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) throw new Error('Unauthorized: not authenticated')
-
-  const admin = createAdminClient()
-  const { data: roles } = await admin
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-
-  const isAdmin = roles?.some((r) => r.role === 'admin') ?? false
-  if (!isAdmin) throw new Error('Unauthorized: admin role required')
-
-  return user.id
 }
 
 /** Assign a role to a user. Creates the row if not present. */
@@ -110,10 +86,4 @@ export async function setPrimaryRole(userId: string, primaryRole: string) {
     .eq('user_id', userId)
   if (error) throw new Error(`Failed to set primary role: ${error.message}`)
   revalidatePath('/admin/users')
-}
-
-/** Sign out the current user (used in nav sign-out forms). */
-export async function signOut() {
-  const supabase = await createClient()
-  await supabase.auth.signOut()
 }

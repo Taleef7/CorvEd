@@ -3,8 +3,8 @@
 
 'use client'
 
-import { useActionState, useState } from 'react'
-import { reassignTutor, updateMatchDetails } from '../../requests/actions'
+import { useActionState, useState, useEffect, useRef } from 'react'
+import { reassignTutor, updateMatchDetails, updateMatchNotes } from '../../requests/actions'
 import { generateSessionsForMatch } from '@/lib/services/sessions'
 
 const DAY_OPTIONS = [
@@ -57,7 +57,7 @@ export function ReassignTutorForm({
 
   if (state && !state.error) {
     return (
-      <div className="rounded-xl bg-emerald-50 px-5 py-4 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+      <div className="border-2 border-[#121212] bg-white px-5 py-4 text-[#121212]">
         ✅ Tutor reassigned successfully. Refresh to see updated details.
       </div>
     )
@@ -67,7 +67,7 @@ export function ReassignTutorForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-300"
+        className=" border border-[#B0B0B0] px-3 py-1.5 text-sm font-medium text-[#121212]/80 transition hover:border-[#1040C0] hover:text-[#1040C0]"
       >
         ↔ Reassign Tutor
       </button>
@@ -78,19 +78,19 @@ export function ReassignTutorForm({
   const otherTutors = eligibleTutors.filter((t) => t.tutor_user_id !== currentTutorUserId)
 
   return (
-    <div className="space-y-3 rounded-xl border border-amber-200 bg-amber-50 p-5 dark:border-amber-800 dark:bg-amber-900/10">
+    <div className="space-y-3 border-2 border-l-4 border-[#F0C020] bg-[#F0C020]/10 p-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">Reassign Tutor</h3>
+        <h3 className="font-semibold text-[#121212]">Reassign Tutor</h3>
         <button
           onClick={() => setOpen(false)}
-          className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          className="text-sm text-[#121212]/60 hover:text-[#121212]/80"
         >
           Cancel
         </button>
       </div>
 
       {otherTutors.length === 0 ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-[#121212]/60">
           No other approved tutors match this subject and level.
         </p>
       ) : (
@@ -101,25 +101,25 @@ export function ReassignTutorForm({
               <div
                 key={tutor.tutor_user_id}
                 onClick={() => setSelectedTutorId(tutor.tutor_user_id)}
-                className={`cursor-pointer rounded-lg border p-3 transition ${
+                className={`cursor-pointer border-2 p-3 transition ${
                   isSelected
-                    ? 'border-indigo-500 bg-indigo-50 dark:border-indigo-400 dark:bg-indigo-900/20'
-                    : 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900'
+                    ? 'border-[#1040C0] bg-[#1040C0]/5'
+                    : 'border-[#D0D0D0] bg-white'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    <p className="text-sm font-medium text-[#121212]">
                       {tutor.user_profiles?.display_name ?? '—'}
                     </p>
-                    <p className="text-xs text-zinc-500">{tutor.timezone}</p>
+                    <p className="text-xs text-[#121212]/60">{tutor.timezone}</p>
                   </div>
                   <input
                     type="radio"
                     checked={isSelected}
                     onChange={() => setSelectedTutorId(tutor.tutor_user_id)}
                     onClick={(e) => e.stopPropagation()}
-                    className="h-4 w-4 accent-indigo-600"
+                    className="h-4 w-4 accent-[#1040C0]"
                   />
                 </div>
               </div>
@@ -135,26 +135,26 @@ export function ReassignTutorForm({
           <input type="hidden" name="newTutorUserId" value={selectedTutorId} />
 
           <div>
-            <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+            <label className="block text-sm font-medium text-[#121212]/80">
               Reason{' '}
-              <span className="font-normal text-zinc-400">(optional)</span>
+              <span className="font-normal text-[#121212]/40">(optional)</span>
             </label>
             <input
               type="text"
               name="reason"
               placeholder="e.g. tutor unavailable"
-              className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+              className="mt-1 w-full border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none"
             />
           </div>
 
           {state?.error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+            <p className="text-sm text-red-600">{state.error}</p>
           )}
 
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+            className="border-2 border-[#121212] bg-[#D02020] px-4 py-2 text-sm font-bold uppercase tracking-wider text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 disabled:opacity-60"
           >
             {isPending ? 'Reassigning…' : 'Confirm Reassignment'}
           </button>
@@ -222,7 +222,7 @@ export function EditMatchForm({
 
   if (state && !state.error) {
     return (
-      <div className="rounded-xl bg-emerald-50 px-5 py-4 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+      <div className="border-2 border-[#121212] bg-white px-5 py-4 text-[#121212]">
         ✅ Match details updated. Refresh to see changes.
       </div>
     )
@@ -232,7 +232,7 @@ export function EditMatchForm({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-300"
+        className=" border border-[#B0B0B0] px-3 py-1.5 text-sm font-medium text-[#121212]/80 transition hover:border-[#1040C0] hover:text-[#1040C0]"
       >
         ✏️ Edit Meet Link &amp; Schedule
       </button>
@@ -242,16 +242,16 @@ export function EditMatchForm({
   return (
     <form
       action={formAction}
-      className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900"
+      className="space-y-4 border-2 border-[#121212] bg-white p-5"
     >
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">
+        <h3 className="font-semibold text-[#121212]">
           Edit Meet Link &amp; Schedule
         </h3>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-sm text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          className="text-sm text-[#121212]/60 hover:text-[#121212]/80"
         >
           Cancel
         </button>
@@ -260,7 +260,7 @@ export function EditMatchForm({
       <input type="hidden" name="matchId" value={matchId} />
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-[#121212]/80">
           Google Meet Link
         </label>
         <input
@@ -268,12 +268,12 @@ export function EditMatchForm({
           name="meetLink"
           defaultValue={currentMeetLink ?? ''}
           placeholder="https://meet.google.com/xxx-xxxx-xxx"
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-1 w-full border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-[#121212]/80">
           Schedule Timezone
         </label>
         <input
@@ -281,12 +281,12 @@ export function EditMatchForm({
           name="timezone"
           defaultValue={currentSchedule?.timezone ?? ''}
           placeholder="e.g. Asia/Karachi"
-          className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-1 w-full border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="mb-2 block text-sm font-medium text-[#121212]/80">
           Days of Week
         </label>
         <div className="flex flex-wrap gap-3">
@@ -297,7 +297,7 @@ export function EditMatchForm({
                 name="days"
                 value={value}
                 defaultChecked={currentSchedule?.days?.includes(value) ?? false}
-                className="h-4 w-4 rounded accent-indigo-600"
+                className="h-4 w-4 accent-[#1040C0]"
               />
               {label}
             </label>
@@ -306,25 +306,25 @@ export function EditMatchForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+        <label className="block text-sm font-medium text-[#121212]/80">
           Start Time
         </label>
         <input
           type="time"
           name="time"
           defaultValue={currentSchedule?.time ?? ''}
-          className="mt-1 rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          className="mt-1 border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none"
         />
       </div>
 
       {state?.error && (
-        <p className="text-sm text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="text-sm text-red-600">{state.error}</p>
       )}
 
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+        className=" bg-[#1040C0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
       >
         {isPending ? 'Saving…' : 'Save Changes'}
       </button>
@@ -349,7 +349,7 @@ export function GenerateSessionsForm({ matchId }: { matchId: string }) {
 
   if (state && !state.error) {
     return (
-      <div className="rounded-xl bg-emerald-50 px-5 py-4 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+      <div className="border-2 border-[#121212] bg-white px-5 py-4 text-[#121212]">
         ✅ {state.count} session{state.count !== 1 ? 's' : ''} generated successfully. Match is now{' '}
         <strong>active</strong>.{' '}
         <a href="/admin/sessions" className="underline">
@@ -362,23 +362,82 @@ export function GenerateSessionsForm({ matchId }: { matchId: string }) {
   return (
     <form action={formAction}>
       <input type="hidden" name="matchId" value={matchId} />
-      <div className="rounded-xl border border-dashed border-zinc-300 p-4 dark:border-zinc-600">
-        <p className="text-sm font-medium text-zinc-700 dark:text-zinc-300">📅 Generate Sessions</p>
-        <p className="mt-0.5 text-xs text-zinc-500">
+      <div className="border-2 border-dashed border-[#B0B0B0] p-4">
+        <p className="text-sm font-medium text-[#121212]/80">📅 Generate Sessions</p>
+        <p className="mt-0.5 text-xs text-[#121212]/60">
           Creates all sessions for the active package based on the schedule pattern and Meet link.
           Advances match and request to <strong>active</strong>.
         </p>
         {state?.error && (
-          <p className="mt-2 text-sm text-red-600 dark:text-red-400">{state.error}</p>
+          <p className="mt-2 text-sm text-red-600">{state.error}</p>
         )}
         <button
           type="submit"
           disabled={isPending}
-          className="mt-3 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          className="mt-3  bg-[#1040C0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
         >
           {isPending ? 'Generating…' : '⚡ Generate Sessions'}
         </button>
       </div>
+    </form>
+  )
+}
+
+// ── Admin Notes Form ───────────────────────────────────────────────────────────
+
+type NotesResult = { error?: string; success?: boolean } | undefined
+
+async function notesAction(
+  _prev: NotesResult,
+  formData: FormData,
+): Promise<NotesResult> {
+  const matchId = formData.get('matchId') as string
+  const adminNotes = formData.get('adminNotes') as string
+  return updateMatchNotes({ matchId, adminNotes })
+}
+
+export function AdminNotesForm({
+  matchId,
+  currentNotes,
+}: {
+  matchId: string
+  currentNotes: string | null
+}) {
+  const [state, formAction, isPending] = useActionState(notesAction, undefined)
+  const prevStateRef = useRef(state)
+
+  useEffect(() => {
+    if (state && state !== prevStateRef.current && state.success) {
+      // Toast-like feedback (relies on parent Toaster already present via root layout)
+      // No external toast import needed — just visual confirmation via the form itself
+    }
+    prevStateRef.current = state
+  }, [state])
+
+  return (
+    <form action={formAction} className="border-2 border-[#121212] bg-white p-5 space-y-3">
+      <h3 className="font-semibold text-[#121212]">📝 Admin Notes</h3>
+      <input type="hidden" name="matchId" value={matchId} />
+      <textarea
+        name="adminNotes"
+        defaultValue={currentNotes ?? ''}
+        rows={3}
+        placeholder="Internal notes about this match (not visible to students/tutors)"
+        className="w-full border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none"
+      />
+      {state?.error && (
+        <p className="text-sm text-red-600">{state.error}</p>
+      )}
+      {state?.success && (
+        <p className="text-sm text-green-700">✅ Notes saved.</p>
+      )}
+      <button
+        type="submit"
+        disabled={isPending}
+        className="bg-[#1040C0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
+      >
+        {isPending ? 'Saving…' : 'Save Notes'}
+      </button>
     </form>
   )
 }

@@ -38,19 +38,15 @@ export function PackageSummary({
 
   if (status === 'pending') {
     return (
-      <div className="rounded-2xl border border-yellow-200 bg-yellow-50 px-6 py-5 dark:border-yellow-800 dark:bg-yellow-900/20">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">📦</span>
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">Package Summary</h2>
-        </div>
-        <p className="mt-2 text-sm text-yellow-800 dark:text-yellow-300">
-          ⏳ Payment pending verification. Sessions will appear once payment is confirmed.
+      <div className="border-l-4 border-[#F0C020] bg-[#F0C020]/10 px-5 py-4">
+        <p className="text-sm font-medium text-[#121212]">
+          ⏳ Payment pending verification — sessions will appear once confirmed.
         </p>
         <Link
           href={`/dashboard/packages/${packageId}`}
-          className="mt-2 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+          className="mt-2 inline-flex min-h-[36px] items-center border-2 border-[#121212] bg-[#F0C020] px-4 py-1 text-xs font-bold uppercase tracking-widest text-[#121212] shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
         >
-          View payment details →
+          View Payment Details
         </Link>
       </div>
     )
@@ -58,19 +54,17 @@ export function PackageSummary({
 
   if (status === 'expired') {
     return (
-      <div className="rounded-2xl border border-zinc-200 bg-zinc-50 px-6 py-5 dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">📦</span>
-          <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">Package Summary</h2>
-        </div>
-        <p className="mt-2 text-sm text-zinc-500">
-          Package expired ({formatDate(start_date)} → {formatDate(end_date)}).
+      <div className="border-4 border-[#121212] bg-[#E0E0E0] px-6 py-5">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Package</p>
+        <p className="mt-1 font-black text-[#121212]">Package Summary</p>
+        <p className="mt-2 text-sm text-[#121212]/60">
+          Expired — {formatDate(start_date)} to {formatDate(end_date)}.
         </p>
         <Link
           href="/dashboard/requests/new"
-          className="mt-2 inline-block text-xs font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+          className="mt-3 inline-flex min-h-[36px] items-center border-2 border-[#121212] bg-white px-4 py-1 text-xs font-bold uppercase tracking-widest text-[#121212] shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
         >
-          Renew →
+          Renew Package
         </Link>
       </div>
     )
@@ -86,62 +80,58 @@ export function PackageSummary({
 
   // Active package
   return (
-    <div className="rounded-2xl border border-zinc-200 bg-white px-6 py-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex items-center gap-2">
-        <span className="text-lg">📦</span>
-        <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">Package Summary</h2>
-      </div>
+    <div className="border-4 border-[#121212] bg-white px-6 py-5 shadow-[4px_4px_0px_0px_#121212]">
+      <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Package</p>
+      <p className="mt-1 font-black text-[#121212]">Package Summary</p>
 
-      <dl className="mt-3 space-y-1 text-sm">
+      <dl className="mt-3 space-y-1.5 text-sm">
         <div className="flex justify-between">
-          <dt className="text-zinc-500">Package</dt>
-          <dd className="font-medium text-zinc-800 dark:text-zinc-200">
-            {tier_sessions} sessions/month
+          <dt className="text-[#121212]/50">Tier</dt>
+          <dd className="font-bold text-[#121212]">{tier_sessions} sessions / month</dd>
+        </div>
+        <div className="flex justify-between">
+          <dt className="text-[#121212]/50">Period</dt>
+          <dd className="font-bold text-[#121212]">
+            {formatDate(start_date)} – {formatDate(end_date)}
           </dd>
         </div>
         <div className="flex justify-between">
-          <dt className="text-zinc-500">Month</dt>
-          <dd className="font-medium text-zinc-800 dark:text-zinc-200">
-            {formatDate(start_date)} → {formatDate(end_date)}
-          </dd>
-        </div>
-        <div className="flex justify-between">
-          <dt className="text-zinc-500">Sessions remaining</dt>
-          <dd className="font-semibold text-indigo-600 dark:text-indigo-400">
+          <dt className="text-[#121212]/50">Remaining</dt>
+          <dd className="font-black text-[#1040C0]">
             {sessionsRemaining} of {tier_sessions}
           </dd>
         </div>
       </dl>
 
       {/* Progress bar */}
-      <div className="mt-3">
-        <div className="h-2 w-full overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-700">
+      <div className="mt-4">
+        <div className="h-3 w-full border-2 border-[#121212] bg-[#E0E0E0]">
           <div
-            className="h-full rounded-full bg-indigo-500 transition-all"
+            className="h-full bg-[#1040C0] transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-zinc-400">
+        <p className="mt-1 text-xs text-[#121212]/50">
           {sessions_used} of {tier_sessions} sessions used
         </p>
       </div>
 
       {/* Renewal alert */}
       {showRenewalAlert && (
-        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-800 dark:bg-amber-900/20">
-          <p className="text-xs text-amber-800 dark:text-amber-300">
+        <div className="mt-4 border-l-4 border-[#D02020] bg-[#D02020]/5 px-3 py-2">
+          <p className="text-xs font-bold text-[#D02020]">
             {sessionsRemaining === 0
-              ? `⚠️ Your sessions are used up. Renew to continue.`
-              : `⚠️ Only ${sessionsRemaining} session${sessionsRemaining === 1 ? '' : 's'} left${daysUntilEnd <= 5 ? ` and ${daysUntilEnd} day${daysUntilEnd === 1 ? '' : 's'} until package ends` : ''}. Renew soon to avoid gaps.`}
+              ? `Sessions used up. Renew to continue.`
+              : `Only ${sessionsRemaining} session${sessionsRemaining === 1 ? '' : 's'} left${daysUntilEnd <= 5 ? ` — ${daysUntilEnd} day${daysUntilEnd === 1 ? '' : 's'} remaining` : ''}. Renew soon.`}
           </p>
           {renewalHref && (
             <a
               href={renewalHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+              className="mt-2 inline-flex min-h-[36px] items-center border-2 border-[#D02020] bg-[#D02020] px-4 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
             >
-              Chat to Renew →
+              Chat to Renew
             </a>
           )}
         </div>

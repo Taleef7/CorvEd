@@ -42,43 +42,50 @@ export function NextSessionCard({
     (match?.tutor_profiles?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
 
   return (
-    <div className="rounded-2xl bg-indigo-50 px-6 py-5 shadow-sm dark:bg-indigo-900/20">
-      <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">
-        🎓 Your Next Session
-      </p>
-      <p className="mt-1 text-xl font-bold text-zinc-900 dark:text-zinc-50">
-        {formatSessionTime(session.scheduled_start_utc, userTimezone)}
-      </p>
-      <p className="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
-        {subjectName} — {levelLabel}
-      </p>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">With: {tutorName}</p>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        {match?.meet_link && (
-          <a
-            href={match.meet_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700"
-          >
-            🔗 Join Google Meet
-          </a>
-        )}
-        <RescheduleButton
-          subject={subjectName}
-          level={levelLabel}
-          scheduledStartUtc={session.scheduled_start_utc}
-          studentTimezone={userTimezone}
-          serverNowMs={serverNowMs}
-        />
+    <div className="border-4 border-[#121212] bg-[#1040C0] shadow-[6px_6px_0px_0px_#121212]">
+      <div className="px-6 py-5">
+        <p className="text-xs font-bold uppercase tracking-widest text-white/70">
+          Your Next Session
+        </p>
+        <p className="mt-1 text-xl font-black text-white">
+          {formatSessionTime(session.scheduled_start_utc, userTimezone)}
+        </p>
+        <p className="mt-0.5 text-sm font-medium text-white/80">
+          {subjectName} — {levelLabel}
+        </p>
+        <p className="text-sm text-white/60">Tutor: {tutorName}</p>
+
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          {match?.meet_link && (
+            <a
+              href={match.meet_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Join Google Meet session"
+              className="inline-flex min-h-[44px] items-center border-2 border-white bg-white px-5 py-2 text-xs font-bold uppercase tracking-widest text-[#1040C0] shadow-[3px_3px_0px_0px_rgba(0,0,0,0.3)] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
+            >
+              Join Google Meet
+            </a>
+          )}
+          <RescheduleButton
+            subject={subjectName}
+            level={levelLabel}
+            scheduledStartUtc={session.scheduled_start_utc}
+            studentTimezone={userTimezone}
+            serverNowMs={serverNowMs}
+          />
+        </div>
       </div>
+
       {viewAllHref && (
-        <Link
-          href={viewAllHref}
-          className="mt-3 inline-block text-xs text-indigo-600 hover:underline dark:text-indigo-400"
-        >
-          View all sessions →
-        </Link>
+        <div className="border-t-2 border-white/20 px-6 py-3">
+          <Link
+            href={viewAllHref}
+            className="text-xs font-bold uppercase tracking-widest text-white/70 underline-offset-4 hover:text-white hover:underline"
+          >
+            View All Sessions ›
+          </Link>
+        </div>
       )}
     </div>
   )

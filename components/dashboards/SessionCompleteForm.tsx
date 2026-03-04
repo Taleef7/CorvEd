@@ -3,8 +3,9 @@
 
 'use client'
 
-import { useActionState, useState } from 'react'
+import { useActionState, useState, useEffect } from 'react'
 import { tutorUpdateSessionStatus } from '@/lib/services/sessions'
+import { toast } from 'sonner'
 
 type UpdateResult = { error?: string } | undefined
 
@@ -53,9 +54,18 @@ export function SessionCompleteForm({ sessionId }: Props) {
   const [open, setOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(tutorUpdateStatusAction, undefined)
 
+  // Show toast on success or error
+  useEffect(() => {
+    if (state && !state.error) {
+      toast.success('Session updated successfully')
+    } else if (state?.error) {
+      toast.error(state.error)
+    }
+  }, [state])
+
   if (state && !state.error) {
     return (
-      <span className="text-xs text-emerald-600 dark:text-emerald-400">✅ Session updated</span>
+      <span className="text-xs font-bold text-[#121212]">&#10003; Session updated</span>
     )
   }
 
@@ -63,7 +73,7 @@ export function SessionCompleteForm({ sessionId }: Props) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="rounded border border-zinc-300 px-2 py-1 text-xs font-medium text-zinc-600 transition hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-600 dark:text-zinc-400"
+        className="border-2 border-[#121212] px-2 py-1 text-xs font-medium text-[#121212]/70 transition hover:border-[#1040C0] hover:text-[#1040C0] "
       >
         Mark Session
       </button>
@@ -71,53 +81,53 @@ export function SessionCompleteForm({ sessionId }: Props) {
   }
 
   return (
-    <form action={formAction} className="mt-2 space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+    <form action={formAction} className="mt-2 space-y-2 border border-[#D0D0D0] bg-[#F0F0F0] p-3">
       <input type="hidden" name="sessionId" value={sessionId} />
 
-      <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mark Session Complete</p>
+      <p className="text-xs font-semibold text-[#121212]/80">Mark Session Complete</p>
 
       <div className="flex flex-wrap gap-3">
         {STATUS_OPTIONS.map((opt) => (
-          <label key={opt.value} className="flex cursor-pointer items-center gap-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+          <label key={opt.value} className="flex cursor-pointer items-center gap-1.5 text-xs text-[#121212]/80">
             <input
               type="radio"
               name="status"
               value={opt.value}
               defaultChecked={opt.value === 'done'}
-              className="accent-indigo-600"
+              className="accent-[#1040C0]"
             />
             {opt.icon} {opt.label}
           </label>
         ))}
       </div>
 
-      <label htmlFor={`notes-${sessionId}`} className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-        Session notes <span className="font-normal text-zinc-400">(optional)</span>
+      <label htmlFor={`notes-${sessionId}`} className="text-xs font-medium text-[#121212]/80">
+        Session notes <span className="font-normal text-[#121212]/40">(optional)</span>
       </label>
       <textarea
         id={`notes-${sessionId}`}
         name="tutorNotes"
         placeholder="e.g. topics covered, homework set"
         rows={2}
-        className="w-full rounded border border-zinc-300 px-2 py-1 text-xs focus:border-indigo-400 focus:outline-none dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        className="w-full border-2 border-[#121212] px-2 py-1 text-xs focus:border-[#1040C0] focus:outline-none "
       />
 
       {state?.error && (
-        <p className="text-xs text-red-600 dark:text-red-400">{state.error}</p>
+        <p className="text-xs text-red-600">{state.error}</p>
       )}
 
       <div className="flex gap-2">
         <button
           type="submit"
           disabled={isPending}
-          className="rounded bg-indigo-600 px-2 py-1 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          className="rounded bg-[#1040C0] px-2 py-1 text-xs font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
         >
           {isPending ? 'Saving…' : 'Submit'}
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="text-xs text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300"
+          className="text-xs text-[#121212]/60 hover:text-[#121212]/80"
         >
           Cancel
         </button>

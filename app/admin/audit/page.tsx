@@ -59,44 +59,44 @@ export default async function AdminAuditPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Audit Log</h1>
-          <p className="mt-1 text-sm text-zinc-500">
+          <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Audit Log</h1>
+          <p className="mt-1 text-sm text-[#121212]/60">
             Most recent {logs.length} platform events — times shown in PKT (Asia/Karachi)
           </p>
         </div>
       </div>
 
       {logs.length === 0 ? (
-        <div className="rounded-2xl bg-white px-8 py-12 text-center shadow-sm dark:bg-zinc-900">
-          <p className="text-zinc-500">No audit events recorded yet.</p>
-          <p className="mt-1 text-sm text-zinc-400">
+        <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center">
+          <p className="text-[#121212]/60">No audit events recorded yet.</p>
+          <p className="mt-1 text-sm text-[#121212]/40">
             Events are logged automatically when admin actions are performed (payments, tutor
             approvals, session updates, etc.).
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-          <table className="min-w-full divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
-            <thead className="bg-zinc-50 dark:bg-zinc-800">
+        <div className="overflow-x-auto border-4 border-[#121212] bg-white">
+          <table className="min-w-full divide-y divide-[#E0E0E0] text-sm">
+            <thead className="bg-[#121212]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
                   Timestamp
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
                   Actor
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
                   Action
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
                   Entity
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
                   Details
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-50 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[#E0E0E0]">
               {logs.map((log) => {
                 const actorName =
                   (log.user_profiles as { display_name: string } | null)?.display_name ?? 'System'
@@ -118,20 +118,20 @@ export default async function AdminAuditPage() {
                 return (
                   <tr
                     key={log.id}
-                    className="hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+                    className="hover:bg-[#F0F0F0]/50"
                   >
-                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-zinc-500 dark:text-zinc-400">
+                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-[#121212]/60 ">
                       {formatAuditTime(log.created_at)}
                     </td>
-                    <td className="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">{actorName}</td>
-                    <td className="px-4 py-2.5 text-zinc-900 dark:text-zinc-100">{actionLabel}</td>
+                    <td className="px-4 py-2.5 text-[#121212]/80">{actorName}</td>
+                    <td className="px-4 py-2.5 text-[#121212]">{actionLabel}</td>
                     <td className="px-4 py-2.5 text-xs">
-                      <span className="rounded bg-zinc-100 px-1.5 py-0.5 font-mono text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400">
+                      <span className="bg-[#E0E0E0] px-1.5 py-0.5 font-mono text-[#121212]">
                         {log.entity_type}
                       </span>{' '}
-                      <span className="text-zinc-400 dark:text-zinc-500">{entityIdShort}</span>
+                      <span className="text-[#121212]/40">{entityIdShort}</span>
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-zinc-500 dark:text-zinc-400 max-w-xs truncate">
+                    <td className="px-4 py-2.5 text-xs text-[#121212]/60  max-w-xs truncate">
                       {detailsStr}
                     </td>
                   </tr>

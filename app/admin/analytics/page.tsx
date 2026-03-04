@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getExpiringPackages } from '@/lib/services/payments'
 
 export default async function AdminAnalyticsPage() {
   const admin = createAdminClient()
@@ -12,6 +13,41 @@ export default async function AdminAnalyticsPage() {
   const plus7 = new Date(now.getTime() + 7 * 86400000).toISOString()
   const minus7 = new Date(now.getTime() - 7 * 86400000).toISOString()
   const nowIso = now.toISOString()
+
+  // Fetch expiring packages for renewal alerts
+  const expiringPackages = await getExpiringPackages(5)
+
+  // Fetch student names for expiring packages
+  let renewalAlerts: { packageId: string; studentName: string; sessionsRemaining: number; endDate: string }[] = []
+  if (expiringPackages.length > 0) {
+    const requestIds = expiringPackages.map((p) => p.request_id)
+    const { data: requests } = await admin
+      .from('requests')
+      .select('id, created_by_user_id, subjects(name)')
+      .in('id', requestIds)
+
+    if (requests) {
+      const userIds = [...new Set(requests.map((r: { created_by_user_id: string }) => r.created_by_user_id))]
+      const { data: profiles } = await admin
+        .from('user_profiles')
+        .select('user_id, display_name')
+        .in('user_id', userIds)
+
+      const profileMap = new Map((profiles ?? []).map((p: { user_id: string; display_name: string }) => [p.user_id, p.display_name]))
+      const requestMap = new Map(requests.map((r: { id: string; created_by_user_id: string; subjects: { name: string } | { name: string }[] | null }) => [r.id, r]))
+
+      renewalAlerts = expiringPackages.map((pkg) => {
+        const req = requestMap.get(pkg.request_id) as { created_by_user_id: string; subjects: { name: string } | { name: string }[] | null } | undefined
+        const name = req ? (profileMap.get(req.created_by_user_id) ?? 'Unknown') : 'Unknown'
+        return {
+          packageId: pkg.id,
+          studentName: name,
+          sessionsRemaining: pkg.tier_sessions - pkg.sessions_used,
+          endDate: pkg.end_date,
+        }
+      })
+    }
+  }
 
   const [
     activeStudents,
@@ -22,8 +58,8 @@ export default async function AdminAnalyticsPage() {
     pendingPayments,
     pendingTutors,
   ] = await Promise.all([
-    // Active students: requests with status = 'active'
-    admin.from('requests').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+    // Active students: unique users with active requests
+    admin.from('requests').select('created_by_user_id').eq('status', 'active'),
     // Active tutors: tutor_profiles with approved = true
     admin
       .from('tutor_profiles')
@@ -72,7 +108,9 @@ export default async function AdminAnalyticsPage() {
   }
 
   const metrics = {
-    activeStudents: activeStudents.count ?? 0,
+    activeStudents: new Set(
+      (activeStudents.data ?? []).map((r: { created_by_user_id: string }) => r.created_by_user_id)
+    ).size,
     activeTutors: activeTutors.count ?? 0,
     upcomingSessions: upcomingSessions.count ?? 0,
     missedSessions: missedSessions.count ?? 0,
@@ -84,15 +122,15 @@ export default async function AdminAnalyticsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">Analytics</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Analytics</h1>
+        <p className="mt-1 text-sm text-[#121212]/60">
           Platform health snapshot — refreshed on every page load.
         </p>
       </div>
 
       {/* ── Primary metrics ── */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#121212]/40">
           Overview
         </h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -122,7 +160,7 @@ export default async function AdminAnalyticsPage() {
 
       {/* ── Sessions health ── */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#121212]/40">
           Session Health
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -145,9 +183,33 @@ export default async function AdminAnalyticsPage() {
         </div>
       </section>
 
+      {/* ── Renewal Alerts ── */}
+      {renewalAlerts.length > 0 && (
+        <section>
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#121212]/40">
+            Renewals Due (Next 5 Days)
+          </h2>
+          <div className="border-4 border-[#121212] bg-[#F0C020]/10 divide-y-2 divide-[#121212]">
+            {renewalAlerts.map((alert) => (
+              <div key={alert.packageId} className="flex items-center justify-between px-5 py-3">
+                <div>
+                  <p className="text-sm font-bold text-[#121212]">{alert.studentName}</p>
+                  <p className="text-xs text-[#121212]/50">
+                    {alert.sessionsRemaining} sessions left · Expires {alert.endDate}
+                  </p>
+                </div>
+                <span className="text-xs font-bold uppercase tracking-widest text-[#F0C020] border-2 border-[#121212] bg-white px-2 py-1">
+                  Renewal Due
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* ── Action items ── */}
       <section>
-        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-[#121212]/40">
           Action Required
         </h2>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -193,35 +255,35 @@ function MetricCard({
   linkLabel?: string
 }) {
   const base =
-    'rounded-xl border p-5 shadow-sm transition'
+    'border-4 border-[#121212] p-5 transition'
 
   const styles: Record<string, string> = {
     normal:
-      'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900',
+      'bg-white',
     warning:
-      'border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/30',
+      'border-l-[#F0C020] bg-[#F0C020]/10',
     attention:
-      'border-orange-200 bg-orange-50 dark:border-orange-800/60 dark:bg-orange-950/30',
+      'bg-[#D02020]/5 border-l-[#D02020]',
   }
 
   const valueStyles: Record<string, string> = {
-    normal: 'text-zinc-900 dark:text-zinc-50',
-    warning: 'text-amber-700 dark:text-amber-400',
-    attention: 'text-orange-700 dark:text-orange-400',
+    normal: 'text-[#121212]',
+    warning: 'text-[#121212]',
+    attention: 'text-[#121212]',
   }
 
   const content = (
     <div className={`${base} ${styles[variant]} ${href ? 'hover:shadow-md cursor-pointer' : ''}`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xl">{icon}</span>
-        <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/60">
           {label}
         </p>
       </div>
       <p className={`text-4xl font-bold ${valueStyles[variant]}`}>{value}</p>
-      <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">{unit}</p>
+      <p className="mt-1 text-xs text-[#121212]/40">{unit}</p>
       {href && linkLabel && (
-        <p className="mt-3 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+        <p className="mt-3 text-xs font-medium text-[#1040C0]">
           {linkLabel}
         </p>
       )}
