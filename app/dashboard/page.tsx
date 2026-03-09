@@ -160,11 +160,18 @@ export default async function DashboardPage() {
   const statusBanner = primaryRequest ? getRequestStatusBanner(primaryRequest.status) : null
 
   // Compute server-side "now" timestamp for renewal alert (avoids impure Date.now() in render)
-  const serverNowMs = new Date().getTime()
+  const nowIso = new Date().toISOString()
+  const serverNowMs = new Date(nowIso).getTime()
+
+  // Quick stats
+  const totalSubjects = requests?.length ?? 0
+  const activeCount = requests?.filter((r) => r.status === 'active').length ?? 0
+  const pendingCount =
+    requests?.filter((r) => ['new', 'payment_pending', 'ready_to_match', 'matched'].includes(r.status)).length ?? 0
 
   return (
     <div className="min-h-screen bg-[#F0F0F0] px-4 py-10">
-      <div className="mx-auto w-full max-w-2xl space-y-6">
+      <div className="mx-auto w-full max-w-5xl space-y-6">
         {/* Status banner */}
         {statusBanner && (
           <StatusBanner message={statusBanner.message} variant={statusBanner.variant} />
@@ -173,12 +180,12 @@ export default async function DashboardPage() {
         {/* Onboarding checklist */}
         <OnboardingChecklist steps={onboardingSteps} />
 
-        {/* Header */}
+        {/* Header row */}
         <div className="flex items-start justify-between border-b-4 border-[#121212] pb-4">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Student</p>
             <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212] leading-tight">
-              My Requests
+              Dashboard
             </h1>
           </div>
           <Link
@@ -189,7 +196,28 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* Next Session Card (T9.1) */}
+        {/* Stats strip */}
+        <dl className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Subjects', value: totalSubjects, href: '#requests' },
+            { label: 'Active', value: activeCount, accent: activeCount > 0 },
+            { label: 'Pending', value: pendingCount },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className={`border-2 px-4 py-3 ${stat.accent ? 'border-[#1040C0] bg-[#1040C0]/5' : 'border-[#121212] bg-white'}`}
+            >
+              <dd className={`text-2xl font-black ${stat.accent ? 'text-[#1040C0]' : 'text-[#121212]'}`}>
+                {stat.value}
+              </dd>
+              <dt className="text-xs font-medium uppercase tracking-widest text-[#121212]/50">
+                {stat.label}
+              </dt>
+            </div>
+          ))}
+        </dl>
+
+        {/* Next Session Card (T9.1) — full width */}
         {nextSession ? (
           <NextSessionCard
             session={nextSession}
@@ -214,91 +242,99 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {/* Requests list */}
-        {!requests || requests.length === 0 ? (
-          <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center shadow-[8px_8px_0px_0px_#121212]">
-            <div aria-hidden="true" className="mx-auto mb-4 h-12 w-12 border-4 border-[#121212] bg-[#F0C020]" />
-            <p className="font-bold text-[#121212]">No requests yet.</p>
-            <p className="mt-1 text-sm text-[#121212]/60">Submit a tutoring request to get started.</p>
-            <Link
-              href="/dashboard/requests/new"
-              className="mt-6 inline-flex min-h-[44px] items-center border-2 border-[#121212] bg-[#D02020] px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
-            >
-              Submit First Request
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {requests.map((req) => {
-              const subj = req.subjects
-              const subjectName =
-                (Array.isArray(subj) ? subj[0]?.name : (subj as { name: string } | null)?.name) ??
-                `Subject #${req.subject_id}`
-              const status = req.status as RequestStatus
-              const date = new Date(req.created_at).toLocaleDateString('en-GB', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric',
-              })
-              const pkg = packagesByRequestId[req.id]
-              return (
-                <div key={req.id} className="space-y-2">
-                  <Link
-                    href={`/dashboard/requests/${req.id}`}
-                    className="flex items-center justify-between border-4 border-[#121212] bg-white px-6 py-4 shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#121212]"
-                  >
-                    <div>
-                      <p className="font-bold text-[#121212]">{subjectName}</p>
-                      <p className="mt-0.5 text-xs text-[#121212]/50">
-                        {LEVEL_LABELS[req.level] ?? req.level} · Submitted {date}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <StatusBadge status={status} />
-                      <span className="text-[#121212]/40 text-sm font-bold">›</span>
-                    </div>
-                  </Link>
+        {/* Requests grid */}
+        <div id="requests">
+          <h2 className="mb-3 text-xs font-bold uppercase tracking-widest text-[#121212]/50">
+            My Subjects
+          </h2>
+          {!requests || requests.length === 0 ? (
+            <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center shadow-[8px_8px_0px_0px_#121212]">
+              <div aria-hidden="true" className="mx-auto mb-4 h-12 w-12 border-4 border-[#121212] bg-[#F0C020]" />
+              <p className="font-bold text-[#121212]">No requests yet.</p>
+              <p className="mt-1 text-sm text-[#121212]/60">Submit a tutoring request to get started.</p>
+              <Link
+                href="/dashboard/requests/new"
+                className="mt-6 inline-flex min-h-[44px] items-center border-2 border-[#121212] bg-[#D02020] px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-white shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              >
+                Submit First Request
+              </Link>
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {requests.map((req) => {
+                const subj = req.subjects
+                const subjectName =
+                  (Array.isArray(subj) ? subj[0]?.name : (subj as { name: string } | null)?.name) ??
+                  `Subject #${req.subject_id}`
+                const status = req.status as RequestStatus
+                const date = new Date(req.created_at).toLocaleDateString('en-GB', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                })
+                const pkg = packagesByRequestId[req.id]
+                return (
+                  <div key={req.id} className="flex flex-col border-4 border-[#121212] bg-white shadow-[4px_4px_0px_0px_#121212]">
+                    {/* Card header — links to request detail */}
+                    <Link
+                      href={`/dashboard/requests/${req.id}`}
+                      className="flex items-start justify-between px-5 py-4 transition hover:bg-[#F8F8F8]"
+                    >
+                      <div>
+                        <p className="font-bold text-[#121212]">{subjectName}</p>
+                        <p className="mt-0.5 text-xs text-[#121212]/50">
+                          {LEVEL_LABELS[req.level] ?? req.level} · Submitted {date}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={status} />
+                        <span className="text-[#121212]/40 text-sm font-bold">›</span>
+                      </div>
+                    </Link>
 
-                  {/* Package summary card */}
-                  {pkg ? (
-                    <PackageSummary
-                      tier_sessions={pkg.tier_sessions}
-                      sessions_used={pkg.sessions_used}
-                      start_date={pkg.start_date}
-                      end_date={pkg.end_date}
-                      status={pkg.status}
-                      packageId={pkg.id}
-                      daysUntilEnd={Math.max(
-                        0,
-                        Math.ceil(
-                          (new Date(pkg.end_date).getTime() - serverNowMs) / (1000 * 60 * 60 * 24),
-                        ),
-                      )}
-                    />
-                  ) : status === 'new' ? (
-                    <div className="border-l-4 border-[#1040C0] bg-[#1040C0]/5 px-4 py-3">
-                      <p className="text-sm font-medium text-[#1040C0]">
-                        {req.preferred_package_tier
-                          ? `Confirm your ${req.preferred_package_tier}-session package and pay to begin matching.`
-                          : 'Select a package to begin the matching process.'}
-                      </p>
-                      <Link
-                        href={
-                          req.preferred_package_tier
-                            ? `/dashboard/packages/new?requestId=${req.id}&tier=${req.preferred_package_tier}`
-                            : `/dashboard/packages/new?requestId=${req.id}`
-                        }
-                        className="mt-2 inline-flex min-h-[36px] items-center border-2 border-[#1040C0] bg-[#1040C0] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white shadow-[3px_3px_0px_0px_#121212] transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-                      >
-                        {req.preferred_package_tier ? 'Continue to Payment' : 'Select Package'}
-                      </Link>
-                    </div>
-                  ) : null}
-                </div>
-              )
-            })}
-          </div>
-        )}
+                    {/* Package summary or payment CTA */}
+                    {pkg ? (
+                      <div className="border-t-2 border-[#E8E8E8] px-5 py-3">
+                        <PackageSummary
+                          tier_sessions={pkg.tier_sessions}
+                          sessions_used={pkg.sessions_used}
+                          start_date={pkg.start_date}
+                          end_date={pkg.end_date}
+                          status={pkg.status}
+                          packageId={pkg.id}
+                          daysUntilEnd={Math.max(
+                            0,
+                            Math.ceil(
+                              (new Date(pkg.end_date).getTime() - serverNowMs) / (1000 * 60 * 60 * 24),
+                            ),
+                          )}
+                        />
+                      </div>
+                    ) : status === 'new' ? (
+                      <div className="border-t-2 border-[#1040C0]/30 bg-[#1040C0]/5 px-5 py-3">
+                        <p className="text-xs font-medium text-[#1040C0]">
+                          {req.preferred_package_tier
+                            ? `Confirm ${req.preferred_package_tier}-session package to begin matching.`
+                            : 'Select a package to begin the matching process.'}
+                        </p>
+                        <Link
+                          href={
+                            req.preferred_package_tier
+                              ? `/dashboard/packages/new?requestId=${req.id}&tier=${req.preferred_package_tier}`
+                              : `/dashboard/packages/new?requestId=${req.id}`
+                          }
+                          className="mt-2 inline-flex min-h-[32px] items-center border-2 border-[#1040C0] bg-[#1040C0] px-3 py-1 text-xs font-bold uppercase tracking-widest text-white transition hover:-translate-y-0.5 active:translate-x-[1px] active:translate-y-[1px]"
+                        >
+                          {req.preferred_package_tier ? 'Continue to Payment' : 'Select Package'}
+                        </Link>
+                      </div>
+                    ) : null}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
