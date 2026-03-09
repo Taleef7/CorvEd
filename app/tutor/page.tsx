@@ -40,7 +40,7 @@ export default async function TutorPage() {
        matches!sessions_match_id_fkey (
          meet_link,
          requests!matches_request_id_fkey (
-           level,
+           level, for_student_name,
            subjects ( name ),
            user_profiles!requests_created_by_user_id_fkey ( display_name )
          )
@@ -74,6 +74,7 @@ export default async function TutorPage() {
       meet_link: string | null
       requests: {
         level: string | null
+        for_student_name: string | null
         subjects: { name: string } | null
         user_profiles: { display_name: string } | null
       } | null
@@ -84,6 +85,7 @@ export default async function TutorPage() {
   const nextMatch = nextSession?.matches
   const nextReq = nextMatch?.requests
   const nextStudentName =
+    nextReq?.for_student_name ??
     (nextReq?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
   const nextSubjectName = (nextReq?.subjects as { name: string } | null)?.name ?? '—'
   const nextLevel = getLevelLabel(nextReq?.level)
@@ -104,7 +106,6 @@ export default async function TutorPage() {
       {/* Next Session */}
       {nextSession ? (
         <div className="relative border-4 border-[#121212] bg-[#1040C0] p-6 shadow-[6px_6px_0px_0px_#121212]">
-          {/* Geometric decoration */}
           <div className="absolute top-4 right-4 h-8 w-8 rounded-full border-2 border-white opacity-40" aria-hidden="true" />
           <p className="text-xs font-bold uppercase tracking-widest text-white/70">Your Next Session</p>
           <p className="mt-2 text-2xl font-black uppercase tracking-tight text-white">
@@ -147,43 +148,24 @@ export default async function TutorPage() {
         </div>
       )}
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
-        <div className="border-4 border-[#121212] bg-white p-5 shadow-[4px_4px_0px_0px_#121212]">
+      {/* Stats grid — all 4 cards are clickable links */}
+      <div className="grid grid-cols-2 gap-4">
+        <Link
+          href="/tutor/sessions?view=upcoming"
+          className="block border-4 border-[#121212] bg-white p-5 shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#121212]"
+        >
           <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Upcoming</p>
           <p className="mt-1 text-5xl font-black text-[#121212]">{upcomingCount}</p>
           <p className="text-xs text-[#121212]/50">sessions scheduled</p>
-        </div>
-        <div className="border-4 border-[#121212] bg-[#F0C020] p-5 shadow-[4px_4px_0px_0px_#121212]">
+        </Link>
+        <Link
+          href="/tutor/sessions?view=past"
+          className="block border-4 border-[#121212] bg-[#F0C020] p-5 shadow-[4px_4px_0px_0px_#121212] transition hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#121212]"
+        >
           <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/70">Completed</p>
           <p className="mt-1 text-5xl font-black text-[#121212]">{completedCount}</p>
           <p className="text-xs text-[#121212]/70">sessions taught</p>
-        </div>
-      </div>
-
-      {/* Quick Links */}
-      <div className="border-4 border-[#121212] bg-white p-5 shadow-[4px_4px_0px_0px_#121212]">
-        <p className="mb-4 text-xs font-bold uppercase tracking-widest text-[#121212]/50">Quick Links</p>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/tutor/sessions"
-            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
-          >
-            All Sessions
-          </Link>
-          <Link
-            href="/tutor/profile"
-            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
-          >
-            My Profile
-          </Link>
-          <Link
-            href="/tutor/conduct"
-            className="inline-flex min-h-[44px] items-center border-2 border-[#121212] px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#121212] hover:bg-[#121212] hover:text-white transition-colors"
-          >
-            Code of Conduct
-          </Link>
-        </div>
+        </Link>
       </div>
     </div>
   )
