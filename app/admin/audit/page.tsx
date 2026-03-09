@@ -4,10 +4,10 @@
 export const dynamic = 'force-dynamic'
 
 import { createAdminClient } from '@/lib/supabase/admin'
+import { AuditFilters } from './AuditFilters'
 
 const ADMIN_TIMEZONE = 'Asia/Karachi'
 
-// Human-readable labels for known audit actions
 const AUDIT_ACTION_LABELS: Record<string, string> = {
   payment_marked_paid: '💳 Payment marked paid',
   payment_marked_rejected: '❌ Payment rejected',
@@ -19,6 +19,7 @@ const AUDIT_ACTION_LABELS: Record<string, string> = {
   session_rescheduled: '📅 Session rescheduled',
   session_status_updated: '📝 Session status updated',
   match_details_updated: '🔗 Match details updated',
+  match_notes_updated: '📋 Match notes updated',
 }
 
 function formatAuditTime(iso: string) {
@@ -42,58 +43,88 @@ type AuditLogRow = {
   user_profiles: { display_name: string } | null
 }
 
-export default async function AdminAuditPage() {
+export default async function AdminAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; action?: string; entity?: string }>
+}) {
   const admin = createAdminClient()
+  const params = await searchParams
+  const searchQ = (params.q ?? '').trim().toLowerCase()
+  const filterAction = params.action ?? ''
+  const filterEntity = params.entity ?? ''
 
-  const { data: logsData } = await admin
+  let query = admin
     .from('audit_logs')
-    .select(
-      'id, action, entity_type, entity_id, details, created_at, user_profiles!actor_user_id(display_name)'
-    )
+    .select('id, action, entity_type, entity_id, details, created_at, user_profiles!actor_user_id(display_name)')
     .order('created_at', { ascending: false })
-    .limit(200)
+    .limit(500)
 
-  const logs = (logsData ?? []) as unknown as AuditLogRow[]
+  if (filterAction) query = query.eq('action', filterAction)
+  if (filterEntity) query = query.eq('entity_type', filterEntity)
+
+  const { data: logsData } = await query
+  let logs = (logsData ?? []) as unknown as AuditLogRow[]
+
+  // Client-side keyword search on actor name and details string
+  if (searchQ) {
+    logs = logs.filter((log) => {
+      const actor = ((log.user_profiles as { display_name: string } | null)?.display_name ?? '').toLowerCase()
+      const detailsStr = log.details ? JSON.stringify(log.details).toLowerCase() : ''
+      return actor.includes(searchQ) || log.action.includes(searchQ) || detailsStr.includes(searchQ)
+    })
+  }
+
+  // Collect distinct action types for the filter dropdown
+  const { data: allActions } = await admin
+    .from('audit_logs')
+    .select('action')
+    .order('action')
+    .limit(500)
+  const distinctActions = [...new Set((allActions ?? []).map((r: { action: string }) => r.action))].sort()
+
+  const ENTITY_TYPES = ['session', 'match', 'payment', 'tutor_profile', 'request']
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Audit Log</h1>
-          <p className="mt-1 text-sm text-[#121212]/60">
-            Most recent {logs.length} platform events — times shown in PKT (Asia/Karachi)
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Audit Log</h1>
+        <p className="mt-1 text-sm text-[#121212]/60">
+          Platform events — times shown in PKT (Asia/Karachi)
+        </p>
       </div>
+
+      {/* Filter bar (client component) */}
+      <AuditFilters
+        currentQ={params.q ?? ''}
+        currentAction={filterAction}
+        currentEntity={filterEntity}
+        actionOptions={distinctActions.map((a) => ({ value: a, label: AUDIT_ACTION_LABELS[a] ?? a }))}
+        entityOptions={ENTITY_TYPES}
+      />
+
+      <p className="text-xs text-[#121212]/40">
+        Showing {logs.length} event{logs.length !== 1 ? 's' : ''}
+        {filterAction || filterEntity || searchQ ? ' (filtered)' : ''}
+      </p>
 
       {logs.length === 0 ? (
         <div className="border-4 border-[#121212] bg-white px-8 py-12 text-center">
-          <p className="text-[#121212]/60">No audit events recorded yet.</p>
-          <p className="mt-1 text-sm text-[#121212]/40">
-            Events are logged automatically when admin actions are performed (payments, tutor
-            approvals, session updates, etc.).
-          </p>
+          <p className="text-[#121212]/60">No audit events match your filters.</p>
         </div>
       ) : (
         <div className="overflow-x-auto border-4 border-[#121212] bg-white">
           <table className="min-w-full divide-y divide-[#E0E0E0] text-sm">
             <thead className="bg-[#121212]">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
-                  Timestamp
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
-                  Actor
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
-                  Action
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
-                  Entity
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white">
-                  Details
-                </th>
+                {['Timestamp', 'Actor', 'Action', 'Entity', 'Details'].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-widest text-white"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E0E0E0]">
@@ -112,15 +143,11 @@ export default async function AdminAuditPage() {
                       })
                       .join(' · ')
                   : '—'
-                // Truncate entity_id to first 8 chars for readability (UUID)
                 const entityIdShort = log.entity_id ? log.entity_id.slice(0, 8) + '…' : '—'
 
                 return (
-                  <tr
-                    key={log.id}
-                    className="hover:bg-[#F0F0F0]/50"
-                  >
-                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-[#121212]/60 ">
+                  <tr key={log.id} className="hover:bg-[#F0F0F0]/50">
+                    <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs text-[#121212]/60">
                       {formatAuditTime(log.created_at)}
                     </td>
                     <td className="px-4 py-2.5 text-[#121212]/80">{actorName}</td>
@@ -131,7 +158,7 @@ export default async function AdminAuditPage() {
                       </span>{' '}
                       <span className="text-[#121212]/40">{entityIdShort}</span>
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-[#121212]/60  max-w-xs truncate">
+                    <td className="max-w-xs truncate px-4 py-2.5 text-xs text-[#121212]/60">
                       {detailsStr}
                     </td>
                   </tr>
