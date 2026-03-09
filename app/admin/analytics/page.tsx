@@ -140,6 +140,8 @@ export default async function AdminAnalyticsPage() {
             unit="students"
             icon="🎓"
             variant="normal"
+            href="/admin/users"
+            linkLabel="View students →"
           />
           <MetricCard
             label="Active Tutors"
@@ -147,6 +149,8 @@ export default async function AdminAnalyticsPage() {
             unit="tutors"
             icon="👩‍🏫"
             variant="normal"
+            href="/admin/tutors"
+            linkLabel="View tutors →"
           />
           <MetricCard
             label="Upcoming Sessions"
@@ -154,6 +158,8 @@ export default async function AdminAnalyticsPage() {
             unit="sessions · next 7 days"
             icon="📅"
             variant="normal"
+            href="/admin/sessions?status=scheduled"
+            linkLabel="View sessions →"
           />
         </div>
       </section>
@@ -170,6 +176,8 @@ export default async function AdminAnalyticsPage() {
             unit="no-shows · last 7 days"
             icon="❌"
             variant="normal"
+            href="/admin/sessions?status=no_show"
+            linkLabel="Review no-shows →"
           />
           <MetricCard
             label="Not Marked Yet"
