@@ -5,7 +5,7 @@
 
 import { useActionState, useState, useEffect, useRef } from 'react'
 import { reassignTutor, updateMatchDetails, updateMatchNotes } from '../../requests/actions'
-import { generateSessionsForMatch } from '@/lib/services/sessions'
+import { generateSessionsForMatch, deleteSessionsForMatch } from '@/lib/services/sessions'
 
 const DAY_OPTIONS = [
   { label: 'Sun', value: 0 },
@@ -380,6 +380,79 @@ export function GenerateSessionsForm({ matchId }: { matchId: string }) {
         </button>
       </div>
     </form>
+  )
+}
+
+// ── Delete Sessions Form ─────────────────────────────────────────────────────
+
+type DeleteResult = { error?: string; count?: number } | undefined
+
+async function deleteAction(
+  _prev: DeleteResult,
+  formData: FormData,
+): Promise<DeleteResult> {
+  const matchId = formData.get('matchId') as string
+  return deleteSessionsForMatch(matchId)
+}
+
+export function DeleteSessionsForm({
+  matchId,
+  sessionCount,
+}: {
+  matchId: string
+  sessionCount: number
+}) {
+  const [state, formAction, isPending] = useActionState(deleteAction, undefined)
+  const [confirmed, setConfirmed] = useState(false)
+
+  if (state && !state.error) {
+    return (
+      <div className="border-2 border-[#D02020] bg-[#D02020]/5 px-5 py-4 text-sm text-[#D02020]">
+        ✅ {state.count} session{state.count !== 1 ? 's' : ''} deleted. Match reverted to{' '}
+        <strong>matched</strong>. You can now regenerate sessions.
+      </div>
+    )
+  }
+
+  return (
+    <div className="border-2 border-dashed border-[#D02020] p-4">
+      <p className="text-sm font-medium text-[#D02020]">🗑 Delete Sessions</p>
+      <p className="mt-0.5 text-xs text-[#121212]/60">
+        Deletes all {sessionCount} existing session{sessionCount !== 1 ? 's' : ''} and reverts the
+        match back to <strong>matched</strong> so you can edit the schedule and regenerate.
+      </p>
+      {state?.error && (
+        <p className="mt-2 text-sm text-red-600">{state.error}</p>
+      )}
+      {!confirmed ? (
+        <button
+          type="button"
+          onClick={() => setConfirmed(true)}
+          className="mt-3 border-2 border-[#D02020] px-4 py-2 text-sm font-semibold text-[#D02020] transition hover:bg-[#D02020] hover:text-white"
+        >
+          Delete {sessionCount} Session{sessionCount !== 1 ? 's' : ''}
+        </button>
+      ) : (
+        <form action={formAction} className="mt-3 flex items-center gap-3">
+          <input type="hidden" name="matchId" value={matchId} />
+          <span className="text-xs text-[#121212]/60">Are you sure?</span>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="border-2 border-[#D02020] bg-[#D02020] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#B01010] disabled:opacity-60"
+          >
+            {isPending ? 'Deleting…' : 'Yes, Delete'}
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmed(false)}
+            className="text-sm text-[#121212]/60 hover:text-[#121212]/80"
+          >
+            Cancel
+          </button>
+        </form>
+      )}
+    </div>
   )
 }
 

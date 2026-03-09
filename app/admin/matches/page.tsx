@@ -27,6 +27,7 @@ type MatchRow = {
   requests: {
     id: string
     level: string
+    for_student_name: string | null
     subjects: { name: string } | null
     user_profiles: { display_name: string } | null
   } | null
@@ -52,7 +53,7 @@ export default async function AdminMatchesPage({
          user_profiles!tutor_user_id ( display_name )
        ),
        requests!matches_request_id_fkey (
-         id, level,
+         id, level, for_student_name,
          subjects ( name ),
          user_profiles!requests_created_by_user_id_fkey ( display_name )
        )`,
@@ -120,6 +121,7 @@ export default async function AdminMatchesPage({
                 const subjectName = (req?.subjects as { name: string } | null)?.name ?? '—'
                 const levelLabel = req ? (LEVEL_LABELS[req.level] ?? req.level) : '—'
                 const studentName =
+                  req?.for_student_name ??
                   (req?.user_profiles as { display_name: string } | null)?.display_name ?? '—'
                 const tutorName =
                   (match.tutor_profiles?.user_profiles as { display_name: string } | null)

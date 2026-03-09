@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchApprovedTutors } from '@/lib/services/matching'
 import { LEVEL_LABELS } from '@/lib/utils/request'
-import { ReassignTutorForm, EditMatchForm, GenerateSessionsForm, AdminNotesForm } from './MatchActions'
+import { ReassignTutorForm, EditMatchForm, GenerateSessionsForm, DeleteSessionsForm, AdminNotesForm } from './MatchActions'
 import { CopyMessageButton } from '@/components/CopyMessageButton'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
 import { templates } from '@/lib/whatsapp/templates'
@@ -152,6 +152,12 @@ export default async function AdminMatchDetailPage({
     ? await fetchApprovedTutors(request.subject_id, request.level)
     : []
 
+  // Session count for this match (to show delete option when sessions exist)
+  const { count: sessionCount } = await admin
+    .from('sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('match_id', match.id)
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       {/* Back link */}
@@ -280,6 +286,10 @@ export default async function AdminMatchDetailPage({
 
         {schedule?.days && schedule.days.length > 0 && match.meet_link && (
           <GenerateSessionsForm matchId={match.id} />
+        )}
+
+        {(sessionCount ?? 0) > 0 && (
+          <DeleteSessionsForm matchId={match.id} sessionCount={sessionCount ?? 0} />
         )}
 
         <AdminNotesForm matchId={match.id} currentNotes={match.admin_notes} />

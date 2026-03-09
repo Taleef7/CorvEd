@@ -144,6 +144,91 @@ export async function generateSessionsForMatch(
   }
 }
 
+// ── Delete Sessions for a Match ───────────────────────────────────────────────
+
+/**
+ * Delete all sessions for a match and revert match + request status back to
+ * 'matched' so the admin can edit the schedule and regenerate.
+ */
+export async function deleteSessionsForMatch(
+  matchId: string,
+): Promise<{ error?: string; count?: number }> {
+  try {
+    const adminUserId = await requireAdmin();
+    const admin = createAdminClient();
+
+    // Fetch match
+    const { data: match, error: matchErr } = await admin
+      .from("matches")
+      .select("request_id, status")
+      .eq("id", matchId)
+      .single();
+    if (matchErr || !match) throw new Error("Match not found.");
+
+    // Count sessions before deleting (for audit log)
+    const { count: existingCount } = await admin
+      .from("sessions")
+      .select("id", { count: "exact", head: true })
+      .eq("match_id", matchId);
+
+    if ((existingCount ?? 0) === 0) {
+      throw new Error("No sessions to delete for this match.");
+    }
+
+    // Delete all sessions for this match
+    const { error: deleteErr } = await admin
+      .from("sessions")
+      .delete()
+      .eq("match_id", matchId);
+    if (deleteErr) throw new Error(`Failed to delete sessions: ${deleteErr.message}`);
+
+    // Reset sessions_used to 0 on the active package — the deleted sessions may have
+    // had their counts incremented (done / no_show_student) and those increments are
+    // no longer meaningful against the fresh set of sessions about to be regenerated.
+    const { error: pkgResetErr } = await admin
+      .from("packages")
+      .update({ sessions_used: 0 })
+      .eq("request_id", match.request_id)
+      .eq("status", "active");
+    if (pkgResetErr) throw new Error(`Failed to reset sessions_used: ${pkgResetErr.message}`);
+
+    // Revert match + request status back to 'matched' so sessions can be regenerated
+    if (match.status === "active") {
+      const { error: matchRevertErr } = await admin
+        .from("matches")
+        .update({ status: "matched" })
+        .eq("id", matchId);
+      if (matchRevertErr) throw new Error(`Failed to revert match status: ${matchRevertErr.message}`);
+
+      const { error: reqRevertErr } = await admin
+        .from("requests")
+        .update({ status: "matched" })
+        .eq("id", match.request_id);
+      if (reqRevertErr) throw new Error(`Failed to revert request status: ${reqRevertErr.message}`);
+    }
+
+    await admin.from("audit_logs").insert([
+      {
+        actor_user_id: adminUserId,
+        action: "sessions_deleted",
+        entity_type: "match",
+        entity_id: matchId,
+        details: { session_count: existingCount ?? 0, request_id: match.request_id, sessions_used_reset: true },
+      },
+    ]);
+
+    revalidatePath(`/admin/matches/${matchId}`);
+    revalidatePath("/admin/sessions");
+    revalidatePath("/admin/matches");
+
+    return { count: existingCount ?? 0 };
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "An unexpected error occurred.",
+    };
+  }
+}
+
 // ── T8.3: Session Status Update (admin) ──────────────────────────────────────
 
 const SESSION_CONSUMING_STATUSES = ["done", "no_show_student"] as const;
