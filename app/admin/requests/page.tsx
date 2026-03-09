@@ -31,6 +31,8 @@ type RequestRow = {
   level: string
   subject_id: number
   created_at: string
+  for_student_name: string | null
+  requester_role: string
   subjects: { name: string } | null
   user_profiles: { display_name: string; whatsapp_number: string | null } | null
   packages: PackageRow[]
@@ -56,7 +58,7 @@ export default async function AdminRequestsPage({
   let dataQuery = admin
     .from('requests')
     .select(
-      `id, status, level, subject_id, created_at,
+      `id, status, level, subject_id, created_at, for_student_name, requester_role,
        subjects ( name ),
        user_profiles!requests_created_by_user_id_fkey ( display_name, whatsapp_number ),
        packages ( tier_sessions, status )`
@@ -189,10 +191,17 @@ export default async function AdminRequestsPage({
                   year: 'numeric',
                 })
 
+                const studentName = req.for_student_name ?? profile?.display_name ?? '—'
+
                 return (
                   <tr key={req.id} className="hover:bg-[#F0F0F0]/50">
                     <td className="px-4 py-3 font-medium text-[#121212]">
-                      {profile?.display_name ?? '—'}
+                      {studentName}
+                      {req.requester_role === 'parent' && profile?.display_name && (
+                        <span className="ml-1 text-xs text-[#121212]/50">
+                          (Parent: {profile.display_name})
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-[#121212]/70 ">{levelLabel}</td>
                     <td className="px-4 py-3 text-[#121212]/70 ">{subjectName}</td>

@@ -17,6 +17,8 @@ const DAY_OPTIONS = [
   { label: 'Sat', value: 6 },
 ]
 
+const DAY_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
 type AvailWindow = { day: number; start: string; end: string }
 
 export type EligibleTutor = {
@@ -45,7 +47,6 @@ async function assignAction(
       ? { timezone, days: rawDays, time, duration_mins: 60 }
       : undefined
 
-  // Partial schedule: if any schedule field is filled but not all three, reject early
   const hasAnyScheduleField = !!timezone || !!time || rawDays.length > 0
   const hasAllScheduleFields = !!timezone && !!time && rawDays.length > 0
   if (hasAnyScheduleField && !hasAllScheduleFields) {
@@ -55,6 +56,122 @@ async function assignAction(
   }
 
   return assignTutor({ requestId, tutorUserId, meetLink, schedulePattern })
+}
+
+/** Visual availability calendar: 7 columns (days), time-block rows colour-coded */
+function AvailabilityCalendar({ windows }: { windows: AvailWindow[] }) {
+  if (windows.length === 0) {
+    return <p className="text-xs text-[#121212]/40 italic">No availability set</p>
+  }
+
+  // Group windows by day
+  const byDay: Record<number, AvailWindow[]> = {}
+  for (const w of windows) {
+    if (!byDay[w.day]) byDay[w.day] = []
+    byDay[w.day].push(w)
+  }
+
+  return (
+    <div className="grid grid-cols-7 gap-px border border-[#D0D0D0] bg-[#D0D0D0] text-[10px] font-bold">
+      {DAY_SHORT.map((day, idx) => {
+        const slots = byDay[idx] ?? []
+        return (
+          <div key={idx} className="bg-white">
+            <div className={`px-1 py-0.5 text-center uppercase tracking-wide ${slots.length > 0 ? 'bg-[#1040C0] text-white' : 'text-[#121212]/30'}`}>
+              {day}
+            </div>
+            <div className="space-y-px p-0.5">
+              {slots.length === 0 ? (
+                <div className="rounded-sm bg-[#F0F0F0] py-1 text-center text-[#121212]/20">—</div>
+              ) : (
+                slots.map((s, si) => (
+                  <div key={si} className="rounded-sm bg-[#1040C0]/10 px-0.5 py-1 text-center text-[#1040C0] leading-tight">
+                    {s.start}
+                    <br />
+                    {s.end}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+/** Single collapsible tutor card */
+function TutorCard({
+  tutor,
+  isSelected,
+  onSelect,
+}: {
+  tutor: EligibleTutor
+  isSelected: boolean
+  onSelect: () => void
+}) {
+  const [expanded, setExpanded] = useState(isSelected)
+  const windows = tutor.tutor_availability?.windows ?? []
+  const name = tutor.user_profiles?.display_name ?? '—'
+
+  return (
+    <div
+      className={`border-2 transition ${
+        isSelected ? 'border-[#1040C0]' : 'border-[#D0D0D0]'
+      } bg-white`}
+    >
+      {/* Header row — always visible */}
+      <div
+        className="flex cursor-pointer items-center gap-3 px-4 py-3 select-none"
+        onClick={() => {
+          onSelect()
+          setExpanded(true)
+        }}
+      >
+        <input
+          type="radio"
+          name="tutor_select_display"
+          checked={isSelected}
+          onChange={onSelect}
+          onClick={(e) => e.stopPropagation()}
+          className="h-4 w-4 flex-shrink-0 accent-[#1040C0]"
+        />
+        <span className="flex-1 font-semibold text-[#121212]">{name}</span>
+        <span className="text-xs text-[#121212]/40">{tutor.timezone}</span>
+        <button
+          type="button"
+          aria-label={expanded ? 'Collapse' : 'Expand'}
+          onClick={(e) => {
+            e.stopPropagation()
+            setExpanded((v) => !v)
+          }}
+          className="ml-1 flex h-6 w-6 flex-shrink-0 items-center justify-center border border-[#D0D0D0] text-xs text-[#121212]/60 hover:border-[#1040C0] hover:text-[#1040C0]"
+        >
+          {expanded ? '▲' : '▼'}
+        </button>
+      </div>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div className="border-t border-[#E0E0E0] px-4 py-3 space-y-3">
+          <div>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-[#121212]/40">
+              Availability
+            </p>
+            <AvailabilityCalendar windows={windows} />
+          </div>
+          {tutor.bio && (
+            <div>
+              <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-[#121212]/40">
+                Bio
+              </p>
+              <p className="text-xs text-[#121212]/60 leading-relaxed">{tutor.bio}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function AssignTutorForm({
@@ -75,10 +192,7 @@ export function AssignTutorForm({
         <p className="font-semibold">✅ Tutor assigned successfully!</p>
         <p className="mt-1 text-sm">
           The request has been moved to &ldquo;Matched&rdquo; status.{' '}
-          <a
-            href={`/admin/matches/${state.matchId}`}
-            className="underline hover:no-underline"
-          >
+          <a href={`/admin/matches/${state.matchId}`} className="underline hover:no-underline">
             View match →
           </a>
         </p>
@@ -91,7 +205,7 @@ export function AssignTutorForm({
       <h2 className="text-lg font-semibold text-[#121212]">Eligible Tutors</h2>
 
       {eligibleTutors.length === 0 ? (
-        <div className="border-2 border-[#121212] border border-[#D0D0D0] bg-white px-6 py-8 text-center">
+        <div className="border-2 border-[#D0D0D0] bg-white px-6 py-8 text-center">
           <p className="text-[#121212]/60">
             No approved tutors currently match this subject and level.
           </p>
@@ -104,54 +218,15 @@ export function AssignTutorForm({
           </p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {eligibleTutors.map((tutor) => {
-            const isSelected = selectedTutorId === tutor.tutor_user_id
-            const windows = tutor.tutor_availability?.windows ?? []
-            const availSummary = windows
-              .sort((a, b) => a.day - b.day)
-              .map((w) => `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][w.day]} ${w.start}–${w.end}`)
-              .join(', ')
-
-            return (
-              <div
-                key={tutor.tutor_user_id}
-                onClick={() => setSelectedTutorId(tutor.tutor_user_id)}
-                className={`cursor-pointer border-2 border-[#121212] p-4 transition ${
-                  isSelected
-                    ? 'border-[#1040C0] bg-[#1040C0]/5'
-                    : 'border-[#D0D0D0] bg-white hover:border-[#1040C0]'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-[#121212]">
-                      {tutor.user_profiles?.display_name ?? '—'}
-                    </p>
-                    <p className="text-sm text-[#121212]/60">Timezone: {tutor.timezone}</p>
-                    {availSummary && (
-                      <p className="mt-1 text-xs text-[#121212]/40">
-                        Available: {availSummary}
-                      </p>
-                    )}
-                    {tutor.bio && (
-                      <p className="mt-1 line-clamp-2 text-sm text-[#121212]/60 dark:text-[#121212]/40">
-                        {tutor.bio}
-                      </p>
-                    )}
-                  </div>
-                  <input
-                    type="radio"
-                    name="tutor_select_display"
-                    checked={isSelected}
-                    onChange={() => setSelectedTutorId(tutor.tutor_user_id)}
-                    className="mt-1 h-4 w-4 accent-[#1040C0]"
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </div>
-              </div>
-            )
-          })}
+        <div className="space-y-2">
+          {eligibleTutors.map((tutor) => (
+            <TutorCard
+              key={tutor.tutor_user_id}
+              tutor={tutor}
+              isSelected={selectedTutorId === tutor.tutor_user_id}
+              onSelect={() => setSelectedTutorId(tutor.tutor_user_id)}
+            />
+          ))}
         </div>
       )}
 
@@ -159,7 +234,7 @@ export function AssignTutorForm({
       {selectedTutorId && (
         <form
           action={formAction}
-          className="mt-2 space-y-4 border-2 border-[#1040C0] bg-[#1040C0]/5 p-5"
+          className="space-y-4 border-2 border-[#1040C0] bg-[#1040C0]/5 p-5"
         >
           <h3 className="font-semibold text-[#121212]">Assignment Details</h3>
 
@@ -232,7 +307,7 @@ export function AssignTutorForm({
           <button
             type="submit"
             disabled={isPending}
-            className=" bg-[#1040C0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
+            className="bg-[#1040C0] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#0830A0] disabled:opacity-60"
           >
             {isPending ? 'Assigning…' : 'Assign Tutor'}
           </button>

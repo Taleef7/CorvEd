@@ -7,7 +7,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { fetchApprovedTutors } from '@/lib/services/matching'
-import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS, formatAvailabilityWindows } from '@/lib/utils/request'
+import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS } from '@/lib/utils/request'
 import { AssignTutorForm } from './AssignTutorForm'
 import { AdminRequestActions } from './AdminRequestActions'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
@@ -20,6 +20,44 @@ const EXAM_BOARD_LABELS: Record<string, string> = {
 }
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const DAY_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
+
+type AvailWindow = { day: number; start: string; end: string }
+
+/** Compact 7-col availability calendar (server-rendered) */
+function AvailCalendar({ windows }: { windows: AvailWindow[] }) {
+  const byDay: Record<number, AvailWindow[]> = {}
+  for (const w of windows) {
+    if (!byDay[w.day]) byDay[w.day] = []
+    byDay[w.day].push(w)
+  }
+
+  return (
+    <div className="grid grid-cols-7 gap-px border border-[#D0D0D0] bg-[#D0D0D0] text-[9px] font-bold leading-tight">
+      {DAY_SHORT.map((day, idx) => {
+        const slots = byDay[idx] ?? []
+        return (
+          <div key={idx} className="bg-white">
+            <div className={`px-0.5 py-0.5 text-center uppercase tracking-wide ${slots.length > 0 ? 'bg-[#1040C0] text-white' : 'text-[#121212]/30'}`}>
+              {day}
+            </div>
+            <div className="space-y-px p-0.5 min-h-[28px]">
+              {slots.length === 0 ? (
+                <div className="text-center text-[#121212]/20 py-1">—</div>
+              ) : (
+                slots.map((s, si) => (
+                  <div key={si} className="bg-[#1040C0]/10 px-0.5 py-0.5 text-center text-[#1040C0]">
+                    {s.start}–{s.end}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
 
 type RequestData = {
   id: string
@@ -103,7 +141,10 @@ export default async function AdminRequestDetailPage({
       ? await fetchApprovedTutors(request.subject_id, request.level)
       : []
 
-  const availabilityDisplay = formatAvailabilityWindows(request.availability_windows)
+  // Parse availability windows for the visual calendar
+  const availWindows: AvailWindow[] = Array.isArray(request.availability_windows)
+    ? (request.availability_windows as AvailWindow[])
+    : []
 
   return (
     <div className="space-y-6">
@@ -115,7 +156,7 @@ export default async function AdminRequestDetailPage({
         ← Back to Requests
       </Link>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* Left panel: Request details */}
         <div className="space-y-4">
           <div className="border-4 border-[#121212] bg-white px-6 py-6">
@@ -200,10 +241,10 @@ export default async function AdminRequestDetailPage({
                     {request.timezone}
                   </dd>
                 </div>
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-1.5">
                   <dt className="text-[#121212]/60">Availability</dt>
-                  <dd className="whitespace-pre-line font-medium text-[#121212] text-xs">
-                    {availabilityDisplay}
+                  <dd>
+                    <AvailCalendar windows={availWindows} />
                   </dd>
                 </div>
                 {request.preferred_start_date && (
@@ -275,8 +316,14 @@ export default async function AdminRequestDetailPage({
           )}
         </div>
 
-        {/* Right panel: Eligible tutors + assignment form */}
-        <div>
+        {/* Right panel: Admin actions (sticky) + Eligible tutors */}
+        <div className="space-y-4">
+          {/* Admin actions — always visible at top */}
+          <div className="lg:sticky lg:top-6">
+            <AdminRequestActions requestId={request.id} currentStatus={request.status} />
+          </div>
+
+          {/* Tutor assignment / match state */}
           {request.status === 'ready_to_match' ? (
             <AssignTutorForm
               requestId={request.id}
@@ -299,9 +346,6 @@ export default async function AdminRequestDetailPage({
               </p>
             </div>
           )}
-
-          {/* Admin actions panel */}
-          <AdminRequestActions requestId={request.id} currentStatus={request.status} />
         </div>
       </div>
     </div>
