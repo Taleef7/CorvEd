@@ -174,6 +174,9 @@ export default function PackageDetailPage() {
         newProofPath
       )
       if (!result.success) {
+        if (file && newProofPath && newProofPath !== payment.proof_path) {
+          await supabase.storage.from('payment-proofs').remove([newProofPath])
+        }
         setError(result.error || 'Failed to resubmit payment.')
         setSubmitting(false)
         return
@@ -221,17 +224,18 @@ export default function PackageDetailPage() {
       proofPath = uploadData.path
     }
 
-    // Update payment with reference and/or proof
-    const { error: updateError } = await supabase
-      .from('payments')
-      .update({
-        reference: reference.trim() || null,
-        proof_path: proofPath,
-      })
-      .eq('id', payment.id)
+    const { updatePendingPaymentDetails } = await import('@/app/dashboard/packages/actions')
+    const result = await updatePendingPaymentDetails(
+      payment.id,
+      reference.trim() || null,
+      proofPath,
+    )
 
-    if (updateError) {
-      setError('Failed to save payment details. Please try again.')
+    if (!result.success) {
+      if (file && proofPath && proofPath !== payment.proof_path) {
+        await supabase.storage.from('payment-proofs').remove([proofPath])
+      }
+      setError(result.error || 'Failed to save payment details. Please try again.')
       setSubmitting(false)
       return
     }

@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "test:e2e": "playwright test",
+    "test:e2e:local": "node scripts/with-local-supabase-env.mjs npm run test:e2e",
+    "build:local": "node scripts/with-local-supabase-env.mjs npm run build",
+    "dev:local": "node scripts/with-local-supabase-env.mjs npm run dev",
     "test:e2e:ui": "playwright test --ui",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
@@ -21,7 +24,7 @@
     "clsx": "^2.1.1",
     "lucide-react": "^0.575.0",
     "luxon": "^3.7.2",
-    "next": "16.1.6",
+    "next": "16.2.2",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
@@ -40,10 +43,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
-    "supabase": "^2.76.15",
+    "eslint-config-next": "16.2.2",
+    "supabase": "^2.87.2",
     "tailwindcss": "^4",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.3"
   }
 }

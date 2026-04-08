@@ -6,6 +6,10 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { generateSessions as generateSessionSlots, SchedulePattern } from "@/lib/services/scheduling";
+import {
+  getSessionUsageAdjustment,
+  isSessionCompletionAllowed,
+} from "@/lib/services/session-status-transitions";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath } from "next/cache";
 
@@ -231,17 +235,10 @@ export async function deleteSessionsForMatch(
 
 // ── T8.3: Session Status Update (admin) ──────────────────────────────────────
 
-const SESSION_CONSUMING_STATUSES = ["done", "no_show_student"] as const;
-type ConsumingStatus = (typeof SESSION_CONSUMING_STATUSES)[number];
-
-function isConsuming(status: string): status is ConsumingStatus {
-  return SESSION_CONSUMING_STATUSES.includes(status as ConsumingStatus);
-}
-
 /**
  * Admin: update a session's status (and optionally tutor notes).
  * Guards against double-incrementing sessions_used when transitioning
- * between two consuming statuses (done ↔ no_show_student).
+ * between consuming/non-consuming statuses.
  */
 export async function updateSessionStatus({
   sessionId,
@@ -260,7 +257,7 @@ export async function updateSessionStatus({
     const adminUserId = await requireAdmin();
     const admin = createAdminClient();
 
-    // Fetch current session status to guard against double-incrementing
+    // Fetch current session status to keep package usage counters in sync.
     const { data: current, error: fetchErr } = await admin
       .from("sessions")
       .select("status")
@@ -282,15 +279,20 @@ export async function updateSessionStatus({
     if (updateErr)
       throw new Error(`Failed to update session: ${updateErr.message}`);
 
-    // Increment sessions_used only when transitioning INTO a consuming status
-    // from a non-consuming status — prevents double-incrementing.
-    const wasAlreadyConsuming = isConsuming(current.status);
-    if (isConsuming(status) && !wasAlreadyConsuming) {
+    const usageAdjustment = getSessionUsageAdjustment(current.status, status);
+    if (usageAdjustment === 1) {
       const { error: rpcErr } = await admin.rpc("increment_sessions_used", {
         p_request_id: requestId,
       });
       if (rpcErr)
         throw new Error(`Failed to increment sessions_used: ${rpcErr.message}`);
+    }
+    if (usageAdjustment === -1) {
+      const { error: rpcErr } = await admin.rpc("decrement_sessions_used", {
+        p_request_id: requestId,
+      });
+      if (rpcErr)
+        throw new Error(`Failed to decrement sessions_used: ${rpcErr.message}`);
     }
 
     // Audit log
@@ -339,6 +341,17 @@ export async function tutorUpdateSessionStatus({
   try {
     await requireAuthenticatedUser();
     const supabase = await createClient();
+
+    const { data: session, error: sessionErr } = await supabase
+      .from("sessions")
+      .select("scheduled_start_utc")
+      .eq("id", sessionId)
+      .single();
+
+    if (sessionErr || !session) throw new Error("Session not found.");
+    if (!isSessionCompletionAllowed({ scheduledStartUtc: session.scheduled_start_utc })) {
+      throw new Error("Session has not started yet.");
+    }
 
     // Use the security-definer RPC which handles authorization and sessions_used increment
     const { error } = await supabase.rpc("tutor_update_session", {

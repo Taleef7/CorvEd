@@ -311,7 +311,10 @@ export default async function TutorSessionsPage({
                           Join Meet →
                         </a>
                       )}
-                      <SessionCompleteForm sessionId={session.id} />
+                      <SessionCompleteForm
+                        sessionId={session.id}
+                        disabledReason={isUpcoming ? 'Available after start time' : undefined}
+                      />
                     </div>
                   </div>
                 )
