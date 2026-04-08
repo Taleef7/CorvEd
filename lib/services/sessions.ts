@@ -9,6 +9,7 @@ import { generateSessions as generateSessionSlots, SchedulePattern } from "@/lib
 import {
   getSessionUsageAdjustment,
   isSessionCompletionAllowed,
+  isSessionRescheduleAllowed,
 } from "@/lib/services/session-status-transitions";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath } from "next/cache";
@@ -398,9 +399,21 @@ export async function rescheduleSession({
     const adminUserId = await requireAdmin();
     const admin = createAdminClient();
 
+    const { data: currentSession, error: currentSessionErr } = await admin
+      .from("sessions")
+      .select("scheduled_start_utc")
+      .eq("id", sessionId)
+      .single();
+    if (currentSessionErr || !currentSession) {
+      throw new Error("Session not found.");
+    }
+
     // Prevent rescheduling to a past datetime
     if (new Date(newStartUtc) < new Date()) {
       throw new Error("Cannot reschedule a session to a past date and time.");
+    }
+    if (!isSessionRescheduleAllowed({ scheduledStartUtc: currentSession.scheduled_start_utc })) {
+      throw new Error("Sessions can only be rescheduled with at least 24 hours notice.");
     }
 
     const { error: updateErr } = await admin

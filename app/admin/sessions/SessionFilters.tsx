@@ -2,6 +2,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { getAdminSessionStatusFilterOptions } from '@/lib/admin/sessions'
 
 // ── Student-picker search bar ─────────────────────────────────────────────────
 
@@ -83,14 +84,7 @@ export function SessionViewControls({
     { value: 'past', label: 'Past', count: pastCount },
   ]
 
-  const statuses = [
-    { value: '', label: 'All statuses' },
-    { value: 'scheduled', label: 'Scheduled' },
-    { value: 'done', label: 'Done' },
-    { value: 'rescheduled', label: 'Rescheduled' },
-    { value: 'no_show_student', label: 'No-show (student)' },
-    { value: 'no_show_tutor', label: 'No-show (tutor)' },
-  ]
+  const statuses = getAdminSessionStatusFilterOptions()
 
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">

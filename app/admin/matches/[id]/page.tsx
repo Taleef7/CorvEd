@@ -61,10 +61,13 @@ type MatchDetail = {
 
 export default async function AdminMatchDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ assigned?: string }>
 }) {
   const { id } = await params
+  const { assigned } = await searchParams
   const admin = createAdminClient()
 
   const { data: matchData } = await admin
@@ -160,6 +163,15 @@ export default async function AdminMatchDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      {assigned === '1' && (
+        <div className="border-2 border-[#121212] bg-white px-6 py-4 text-[#121212]">
+          <p className="font-semibold">Tutor assigned successfully.</p>
+          <p className="mt-1 text-sm text-[#121212]/60">
+            The request is now matched and ready for session generation or follow-up updates.
+          </p>
+        </div>
+      )}
+
       {/* Back link */}
       <div className="flex items-center gap-4">
         <Link

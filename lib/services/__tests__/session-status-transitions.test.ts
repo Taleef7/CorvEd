@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   getSessionUsageAdjustment,
+  isSessionRescheduleAllowed,
   isSessionCompletionAllowed,
 } from '@/lib/services/session-status-transitions'
 
@@ -40,6 +41,30 @@ describe('isSessionCompletionAllowed', () => {
     expect(
       isSessionCompletionAllowed({
         scheduledStartUtc: '2026-04-08T12:00:00.000Z',
+        now,
+      }),
+    ).toBe(true)
+  })
+})
+
+describe('isSessionRescheduleAllowed', () => {
+  test('blocks reschedules with less than 24 hours notice', () => {
+    const now = new Date('2026-04-08T12:00:00.000Z')
+
+    expect(
+      isSessionRescheduleAllowed({
+        scheduledStartUtc: '2026-04-09T11:59:00.000Z',
+        now,
+      }),
+    ).toBe(false)
+  })
+
+  test('allows reschedules with at least 24 hours notice', () => {
+    const now = new Date('2026-04-08T12:00:00.000Z')
+
+    expect(
+      isSessionRescheduleAllowed({
+        scheduledStartUtc: '2026-04-09T12:00:00.000Z',
         now,
       }),
     ).toBe(true)

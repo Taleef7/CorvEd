@@ -10,6 +10,7 @@ import { z } from 'zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { buildAuthCallbackUrl } from '@/lib/auth/utils'
 import {
   BauhausLogo,
   BauhausLabel,
@@ -100,7 +101,12 @@ export default function SignUpPage() {
     const supabase = createClient()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      options: {
+        redirectTo: buildAuthCallbackUrl(window.location.origin, {
+          flow: 'signup',
+          accountType: accountType === 'parent' ? 'parent' : 'student',
+        }),
+      },
     })
   }
 

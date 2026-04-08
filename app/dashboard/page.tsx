@@ -51,6 +51,7 @@ export default async function DashboardPage() {
   if (role === 'tutor') redirect('/tutor')
 
   const userTimezone = profile?.timezone ?? 'UTC'
+  const dashboardRoleLabel = role === 'parent' ? 'Parent' : 'Student'
 
   // Fetch next session and requests in parallel (both independent)
   const [{ data: nextSessionData }, { data: requests }] = await Promise.all([
@@ -183,7 +184,7 @@ export default async function DashboardPage() {
         {/* Header row */}
         <div className="flex items-start justify-between border-b-4 border-[#121212] pb-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">Student</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#121212]/50">{dashboardRoleLabel}</p>
             <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212] leading-tight">
               Dashboard
             </h1>

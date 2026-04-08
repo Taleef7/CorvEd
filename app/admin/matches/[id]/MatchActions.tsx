@@ -260,10 +260,11 @@ export function EditMatchForm({
       <input type="hidden" name="matchId" value={matchId} />
 
       <div>
-        <label className="block text-sm font-medium text-[#121212]/80">
+        <label htmlFor="edit-match-meet-link" className="block text-sm font-medium text-[#121212]/80">
           Google Meet Link
         </label>
         <input
+          id="edit-match-meet-link"
           type="url"
           name="meetLink"
           defaultValue={currentMeetLink ?? ''}
@@ -273,10 +274,11 @@ export function EditMatchForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#121212]/80">
+        <label htmlFor="edit-match-timezone" className="block text-sm font-medium text-[#121212]/80">
           Schedule Timezone
         </label>
         <input
+          id="edit-match-timezone"
           type="text"
           name="timezone"
           defaultValue={currentSchedule?.timezone ?? ''}
@@ -291,8 +293,9 @@ export function EditMatchForm({
         </label>
         <div className="flex flex-wrap gap-3">
           {DAY_OPTIONS.map(({ label, value }) => (
-            <label key={value} className="flex cursor-pointer items-center gap-1.5 text-sm">
+            <label htmlFor={`edit-match-day-${value}`} key={value} className="flex cursor-pointer items-center gap-1.5 text-sm">
               <input
+                id={`edit-match-day-${value}`}
                 type="checkbox"
                 name="days"
                 value={value}
@@ -306,10 +309,11 @@ export function EditMatchForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#121212]/80">
+        <label htmlFor="edit-match-time" className="block text-sm font-medium text-[#121212]/80">
           Start Time
         </label>
         <input
+          id="edit-match-time"
           type="time"
           name="time"
           defaultValue={currentSchedule?.time ?? ''}
