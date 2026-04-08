@@ -99,7 +99,7 @@ export function SignInForm() {
               Sign In
             </h1>
             <p className="mt-1 text-sm text-[#121212]/60">
-              Don;&apos;t have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/auth/sign-up"
                 className="font-bold text-[#1040C0] underline underline-offset-2 hover:text-[#D02020]"

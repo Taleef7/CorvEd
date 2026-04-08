@@ -409,6 +409,7 @@ export default async function LandingPage() {
 
                 <p className="text-5xl font-black leading-none">
                   {sessions}
+                  {' '}
                   <span className="text-sm font-medium text-[#121212]/40 ml-1">sessions/month</span>
                 </p>
                 <p className="mt-1 text-xs font-black uppercase tracking-wider text-[#121212]/40">

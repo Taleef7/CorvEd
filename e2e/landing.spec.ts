@@ -16,6 +16,9 @@ test.describe("Landing Page", () => {
     await expect(page.getByText(/8\s*sessions/i).first()).toBeVisible();
     await expect(page.getByText(/12\s*sessions/i).first()).toBeVisible();
     await expect(page.getByText(/20\s*sessions/i).first()).toBeVisible();
+    await expect(page.getByText(/8sessions\/month/i)).toHaveCount(0);
+    await expect(page.getByText(/12sessions\/month/i)).toHaveCount(0);
+    await expect(page.getByText(/20sessions\/month/i)).toHaveCount(0);
   });
 
   test("no admin link visible on public nav", async ({ page }) => {
