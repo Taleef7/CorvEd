@@ -299,7 +299,7 @@ export default function RequestForm({ subjects, initialTimezone }: RequestFormPr
                         ✓
                       </span>
                     )}
-                    <span className="text-2xl font-black text-[#121212]">{value}</span>
+                    <span className="text-2xl font-black text-[#121212]">{value} </span>
                     <span className="text-[11px] font-bold uppercase tracking-wide text-[#121212]">
                       sessions/month
                     </span>

@@ -3,6 +3,12 @@ import { test, expect } from "@playwright/test";
 test.describe("Auth Pages", () => {
   test("sign-in page renders form", async ({ page }) => {
     await page.goto("/auth/sign-in");
+    await expect(
+      page.locator("p").filter({ hasText: "Don't have an account?" }),
+    ).toBeVisible();
+    await expect(page.locator("p").filter({ hasText: "Don;'t" })).toHaveCount(
+      0,
+    );
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();
     await expect(
