@@ -618,6 +618,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      decrement_sessions_used: {
+        Args: {
+          p_request_id: string
+        }
+        Returns: undefined
+      }
+      checkout_package: {
+        Args: {
+          p_request_id: string
+          p_tier_sessions: number
+        }
+        Returns: string
+      }
       tutor_update_session: {
         Args: {
           p_session_id: string

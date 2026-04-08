@@ -1,7 +1,9 @@
 import Link from 'next/link'
+import { LeadForm } from '@/components/LeadForm'
 import { WhatsAppCTA } from '@/components/WhatsAppCTA'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
+import { PACKAGES as PACKAGE_CONFIGS } from '@/lib/config/pricing'
 
 const SUBJECTS = [
   'Mathematics',
@@ -15,7 +17,7 @@ const SUBJECTS = [
   'Urdu',
 ]
 
-const PACKAGES = [
+const PACKAGE_CARD_STYLES = [
   {
     sessions: 8,
     frequency: '~2× per week',
@@ -44,6 +46,21 @@ const PACKAGES = [
     shape: 'triangle' as const,
   },
 ]
+
+const LANDING_PACKAGES = PACKAGE_CONFIGS.map((pkg) => {
+  const cardStyle = PACKAGE_CARD_STYLES.find((style) => style.sessions === pkg.tier)
+
+  return {
+    ...(cardStyle ?? {}),
+    sessions: pkg.sessionsPerMonth,
+    frequency: pkg.typicalFrequency,
+    price: `PKR ${pkg.pricePerMonthPkr.toLocaleString('en-PK')}`,
+    description: cardStyle?.description ?? pkg.description,
+    highlight: cardStyle?.highlight ?? pkg.tier === 12,
+    accentColor: cardStyle?.accentColor ?? '#1040C0',
+    shape: cardStyle?.shape ?? ('square' as const),
+  }
+})
 
 const HOW_IT_WORKS = [
   {
@@ -353,7 +370,7 @@ export default async function LandingPage() {
           </p>
 
           <div className="grid gap-6 sm:grid-cols-3">
-            {PACKAGES.map(({ sessions, frequency, price, description, highlight, accentColor, shape }) => (
+            {LANDING_PACKAGES.map(({ sessions, frequency, price, description, highlight, accentColor, shape }) => (
               <div
                 key={sessions}
                 className="relative bg-white border-4 border-[#121212] p-8 flex flex-col shadow-[8px_8px_0px_0px_#121212] hover:-translate-y-1 transition"
@@ -464,15 +481,24 @@ export default async function LandingPage() {
                   }}
                 />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter mb-2">Book a Free Demo</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter mb-2">Talk to Admissions</h3>
               <p className="text-sm text-[#121212]/60 mb-6 leading-relaxed">
-                Not sure yet? Book a no-obligation 30-minute trial session on WhatsApp before committing.
+                Not sure which package fits? Send us your goals and schedule on WhatsApp before committing.
               </p>
               <WhatsAppCTA
-                label="Book a Free Demo"
+                label="Ask on WhatsApp"
                 className="!rounded-none !border-2 !border-[#121212] !shadow-[3px_3px_0px_0px_#121212] !font-black !uppercase !tracking-wider !text-sm !bg-white !text-[#121212] active:!translate-x-[1px] active:!translate-y-[1px] active:!shadow-none"
               />
             </div>
+          </div>
+          <div className="mt-8 bg-white border-4 border-[#121212] shadow-[8px_8px_0px_0px_rgba(255,255,255,0.25)] p-8">
+            <h3 className="text-xl font-black uppercase tracking-tighter mb-2">
+              Request a WhatsApp Follow-Up
+            </h3>
+            <p className="text-sm text-[#121212]/60 mb-6 leading-relaxed">
+              No account needed for an initial enquiry. Share the details and our team will follow up on WhatsApp.
+            </p>
+            <LeadForm />
           </div>
         </div>
       </section>

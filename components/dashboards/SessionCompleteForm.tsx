@@ -48,9 +48,10 @@ async function tutorUpdateStatusAction(
 
 interface Props {
   sessionId: string
+  disabledReason?: string
 }
 
-export function SessionCompleteForm({ sessionId }: Props) {
+export function SessionCompleteForm({ sessionId, disabledReason }: Props) {
   const [open, setOpen] = useState(false)
   const [state, formAction, isPending] = useActionState(tutorUpdateStatusAction, undefined)
 
@@ -66,6 +67,12 @@ export function SessionCompleteForm({ sessionId }: Props) {
   if (state && !state.error) {
     return (
       <span className="text-xs font-bold text-[#121212]">&#10003; Session updated</span>
+    )
+  }
+
+  if (disabledReason) {
+    return (
+      <span className="text-xs font-semibold text-[#121212]/50">{disabledReason}</span>
     )
   }
 

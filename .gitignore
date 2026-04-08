@@ -143,6 +143,8 @@ vite.config.ts.timestamp-*
 
 # Claude Code local tool state
 .claude/
+.opencode/
+.tmp/
 
 # MCP server state directories
 .playwright-mcp/

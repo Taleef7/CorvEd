@@ -1,6 +1,13 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
+import { PACKAGES, type PackageTier } from '@/lib/config/pricing'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
+
+function getPackageTier(tier: number): PackageTier | null {
+  return PACKAGES.some((pkg) => pkg.tier === tier) ? (tier as PackageTier) : null
+}
 
 /**
  * Generate a signed URL for a payment proof file.
@@ -41,6 +48,96 @@ export async function getPaymentProofSignedUrl(
   return { url: data?.signedUrl ?? null, error: null }
 }
 
+export async function checkoutPackage(
+  requestId: string,
+  tier: number,
+): Promise<{ packageId: string | null; error: string | null }> {
+  const selectedTier = getPackageTier(tier)
+  if (!selectedTier) {
+    return { packageId: null, error: 'Invalid package selection.' }
+  }
+
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { packageId: null, error: 'Not authenticated' }
+  }
+
+  const { data, error } = await supabase.rpc('checkout_package', {
+    p_request_id: requestId,
+    p_tier_sessions: selectedTier,
+  })
+
+  if (error || !data) {
+    return {
+      packageId: null,
+      error: error?.message ?? 'Failed to create package. Please try again.',
+    }
+  }
+
+  revalidatePath('/dashboard')
+  revalidatePath('/dashboard/requests')
+  revalidatePath(`/dashboard/packages/${data}`)
+
+  return { packageId: data, error: null }
+}
+
+export async function updatePendingPaymentDetails(
+  paymentId: string,
+  reference: string | null,
+  proofPath: string | null,
+): Promise<{ success: boolean; error: string | null }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { success: false, error: 'Not authenticated' }
+  }
+
+  const { data: payment } = await supabase
+    .from('payments')
+    .select('id, package_id, payer_user_id, status')
+    .eq('id', paymentId)
+    .single()
+
+  if (!payment || payment.payer_user_id !== user.id) {
+    return { success: false, error: 'Unauthorized' }
+  }
+
+  if (payment.status !== 'pending') {
+    return { success: false, error: 'Payment is not in pending status' }
+  }
+
+  const admin = createAdminClient()
+  const { data: updated, error } = await admin
+    .from('payments')
+    .update({
+      reference: reference?.trim() || null,
+      proof_path: proofPath,
+      rejection_note: null,
+      verified_by_user_id: null,
+      verified_at: null,
+    })
+    .eq('id', paymentId)
+    .eq('payer_user_id', user.id)
+    .eq('status', 'pending')
+    .select('id, package_id')
+
+  if (error || !updated || updated.length === 0) {
+    return { success: false, error: 'Failed to save payment details. Please try again.' }
+  }
+
+  revalidatePath(`/dashboard/packages/${payment.package_id}`)
+  revalidatePath('/admin/payments')
+
+  return { success: true, error: null }
+}
+
 /**
  * Resubmit a rejected payment — resets status to pending.
  */
@@ -73,21 +170,32 @@ export async function resubmitRejectedPayment(
     return { success: false, error: 'Payment is not in rejected status' }
   }
 
-  // Reset payment to pending with new proof/reference
-  const { error } = await supabase
+  const admin = createAdminClient()
+
+  // Reset payment to pending with new proof/reference. The admin client is used
+  // after ownership validation because the payer RLS update policy only permits
+  // edits to already-pending rows.
+  const { data: updated, error } = await admin
     .from('payments')
     .update({
       status: 'pending',
       reference: reference?.trim() || null,
       proof_path: proofPath,
+      rejection_note: null,
       verified_by_user_id: null,
       verified_at: null,
     })
     .eq('id', paymentId)
+    .eq('payer_user_id', user.id)
+    .eq('status', 'rejected')
+    .select('id, package_id')
 
-  if (error) {
+  if (error || !updated || updated.length === 0) {
     return { success: false, error: 'Failed to resubmit payment. Please try again.' }
   }
+
+  revalidatePath(`/dashboard/packages/${updated[0].package_id}`)
+  revalidatePath('/admin/payments')
 
   return { success: true, error: null }
 }

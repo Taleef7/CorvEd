@@ -6,7 +6,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     include: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
-    exclude: ['node_modules', 'e2e', '.next'],
+    exclude: ['node_modules', 'e2e', '.next', '.opencode', '.tmp', 'playwright-report', 'test-results'],
   },
   resolve: {
     alias: {
