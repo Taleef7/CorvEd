@@ -242,11 +242,12 @@ export function AssignTutorForm({
           <input type="hidden" name="tutorUserId" value={selectedTutorId} />
 
           <div>
-            <label className="block text-sm font-medium text-[#121212]/80">
+            <label htmlFor="assign-meet-link" className="block text-sm font-medium text-[#121212]/80">
               Google Meet Link{' '}
               <span className="font-normal text-[#121212]/40">(optional — can be added later)</span>
             </label>
             <input
+              id="assign-meet-link"
               type="url"
               name="meetLink"
               placeholder="https://meet.google.com/xxx-xxxx-xxx"
@@ -255,11 +256,12 @@ export function AssignTutorForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#121212]/80">
+            <label htmlFor="assign-timezone" className="block text-sm font-medium text-[#121212]/80">
               Schedule Timezone{' '}
               <span className="font-normal text-[#121212]/40">(optional — defaults to student&apos;s)</span>
             </label>
             <input
+              id="assign-timezone"
               type="text"
               name="timezone"
               defaultValue={requestTimezone}
@@ -275,8 +277,9 @@ export function AssignTutorForm({
             </label>
             <div className="flex flex-wrap gap-3">
               {DAY_OPTIONS.map(({ label, value }) => (
-                <label key={value} className="flex cursor-pointer items-center gap-1.5 text-sm">
+                <label htmlFor={`assign-day-${value}`} key={value} className="flex cursor-pointer items-center gap-1.5 text-sm">
                   <input
+                    id={`assign-day-${value}`}
                     type="checkbox"
                     name="days"
                     value={value}
@@ -289,11 +292,12 @@ export function AssignTutorForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#121212]/80">
+            <label htmlFor="assign-time" className="block text-sm font-medium text-[#121212]/80">
               Start Time{' '}
               <span className="font-normal text-[#121212]/40">(optional — 24 h format)</span>
             </label>
             <input
+              id="assign-time"
               type="time"
               name="time"
               className="mt-1 border border-[#B0B0B0] px-3 py-2 text-sm focus:border-[#1040C0] focus:outline-none"

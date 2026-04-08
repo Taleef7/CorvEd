@@ -32,6 +32,7 @@ export default async function DashboardLayout({
   if (profile?.primary_role === 'tutor') redirect('/tutor')
 
   const displayName = profile?.display_name ?? user.email ?? 'Student'
+  const dashboardRoleLabel = profile?.primary_role === 'parent' ? 'Parent' : 'Student'
 
   const navLinks = [
     { href: '/dashboard', label: 'Dashboard' },
@@ -64,7 +65,7 @@ export default async function DashboardLayout({
               CorvEd
             </Link>
             <span className="border-2 border-[#1040C0] px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-[#1040C0]">
-              Student
+              {dashboardRoleLabel}
             </span>
           </div>
 

@@ -9,6 +9,7 @@ import { WhatsAppLink } from '@/components/WhatsAppLink'
 import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
 import { UserFilters } from './UserFilters'
 import { DeleteUserButton } from './DeleteUserButton'
+import { getAdminUserPaymentBadge, getHighestPriorityPaymentStatus } from '@/lib/admin/users'
 
 const ALL_ROLES = ['student', 'parent', 'tutor', 'admin'] as const
 type Role = (typeof ALL_ROLES)[number]
@@ -163,15 +164,11 @@ export default async function AdminUsersPage({
     }
   }
 
-  // Best payment status per user: verified > pending > rejected
-  const PAYMENT_RANK: Record<string, number> = { verified: 3, pending: 2, rejected: 1 }
   const paymentByUser = new Map<string, string>()
   for (const pay of userPayments ?? []) {
     const uid = pay.payer_user_id as string
-    const existing = paymentByUser.get(uid)
-    const existingRank = existing ? (PAYMENT_RANK[existing] ?? 0) : 0
-    const newRank = PAYMENT_RANK[pay.status as string] ?? 0
-    if (newRank > existingRank) paymentByUser.set(uid, pay.status as string)
+    const nextStatus = getHighestPriorityPaymentStatus([paymentByUser.get(uid), pay.status as string])
+    if (nextStatus) paymentByUser.set(uid, nextStatus)
   }
 
   const filtersActive = !!(activeSearch || activeLevel || activeSubject || activePayment)
@@ -412,12 +409,7 @@ function RequestStatusBadge({ status }: { status: string }) {
 }
 
 function PaymentBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    verified: { label: 'Verified', cls: 'bg-green-100 text-green-800 border border-green-300' },
-    pending: { label: 'Pending', cls: 'bg-yellow-100 text-yellow-800 border border-yellow-300' },
-    rejected: { label: 'Rejected', cls: 'bg-red-100 text-red-800 border border-red-300' },
-  }
-  const cfg = map[status] ?? { label: status, cls: 'bg-[#E0E0E0] text-[#121212]/60' }
+  const cfg = getAdminUserPaymentBadge(status)
   return (
     <span
       className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${cfg.cls}`}

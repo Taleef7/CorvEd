@@ -29,3 +29,18 @@ export function isSessionCompletionAllowed({
 }): boolean {
   return new Date(scheduledStartUtc).getTime() <= now.getTime()
 }
+
+export function isSessionRescheduleAllowed({
+  scheduledStartUtc,
+  now = new Date(),
+  minimumNoticeHours = 24,
+}: {
+  scheduledStartUtc: string
+  now?: Date
+  minimumNoticeHours?: number
+}): boolean {
+  const scheduledStartMs = new Date(scheduledStartUtc).getTime()
+  if (Number.isNaN(scheduledStartMs)) return false
+
+  return scheduledStartMs - now.getTime() >= minimumNoticeHours * 60 * 60 * 1000
+}

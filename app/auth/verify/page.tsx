@@ -3,6 +3,7 @@
 
 import Link from 'next/link'
 import { BauhausLogo, BauhausGeometricPanel } from '@/components/ui/bauhaus'
+import { ResendVerificationButton } from './ResendButton'
 
 export default function VerifyPage() {
   return (
@@ -49,6 +50,8 @@ export default function VerifyPage() {
               <li>The link expires after 1 hour</li>
             </ul>
           </div>
+
+          <ResendVerificationButton />
 
           <p className="mt-6 text-sm text-[#121212]/60">
             Wrong email?{' '}

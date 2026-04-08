@@ -10,7 +10,7 @@ import { z } from 'zod'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { safeNext } from '@/lib/auth/utils'
+import { buildAuthCallbackUrl, safeNext } from '@/lib/auth/utils'
 import {
   BauhausLogo,
   BauhausLabel,
@@ -58,14 +58,11 @@ export function SignInForm() {
   async function signInWithGoogle() {
     setGoogleLoading(true)
     const supabase = createClient()
-    const baseRedirect = `${window.location.origin}/auth/callback`
-    const redirectTo =
-      next !== '/dashboard'
-        ? `${baseRedirect}?next=${encodeURIComponent(next)}`
-        : baseRedirect
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: {
+        redirectTo: buildAuthCallbackUrl(window.location.origin, { next }),
+      },
     })
   }
 

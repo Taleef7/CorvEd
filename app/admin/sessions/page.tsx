@@ -16,6 +16,7 @@ import Link from 'next/link'
 import { CopyMessageButton } from '@/components/CopyMessageButton'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
 import { templates } from '@/lib/whatsapp/templates'
+import { resolveAdminSessionStatusFilter } from '@/lib/admin/sessions'
 
 const ADMIN_TIMEZONE = 'Asia/Karachi'
 const IMPOSSIBLE_ID = '00000000-0000-0000-0000-000000000000'
@@ -30,6 +31,7 @@ export default async function AdminSessionsPage({
   const childParam = params.child // undefined = no filter, '' = self-request, name = parent's child
   const view = (params.view === 'past' ? 'past' : 'upcoming') as SessionView
   const filterStatus = params.status ?? ''
+  const resolvedStatusFilters = resolveAdminSessionStatusFilter(filterStatus)
   const studentSearch = params.search ?? ''
 
   const admin = createAdminClient()
@@ -291,8 +293,10 @@ export default async function AdminSessionsPage({
     .in('match_id', safeMatchIds)
     .order('scheduled_start_utc', { ascending: true })
 
-  if (filterStatus) {
-    sessionsQuery = sessionsQuery.eq('status', filterStatus as SessionStatus)
+  if (resolvedStatusFilters.length === 1) {
+    sessionsQuery = sessionsQuery.eq('status', resolvedStatusFilters[0] as SessionStatus)
+  } else if (resolvedStatusFilters.length > 1) {
+    sessionsQuery = sessionsQuery.in('status', resolvedStatusFilters)
   }
 
   const { data: sessionsData } = await sessionsQuery

@@ -6,6 +6,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import type { Json } from '@/lib/supabase/database.types'
 import type { Database } from '@/lib/supabase/database.types'
 
@@ -26,6 +27,8 @@ export async function assignTutor({
     duration_mins: number
   }
 }): Promise<{ error?: string; matchId?: string }> {
+  let assignedMatchId: string | null = null
+
   try {
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
@@ -92,10 +95,13 @@ export async function assignTutor({
     revalidatePath(`/admin/requests/${requestId}`)
     revalidatePath('/admin/requests')
     revalidatePath('/admin/matches')
-    return { matchId: match.id }
+    revalidatePath(`/admin/matches/${match.id}`)
+    assignedMatchId = match.id
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
   }
+
+  redirect(`/admin/matches/${assignedMatchId}?assigned=1`)
 }
 
 /** Update match.tutor_user_id to a new tutor and write audit log (history kept). */

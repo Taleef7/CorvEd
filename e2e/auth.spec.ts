@@ -29,6 +29,42 @@ test.describe("Auth Pages", () => {
     await expect(page.getByLabel("Password", { exact: true })).toBeVisible();
   });
 
+  test("sign-up parent tab shows parent-specific fields and CTA", async ({ page }) => {
+    await page.goto("/auth/sign-up");
+    await page.getByRole("button", { name: "Parent" }).click();
+
+    await expect(page.getByLabel(/child's full name/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create Parent Account", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /sign up with google/i }),
+    ).toBeVisible();
+  });
+
+  test("sign-up tutor tab routes applicants to the tutor application", async ({
+    page,
+  }) => {
+    await page.goto("/auth/sign-up");
+    await page.getByRole("button", { name: "Tutor" }).click();
+
+    await expect(
+      page.getByRole("link", { name: /go to tutor application/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /sign up with google/i }),
+    ).toHaveCount(0);
+  });
+
+  test("verify page includes resend verification controls", async ({ page }) => {
+    await page.goto("/auth/verify");
+    await expect(page.getByText("Didn't receive it?")).toBeVisible();
+    await expect(page.getByPlaceholder(/re-enter your email/i)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Resend", exact: true }),
+    ).toBeVisible();
+  });
+
   test("forgot-password page renders form", async ({ page }) => {
     await page.goto("/auth/forgot-password");
     await expect(page.getByLabel(/email/i)).toBeVisible();
