@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 import type { Database } from '@/lib/supabase/database.types'
+import { sanitizeAuditDetails } from '@/lib/audit/sanitize'
 
 /**
  * Student can cancel their own request if it hasn't been paid for.
@@ -81,7 +82,7 @@ export async function cancelRequest(requestId: string): Promise<{ error?: string
       action: 'cancel_request',
       entity_type: 'request',
       entity_id: requestId,
-      details: { cancelled_by: 'student', previous_status: request.status },
+      details: sanitizeAuditDetails({ cancelled_by: 'student', previous_status: request.status }),
     },
   ])
 

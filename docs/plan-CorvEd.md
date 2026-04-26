@@ -42,6 +42,7 @@ It is written for an engineer or AI agent continuing the project. Treat it as a 
 
 - [x] Public landing page (`app/page.tsx`) with LeadForm and WhatsApp CTA
 - [x] LeadForm posts to `/api/leads` and stores in leads table
+- [x] Admin lead queue (`app/admin/leads/page.tsx`) lets admins review, filter, contact, and update Phase 0 lead intake records
 - [x] WhatsApp CTA links to admin WhatsApp number via `lib/whatsapp/buildLink.ts`
 - [x] Policies page (`app/policies/page.tsx`) — reschedule, no-show, refund policies published
 
@@ -76,9 +77,10 @@ It is written for an engineer or AI agent continuing the project. Treat it as a 
 - [x] Matches list
 - [x] Match detail: view full match details, ReassignTutorForm, EditMatchForm (schedule pattern + Meet link), GenerateSessionsForm (session generation), WhatsApp template copy buttons for tutor-assigned and reschedule-confirmed messages
 - [x] Sessions list with admin status override (`app/admin/sessions/page.tsx`)
+- [x] Sessions status filter supports grouped no-shows (`status=no_show`) across student and tutor no-show statuses
 - [x] Users page: list all users with roles
 - [x] Audit log page: recent platform events
-- [x] Analytics dashboard: active students, active tutors, upcoming sessions (next 7 days), missed sessions (last 7 days), unmarked sessions, pending payments, pending tutor approvals
+- [x] Analytics dashboard: active students, active tutors, upcoming sessions (next 7 days), missed sessions (last 7 days), unmarked sessions, pending payments, pending tutor approvals, and new leads
 
 ### 2.6 Services & Logic
 
@@ -122,7 +124,7 @@ These are the items required before MVP v0.1 is declared done per the exit crite
 - [ ] **Tutor availability overlap matching** — the current `fetchApprovedTutors` filters by subject and level but does not compare tutor availability_windows against the student's requested availability.
 - [ ] **Admin match detail: link to student and tutor profiles** — the match detail page shows names but should link to the user management and tutor detail pages.
 - [x] **"What happens next" status banners** — `components/dashboards/StatusBanner.tsx` created and integrated into student dashboard.
-- [ ] **Tutor no-show handling in admin** — when a session is marked no_show_tutor, surface it clearly in the admin sessions page so the admin can reschedule or reassign.
+- [x] **Tutor no-show handling in admin** — `/admin/sessions?status=no_show` now intentionally groups `no_show_student` and `no_show_tutor`, so analytics links land on the sessions requiring follow-up.
 
 ---
 
@@ -151,7 +153,7 @@ The Bauhaus design system has been applied:
 
 - [ ] **Admin WhatsApp copy buttons — comprehensive coverage** — extend to: 1-hour reminder, reschedule confirmation, no-show policy reminder on session pages.
 - [ ] **Filter and search improvements** — add text search by student name/subject to admin requests page.
-- [ ] **Audit log completeness** — review all admin actions write audit_log entries.
+- [x] **Audit log privacy hygiene** — audit detail writes use `sanitizeAuditDetails()` and the tutor session RPC redacts free-text notes before inserting into `audit_logs`.
 
 ### 4.4 Reliability & Error Handling — MOSTLY DONE
 
@@ -283,7 +285,7 @@ Run through `docs/MVP.md` section 14 (launch checklist) item by item. Also:
 | File | Change |
 | --- | --- |
 | `next.config.ts` | Added 6 security headers |
-| `middleware.ts` | Added email verification + role-based access enforcement |
+| `proxy.ts` | Added email verification + role-based access enforcement |
 | `lib/supabase/{client,server,admin}.ts` | Added `Database` generic type |
 | `lib/validators/payment.ts` | Added `markPaidSchema`, `rejectPaymentSchema` |
 | `app/admin/payments/actions.ts` | Added Zod validation |

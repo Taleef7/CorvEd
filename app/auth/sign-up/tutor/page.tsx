@@ -7,10 +7,10 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { tutorSignUpSchema, type TutorSignUpData } from '@/lib/validators/tutor-sign-up'
 import {
   BauhausLogo,
   BauhausLabel,
@@ -19,33 +19,8 @@ import {
   BauhausFieldError,
   BauhausServerError,
   BauhausButton,
-  BauhausDivider,
   BauhausGeometricPanel,
 } from '@/components/ui/bauhaus'
-
-const tutorSignUpSchema = z
-  .object({
-    display_name: z.string().min(2, 'Name must be at least 2 characters'),
-    email: z.string().email('Enter a valid email address'),
-    password: z.string().min(8, 'Password must be at least 8 characters'),
-    confirm_password: z.string().min(1, 'Please confirm your password'),
-    timezone: z.string().min(1, 'Please select a timezone'),
-    bio: z
-      .string()
-      .min(30, 'Please write at least 30 characters about yourself')
-      .max(600, 'Keep bio under 600 characters'),
-    experience_years: z
-      .string()
-      .min(1, 'Please select your experience level'),
-    education: z.string().min(3, 'Please enter your highest qualification'),
-    teaching_approach: z.string().optional(),
-  })
-  .refine((d) => d.password === d.confirm_password, {
-    message: 'Passwords do not match',
-    path: ['confirm_password'],
-  })
-
-type TutorSignUpData = z.infer<typeof tutorSignUpSchema>
 
 const TIMEZONES = [
   { value: 'Asia/Karachi', label: 'Asia/Karachi (PKT, UTC+5)' },
@@ -84,7 +59,7 @@ export default function TutorSignUpPage() {
     formState: { errors, isSubmitting },
   } = useForm<TutorSignUpData>({
     resolver: zodResolver(tutorSignUpSchema),
-    defaultValues: { timezone: 'Asia/Karachi' },
+    defaultValues: { timezone: 'Asia/Karachi', conductAcknowledged: false },
   })
 
   const bio = watch('bio') ?? ''
@@ -332,6 +307,35 @@ export default function TutorSignUpPage() {
                     />
                   </div>
                 </>
+              ))}
+
+              {/* Step 3: Conduct acknowledgement */}
+              {section(3, 'Tutor Conduct', (
+                <div>
+                  <label
+                    htmlFor="t-conduct"
+                    className="flex cursor-pointer items-start gap-3 text-sm leading-relaxed text-[#121212]/70"
+                  >
+                    <input
+                      id="t-conduct"
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 shrink-0 border-2 border-[#121212] accent-[#1040C0]"
+                      aria-invalid={errors.conductAcknowledged ? 'true' : 'false'}
+                      {...register('conductAcknowledged')}
+                    />
+                    <span>
+                      I have read and agree to the{' '}
+                      <Link
+                        href="/tutor/conduct"
+                        className="font-bold text-[#1040C0] underline underline-offset-2 hover:text-[#D02020]"
+                      >
+                        CorvEd Tutor Code of Conduct
+                      </Link>
+                      .
+                    </span>
+                  </label>
+                  <BauhausFieldError message={errors.conductAcknowledged?.message} />
+                </div>
               ))}
 
               {/* What happens next */}

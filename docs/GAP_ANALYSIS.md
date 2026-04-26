@@ -98,7 +98,7 @@
 | | |
 |---|---|
 | **Severity** | Critical |
-| **Status** | **RESOLVED** — `middleware.ts` now checks email verification status (redirects unverified to `/auth/verify`) and enforces role-based routing (`/admin/*` → admin only, `/tutor/*` → tutor/admin only). |
+| **Status** | **RESOLVED** — `proxy.ts` now checks email verification status (redirects unverified to `/auth/verify`) and enforces role-based routing (`/admin/*` → admin only, `/tutor/*` → tutor/admin only). |
 
 ### C3. ~~Admin server actions lack Zod input validation~~ ✅ DONE
 

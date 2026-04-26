@@ -2,7 +2,7 @@
 'use client'
 
 import { useRef } from 'react'
-import { getAdminSessionStatusFilterOptions } from '@/lib/admin/sessions'
+import { SESSION_STATUS_FILTER_OPTIONS } from '@/lib/utils/session-filter'
 
 // ── Student-picker search bar ─────────────────────────────────────────────────
 
@@ -84,8 +84,6 @@ export function SessionViewControls({
     { value: 'past', label: 'Past', count: pastCount },
   ]
 
-  const statuses = getAdminSessionStatusFilterOptions()
-
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       {/* Tabs */}
@@ -125,7 +123,7 @@ export function SessionViewControls({
         className="border-2 border-[#121212] px-3 py-1.5 text-sm"
         aria-label="Filter by status"
       >
-        {statuses.map((s) => (
+        {SESSION_STATUS_FILTER_OPTIONS.map((s) => (
           <option key={s.value} value={s.value}>
             {s.label}
           </option>

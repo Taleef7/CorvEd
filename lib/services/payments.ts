@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sanitizeAuditDetails } from "@/lib/audit/sanitize";
 import { revalidatePath } from "next/cache";
 
 /**
@@ -35,7 +36,7 @@ export async function expirePackages() {
         action: "package_expired",
         entity_type: "package",
         entity_id: pkg.id,
-        details: { request_id: pkg.request_id },
+        details: sanitizeAuditDetails({ request_id: pkg.request_id }),
       },
     ]);
   }

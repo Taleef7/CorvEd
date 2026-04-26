@@ -7,6 +7,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
 import { markPaidSchema, rejectPaymentSchema } from '@/lib/validators/payment'
+import { sanitizeAuditDetails } from '@/lib/audit/sanitize'
 
 export async function markPaymentPaid(
   paymentId: string,
@@ -86,7 +87,7 @@ export async function markPaymentPaid(
       action: 'payment_marked_paid',
       entity_type: 'payment',
       entity_id: paymentId,
-      details: { package_id: packageId, request_id: requestId },
+      details: sanitizeAuditDetails({ package_id: packageId, request_id: requestId }),
     },
   ])
   if (auditError) {
@@ -133,7 +134,7 @@ export async function markPaymentRejected(
       action: 'payment_marked_rejected',
       entity_type: 'payment',
       entity_id: paymentId,
-      details: { rejection_note: rejectionNote },
+      details: sanitizeAuditDetails({ rejection_note: rejectionNote }),
     },
   ])
   if (auditError) {

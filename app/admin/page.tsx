@@ -10,7 +10,8 @@ export default async function AdminPage() {
   const admin = createAdminClient()
   const nowIso = new Date().toISOString()
 
-  const [pendingPayments, pendingTutors, newRequests, upcomingSessions, activeSubjects] = await Promise.all([
+  const [newLeads, pendingPayments, pendingTutors, newRequests, upcomingSessions, activeSubjects] = await Promise.all([
+    admin.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'new'),
     admin.from('payments').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     admin.from('tutor_profiles').select('tutor_user_id', { count: 'exact', head: true }).eq('approved', false),
     admin.from('requests').select('id', { count: 'exact', head: true }).eq('status', 'new'),
@@ -19,6 +20,7 @@ export default async function AdminPage() {
   ])
 
   const counts: Record<string, { count: number; countLabel: string }> = {
+    '/admin/leads': { count: newLeads.count ?? 0, countLabel: 'new' },
     '/admin/payments': { count: pendingPayments.count ?? 0, countLabel: 'pending' },
     '/admin/tutors': { count: pendingTutors.count ?? 0, countLabel: 'pending' },
     '/admin/requests': { count: newRequests.count ?? 0, countLabel: 'new' },
@@ -27,6 +29,7 @@ export default async function AdminPage() {
   }
 
   const CARDS = [
+    { href: '/admin/leads', title: 'Leads', desc: 'Review Phase 0 intake records and track WhatsApp follow-up.', accent: 'yellow' as const },
     { href: '/admin/users', title: 'User Management', desc: 'View all users, assign or remove roles, and set primary roles.', accent: 'blue' as const },
     { href: '/admin/requests', title: 'Requests', desc: 'Review and manage student tutoring requests.', accent: 'red' as const },
     { href: '/admin/payments', title: 'Payments', desc: 'Verify bank transfers and activate packages.', accent: 'yellow' as const },

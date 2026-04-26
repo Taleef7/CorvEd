@@ -7,7 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { buildAdminUpdateUserProfileAuditEntry } from "@/lib/admin/users";
+import { sanitizeAuditDetails } from "@/lib/audit/sanitize";
 
 const VALID_ROLES = ["student", "parent", "tutor", "admin"] as const;
 type Role = (typeof VALID_ROLES)[number];
@@ -99,7 +99,7 @@ const updateProfileSchema = z.object({
 
 /** Update a user's display name and WhatsApp number. */
 export async function updateUserProfile(userId: string, formData: FormData) {
-  const adminUserId = await requireAdmin();
+  await requireAdmin();
 
   const raw = {
     display_name: formData.get("display_name") as string,
@@ -123,11 +123,13 @@ export async function updateUserProfile(userId: string, formData: FormData) {
   if (error) throw new Error(`Failed to update profile: ${error.message}`);
 
   await admin.from("audit_logs").insert([
-    buildAdminUpdateUserProfileAuditEntry({
-      actorUserId: adminUserId,
-      targetUserId: userId,
-      displayName: parsed.data.display_name,
-    }),
+    {
+      actor_user_id: userId,
+      action: "admin_update_user_profile",
+      entity_type: "user_profiles",
+      entity_id: userId,
+      details: sanitizeAuditDetails({ display_name: parsed.data.display_name }),
+    },
   ]);
 
   revalidatePath("/admin/users");

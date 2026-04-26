@@ -10,13 +10,17 @@ import {
   formatSessionTime,
   type SessionStatus,
 } from '@/lib/utils/session'
+import {
+  getSessionStatusesForFilter,
+  getSessionStatusFilterLabel,
+  isSessionStatusFilter,
+} from '@/lib/utils/session-filter'
 import { SessionStatusForm, RescheduleForm } from './SessionActions'
 import { StudentSearchBar, SessionViewControls, type SessionView } from './SessionFilters'
 import Link from 'next/link'
 import { CopyMessageButton } from '@/components/CopyMessageButton'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
 import { templates } from '@/lib/whatsapp/templates'
-import { resolveAdminSessionStatusFilter } from '@/lib/admin/sessions'
 
 const ADMIN_TIMEZONE = 'Asia/Karachi'
 const IMPOSSIBLE_ID = '00000000-0000-0000-0000-000000000000'
@@ -30,8 +34,7 @@ export default async function AdminSessionsPage({
   const studentId = params.student
   const childParam = params.child // undefined = no filter, '' = self-request, name = parent's child
   const view = (params.view === 'past' ? 'past' : 'upcoming') as SessionView
-  const filterStatus = params.status ?? ''
-  const resolvedStatusFilters = resolveAdminSessionStatusFilter(filterStatus)
+  const filterStatus = params.status && isSessionStatusFilter(params.status) ? params.status : ''
   const studentSearch = params.search ?? ''
 
   const admin = createAdminClient()
@@ -54,9 +57,11 @@ export default async function AdminSessionsPage({
       matchIds.length > 0
         ? await admin
             .from('sessions')
-            .select('match_id, scheduled_start_utc')
+            .select('match_id, scheduled_start_utc, status')
             .in('match_id', matchIds)
-        : { data: [] as { match_id: string; scheduled_start_utc: string }[] }
+        : { data: [] as { match_id: string; scheduled_start_utc: string; status: SessionStatus }[] }
+
+    const filteredStatuses = filterStatus ? getSessionStatusesForFilter(filterStatus) : []
 
     // Aggregate per student
     type StudentEntry = {
@@ -120,6 +125,15 @@ export default async function AdminSessionsPage({
 
     // Apply search filter and sort by most upcoming first
     let students = [...studentMap.values()]
+    if (filteredStatuses.length > 0) {
+      students = students.filter((student) =>
+        (sessionRows ?? []).some(
+          (session) =>
+            student.matchIds.includes(session.match_id) &&
+            filteredStatuses.includes(session.status as SessionStatus),
+        ),
+      )
+    }
     if (studentSearch) {
       const q = studentSearch.toLowerCase()
       students = students.filter((s) => s.displayName.toLowerCase().includes(q))
@@ -188,7 +202,7 @@ export default async function AdminSessionsPage({
                       />
                     )}
                     <a
-                      href={`/admin/sessions?student=${student.userId}&child=${encodeURIComponent(student.forStudentName ?? '')}`}
+                      href={`/admin/sessions?student=${student.userId}&child=${encodeURIComponent(student.forStudentName ?? '')}${filterStatus ? `&view=past&status=${encodeURIComponent(filterStatus)}` : ''}`}
                       className="border-2 border-[#121212] px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-[#121212] hover:bg-[#F0F0F0]"
                     >
                       View →
@@ -293,10 +307,13 @@ export default async function AdminSessionsPage({
     .in('match_id', safeMatchIds)
     .order('scheduled_start_utc', { ascending: true })
 
-  if (resolvedStatusFilters.length === 1) {
-    sessionsQuery = sessionsQuery.eq('status', resolvedStatusFilters[0] as SessionStatus)
-  } else if (resolvedStatusFilters.length > 1) {
-    sessionsQuery = sessionsQuery.in('status', resolvedStatusFilters)
+  if (filterStatus) {
+    const statuses = getSessionStatusesForFilter(filterStatus)
+    if (statuses.length === 1) {
+      sessionsQuery = sessionsQuery.eq('status', statuses[0])
+    } else if (statuses.length > 1) {
+      sessionsQuery = sessionsQuery.in('status', statuses)
+    }
   }
 
   const { data: sessionsData } = await sessionsQuery
@@ -363,7 +380,7 @@ export default async function AdminSessionsPage({
         <div className="border-4 border-[#121212] bg-white px-8 py-10 text-center">
           <p className="text-sm text-[#121212]/50">
             No {view} sessions
-            {filterStatus ? ` with status "${filterStatus.replace(/_/g, ' ')}"` : ''}.
+            {filterStatus ? ` with status "${getSessionStatusFilterLabel(filterStatus)}"` : ''}.
           </p>
         </div>
       ) : (
