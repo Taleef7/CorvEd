@@ -225,10 +225,15 @@ export default async function AdminMatchDetailPage({
                   href={`/admin/users?search=${encodeURIComponent(studentProfile.display_name)}`}
                   className="text-[#1040C0] underline-offset-4 hover:underline"
                 >
-                  {studentName}
+                  {studentProfile.display_name}
                 </Link>
               ) : (
                 studentName
+              )}
+              {request?.requester_role === 'parent' && request?.for_student_name && (
+                <span className="ml-1 text-xs text-[#121212]/50">
+                  (Student: {request.for_student_name})
+                </span>
               )}
             </dd>
             {studentProfile?.whatsapp_number && (

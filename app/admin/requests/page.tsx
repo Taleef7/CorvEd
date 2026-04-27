@@ -8,7 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS } from '@/lib/utils/request'
 import { RequestFilters } from './RequestFilters'
 import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
-import { filterAdminRequestsBySearch, normalizeAdminRequestSearch } from '@/lib/admin/request-search'
+import { normalizeAdminRequestSearch } from '@/lib/admin/request-search'
 import type { Database } from '@/lib/supabase/database.types'
 
 type RequestStatusEnum = Database['public']['Enums']['request_status_enum']
@@ -48,7 +48,8 @@ export default async function AdminRequestsPage({
 }) {
   const { status, subject, level, q, page } = await searchParams
   const activeStatus: FilterStatus = ALL_STATUSES.includes(status ?? '') ? status! : 'all'
-  const activeSearch = normalizeAdminRequestSearch(q)
+  const activeSearch = typeof q === 'string' ? q.trim() : ''
+  const normalizedSearch = normalizeAdminRequestSearch(activeSearch)
   const currentPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
   const from = (currentPage - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
@@ -83,33 +84,58 @@ export default async function AdminRequestsPage({
 
   const subjectsQuery = admin.from('subjects').select('id, name').eq('active', true).order('sort_order')
 
+  // Apply text search at DB level
+  // For each token, find matching user IDs (display_name) and subject IDs (name),
+  // then OR-filter across for_student_name, created_by_user_id, and subject_id.
+  if (normalizedSearch) {
+    const rawTokens = normalizedSearch.split(' ').filter(Boolean)
+    // Sanitize: remove PostgREST or()-syntax metacharacters, then escape ILIKE wildcards
+    const safeTokens = rawTokens
+      .map((t) => t.replace(/[(),"]/g, '').replace(/[%_]/g, '\\$&'))
+      .filter(Boolean)
+
+    if (safeTokens.length > 0) {
+      // Run all token lookups in parallel (2 queries per token, all concurrent)
+      const lookups = await Promise.all(
+        safeTokens.flatMap((token) => [
+          admin.from('user_profiles').select('user_id').ilike('display_name', `%${token}%`),
+          admin.from('subjects').select('id').ilike('name', `%${token}%`),
+        ]),
+      )
+
+      // Apply per-token AND filters — each token must match at least one field
+      for (let i = 0; i < safeTokens.length; i++) {
+        const token = safeTokens[i]
+        const { data: matchingUsers } = lookups[i * 2] as { data: { user_id: string }[] | null }
+        const { data: matchingSubjects } = lookups[i * 2 + 1] as { data: { id: number }[] | null }
+
+        const userIds = matchingUsers?.map((u) => u.user_id) ?? []
+        const subjectIds = matchingSubjects?.map((s) => s.id) ?? []
+
+        const orParts: string[] = [`for_student_name.ilike.%${token}%`]
+        if (userIds.length > 0) orParts.push(`created_by_user_id.in.(${userIds.join(',')})`)
+        if (subjectIds.length > 0) orParts.push(`subject_id.in.(${subjectIds.join(',')})`)
+
+        countQuery = countQuery.or(orParts.join(','))
+        dataQuery = dataQuery.or(orParts.join(','))
+      }
+    }
+  }
+
+  dataQuery = dataQuery.range(from, to)
+
   let requests: RequestRow[] = []
   let totalCount = 0
   let subjects: { id: number; name: string }[] = []
 
-  if (activeSearch) {
-    const [{ data: requestsData }, { data: subjectsData }] = await Promise.all([
-      dataQuery,
-      subjectsQuery,
-    ])
-    const filteredRequests = filterAdminRequestsBySearch(
-      (requestsData ?? []) as unknown as RequestRow[],
-      activeSearch,
-    )
-    totalCount = filteredRequests.length
-    requests = filteredRequests.slice(from, to + 1)
-    subjects = (subjectsData ?? []) as { id: number; name: string }[]
-  } else {
-    dataQuery = dataQuery.range(from, to)
-    const [{ count }, { data: requestsData }, { data: subjectsData }] = await Promise.all([
-      countQuery,
-      dataQuery,
-      subjectsQuery,
-    ])
-    totalCount = count ?? 0
-    requests = (requestsData ?? []) as unknown as RequestRow[]
-    subjects = (subjectsData ?? []) as { id: number; name: string }[]
-  }
+  const [{ count }, { data: requestsData }, { data: subjectsData }] = await Promise.all([
+    countQuery,
+    dataQuery,
+    subjectsQuery,
+  ])
+  totalCount = count ?? 0
+  requests = (requestsData ?? []) as unknown as RequestRow[]
+  subjects = (subjectsData ?? []) as { id: number; name: string }[]
 
   const statusLinks: { label: string; value: FilterStatus }[] = [
     { label: 'All', value: 'all' },
