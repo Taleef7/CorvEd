@@ -10,6 +10,7 @@ type RequestFiltersProps = {
   activeStatus: string
   activeSubject: string | undefined
   activeLevel: string | undefined
+  activeSearch: string | undefined
 }
 
 export function RequestFilters({
@@ -17,12 +18,14 @@ export function RequestFilters({
   activeStatus,
   activeSubject,
   activeLevel,
+  activeSearch,
 }: RequestFiltersProps) {
   function buildHref(params: Record<string, string | undefined>): string {
     const merged: Record<string, string | undefined> = {
       status: activeStatus !== 'all' ? activeStatus : undefined,
       subject: activeSubject,
       level: activeLevel,
+      q: activeSearch,
       ...params,
     }
     const qs = Object.entries(merged)
@@ -34,6 +37,34 @@ export function RequestFilters({
 
   return (
     <div className="flex flex-wrap gap-3">
+      <form action="/admin/requests" className="flex flex-wrap gap-2">
+        {activeStatus !== 'all' && <input type="hidden" name="status" value={activeStatus} />}
+        {activeSubject && <input type="hidden" name="subject" value={activeSubject} />}
+        {activeLevel && <input type="hidden" name="level" value={activeLevel} />}
+        <input
+          type="search"
+          name="q"
+          defaultValue={activeSearch ?? ''}
+          placeholder="Search student, requester, or subject"
+          className="min-h-[38px] min-w-[260px] border-2 border-[#121212] px-3 py-1.5 text-sm"
+          aria-label="Search requests"
+        />
+        <button
+          type="submit"
+          className="border-2 border-[#121212] bg-[#121212] px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-white"
+        >
+          Search
+        </button>
+        {activeSearch && (
+          <a
+            href={buildHref({ q: undefined })}
+            className="inline-flex min-h-[38px] items-center border-2 border-[#B0B0B0] bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-[#121212]/70 hover:border-[#1040C0] hover:text-[#1040C0]"
+          >
+            Clear
+          </a>
+        )}
+      </form>
+
       {/* Subject filter */}
       <select
         value={activeSubject ?? ''}

@@ -11,6 +11,7 @@ import { PaymentQuickActions } from './PaymentQuickActions'
 import Link from 'next/link'
 import { templates } from '@/lib/whatsapp/templates'
 import { PAYMENT_INSTRUCTIONS } from '@/lib/config/pricing'
+import { formatPkr } from '@/lib/utils/currency'
 import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
 
 const STATUS_COLOURS: Record<string, string> = {
@@ -149,7 +150,7 @@ export default async function AdminPaymentsPage({
                       {subjectName} · {level} · {pkg?.tier_sessions ?? '?'} sessions/month
                     </p>
                     <p className="text-sm text-[#121212]/60">
-                      Amount: <span className="font-bold text-[#121212]">PKR {payment.amount_pkr.toLocaleString()}</span>
+                      Amount: <span className="font-bold text-[#121212]">{formatPkr(payment.amount_pkr)}</span>
                     </p>
                     <p className="text-xs text-[#121212]/40">Submitted: {submittedDate}</p>
                     {payment.reference && (

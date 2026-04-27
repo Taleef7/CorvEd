@@ -6,6 +6,7 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PACKAGES } from '@/lib/config/pricing'
+import { formatPkr } from '@/lib/utils/currency'
 
 function NewPackageContent() {
   const router = useRouter()
@@ -94,7 +95,7 @@ function NewPackageContent() {
                   {pkg.typicalFrequency}
                 </p>
                 <p className={`mt-3 text-lg font-bold ${isSelected ? 'text-white' : 'text-[#1040C0]'}`}>
-                  PKR {pkg.pricePerMonthPkr.toLocaleString()}
+                  {formatPkr(pkg.pricePerMonthPkr)}
                 </p>
                 <p className={`mt-1 text-xs ${isSelected ? 'text-white/60' : 'text-[#121212]/40'}`}>
                   {pkg.description}

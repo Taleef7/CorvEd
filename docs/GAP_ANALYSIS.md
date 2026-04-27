@@ -61,12 +61,12 @@
 | **Severity** | Critical |
 | **Status** | **RESOLVED** — Migration `20260303000001_fix_double_increment_guard.sql` replaces the RPC with a guarded version that checks previous status before incrementing/decrementing. Also adds `decrement_sessions_used` helper. Local Supabase integration tests now verify double-submit stability, consuming/non-consuming transitions, service-role direct increments, and future-session blocking. |
 
-### B2. ~~Documentation says `p_package_id` but code uses `p_request_id`~~ ✅ DONE
+### B2. ~~Documentation used an old package-id RPC example but code uses `p_request_id`~~ ✅ DONE
 
 | | |
 |---|---|
 | **Severity** | Important |
-| **Status** | **RESOLVED** — `CLAUDE.md` updated to say `increment_sessions_used(p_request_id)`. |
+| **Status** | **RESOLVED** — Contributor-facing RPC examples now use `increment_sessions_used(p_request_id)` where present, and a repo search confirms no stale package-id RPC parameter example remains. |
 
 ### B3. ~~Reschedule is admin-only; students have no self-service path~~ ✅ DONE
 

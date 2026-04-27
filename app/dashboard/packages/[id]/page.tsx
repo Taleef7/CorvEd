@@ -12,6 +12,7 @@ import {
   isAllowedPaymentProofType,
   MAX_PAYMENT_PROOF_SIZE_BYTES,
 } from '@/lib/payments/proofs'
+import { formatPkr } from '@/lib/utils/currency'
 import { LEVEL_LABELS } from '@/lib/utils/request'
 
 type PackageRow = {
@@ -293,7 +294,7 @@ export default function PackageDetailPage() {
             {formatDate(pkg.start_date)} → {formatDate(pkg.end_date)}
           </p>
           <p className="mt-3 text-2xl font-bold text-[#1040C0]">
-            PKR {payment.amount_pkr.toLocaleString()}
+            {formatPkr(payment.amount_pkr)}
           </p>
           {pkgConfig && (
             <p className="mt-1 text-xs text-[#121212]/40">{pkgConfig.typicalFrequency} · 60 min/session</p>

@@ -4,6 +4,7 @@ import { WhatsAppCTA } from '@/components/WhatsAppCTA'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/app/auth/actions'
 import { PACKAGES as PACKAGE_CONFIGS } from '@/lib/config/pricing'
+import { formatPkr } from '@/lib/utils/currency'
 
 const SUBJECTS = [
   'Mathematics',
@@ -54,7 +55,7 @@ const LANDING_PACKAGES = PACKAGE_CONFIGS.map((pkg) => {
     ...(cardStyle ?? {}),
     sessions: pkg.sessionsPerMonth,
     frequency: pkg.typicalFrequency,
-    price: `PKR ${pkg.pricePerMonthPkr.toLocaleString('en-PK')}`,
+    price: formatPkr(pkg.pricePerMonthPkr),
     description: cardStyle?.description ?? pkg.description,
     highlight: cardStyle?.highlight ?? pkg.tier === 12,
     accentColor: cardStyle?.accentColor ?? '#1040C0',

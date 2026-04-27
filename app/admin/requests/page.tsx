@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS } from '@/lib/utils/request'
 import { RequestFilters } from './RequestFilters'
 import { AdminPagination, PAGE_SIZE } from '@/components/AdminPagination'
+import { filterAdminRequestsBySearch, normalizeAdminRequestSearch } from '@/lib/admin/request-search'
 import type { Database } from '@/lib/supabase/database.types'
 
 type RequestStatusEnum = Database['public']['Enums']['request_status_enum']
@@ -43,10 +44,11 @@ type FilterStatus = 'all' | (typeof ALL_STATUSES)[number]
 export default async function AdminRequestsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; subject?: string; level?: string; page?: string }>
+  searchParams: Promise<{ status?: string; subject?: string; level?: string; q?: string; page?: string }>
 }) {
-  const { status, subject, level, page } = await searchParams
+  const { status, subject, level, q, page } = await searchParams
   const activeStatus: FilterStatus = ALL_STATUSES.includes(status ?? '') ? status! : 'all'
+  const activeSearch = normalizeAdminRequestSearch(q)
   const currentPage = Math.max(1, parseInt(page ?? '1', 10) || 1)
   const from = (currentPage - 1) * PAGE_SIZE
   const to = from + PAGE_SIZE - 1
@@ -79,16 +81,35 @@ export default async function AdminRequestsPage({
     dataQuery = dataQuery.eq('level', level as LevelEnum)
   }
 
-  dataQuery = dataQuery.range(from, to)
+  const subjectsQuery = admin.from('subjects').select('id, name').eq('active', true).order('sort_order')
 
-  const [{ count: totalCount }, { data: requestsData }, { data: subjectsData }] = await Promise.all([
-    countQuery,
-    dataQuery,
-    admin.from('subjects').select('id, name').eq('active', true).order('sort_order'),
-  ])
+  let requests: RequestRow[] = []
+  let totalCount = 0
+  let subjects: { id: number; name: string }[] = []
 
-  const requests = (requestsData ?? []) as unknown as RequestRow[]
-  const subjects = (subjectsData ?? []) as { id: number; name: string }[]
+  if (activeSearch) {
+    const [{ data: requestsData }, { data: subjectsData }] = await Promise.all([
+      dataQuery,
+      subjectsQuery,
+    ])
+    const filteredRequests = filterAdminRequestsBySearch(
+      (requestsData ?? []) as unknown as RequestRow[],
+      activeSearch,
+    )
+    totalCount = filteredRequests.length
+    requests = filteredRequests.slice(from, to + 1)
+    subjects = (subjectsData ?? []) as { id: number; name: string }[]
+  } else {
+    dataQuery = dataQuery.range(from, to)
+    const [{ count }, { data: requestsData }, { data: subjectsData }] = await Promise.all([
+      countQuery,
+      dataQuery,
+      subjectsQuery,
+    ])
+    totalCount = count ?? 0
+    requests = (requestsData ?? []) as unknown as RequestRow[]
+    subjects = (subjectsData ?? []) as { id: number; name: string }[]
+  }
 
   const statusLinks: { label: string; value: FilterStatus }[] = [
     { label: 'All', value: 'all' },
@@ -102,7 +123,7 @@ export default async function AdminRequestsPage({
   ]
 
   function buildStatusHref(newStatus: FilterStatus) {
-    const qs = Object.entries({ status: newStatus !== 'all' ? newStatus : undefined, subject, level })
+    const qs = Object.entries({ status: newStatus !== 'all' ? newStatus : undefined, subject, level, q: activeSearch || undefined })
       .filter(([, v]) => v !== undefined && v !== '')
       .map(([k, v]) => `${k}=${encodeURIComponent(v!)}`)
       .join('&')
@@ -114,7 +135,7 @@ export default async function AdminRequestsPage({
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-black uppercase tracking-tighter text-[#121212]">Requests</h1>
         <p className="text-sm text-[#121212]/60">
-          {totalCount ?? requests.length} request{(totalCount ?? requests.length) !== 1 ? 's' : ''}
+          {totalCount} request{totalCount !== 1 ? 's' : ''}
         </p>
       </div>
 
@@ -141,6 +162,7 @@ export default async function AdminRequestsPage({
         activeStatus={activeStatus}
         activeSubject={subject}
         activeLevel={level}
+        activeSearch={activeSearch}
       />
 
       {/* Table */}

@@ -11,6 +11,7 @@ import { STATUS_COLOURS, STATUS_LABELS, LEVEL_LABELS } from '@/lib/utils/request
 import { AssignTutorForm } from './AssignTutorForm'
 import { AdminRequestActions } from './AdminRequestActions'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
+import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs'
 
 const EXAM_BOARD_LABELS: Record<string, string> = {
   cambridge: 'Cambridge',
@@ -148,6 +149,14 @@ export default async function AdminRequestDetailPage({
 
   return (
     <div className="space-y-6">
+      <AdminBreadcrumbs
+        items={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Requests', href: '/admin/requests' },
+          { label: 'Request Detail' },
+        ]}
+      />
+
       {/* Back link */}
       <Link
         href="/admin/requests"
@@ -328,6 +337,7 @@ export default async function AdminRequestDetailPage({
             <AssignTutorForm
               requestId={request.id}
               requestTimezone={request.timezone}
+              requestAvailabilityWindows={availWindows}
               eligibleTutors={eligibleTutors}
             />
           ) : request.status === 'matched' || request.status === 'active' ? (
