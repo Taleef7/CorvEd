@@ -40,7 +40,7 @@ export async function updateLeadStatus(formData: FormData) {
 
   if (error) throw new Error(`Failed to update lead: ${error.message}`)
 
-  await admin.from('audit_logs').insert([
+  const { error: auditError } = await admin.from('audit_logs').insert([
     {
       actor_user_id: adminUserId,
       action: 'lead_status_updated',
@@ -53,6 +53,7 @@ export async function updateLeadStatus(formData: FormData) {
       }),
     },
   ])
+  if (auditError) throw new Error(`Failed to write audit log: ${auditError.message}`)
 
   revalidatePath('/admin')
   revalidatePath('/admin/analytics')

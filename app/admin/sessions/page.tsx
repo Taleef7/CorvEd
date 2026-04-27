@@ -202,7 +202,7 @@ export default async function AdminSessionsPage({
                       />
                     )}
                     <a
-                      href={`/admin/sessions?student=${student.userId}&child=${encodeURIComponent(student.forStudentName ?? '')}${filterStatus ? `&view=past&status=${encodeURIComponent(filterStatus)}` : ''}`}
+                      href={`/admin/sessions?student=${student.userId}&child=${encodeURIComponent(student.forStudentName ?? '')}${filterStatus ? `&status=${encodeURIComponent(filterStatus)}${['done', 'rescheduled', 'no_show', 'no_show_student', 'no_show_tutor'].includes(filterStatus) ? '&view=past' : ''}` : ''}`}
                       className="border-2 border-[#121212] px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-[#121212] hover:bg-[#F0F0F0]"
                     >
                       View →

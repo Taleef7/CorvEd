@@ -99,7 +99,7 @@ const updateProfileSchema = z.object({
 
 /** Update a user's display name and WhatsApp number. */
 export async function updateUserProfile(userId: string, formData: FormData) {
-  await requireAdmin();
+  const adminUserId = await requireAdmin();
 
   const raw = {
     display_name: formData.get("display_name") as string,
@@ -124,7 +124,7 @@ export async function updateUserProfile(userId: string, formData: FormData) {
 
   await admin.from("audit_logs").insert([
     {
-      actor_user_id: userId,
+      actor_user_id: adminUserId,
       action: "admin_update_user_profile",
       entity_type: "user_profiles",
       entity_id: userId,

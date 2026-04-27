@@ -22,7 +22,7 @@ const SESSION_STATUS_FILTERS: Record<SessionStatusFilter, SessionStatus[]> = {
 }
 
 export function isSessionStatusFilter(value: string): value is SessionStatusFilter {
-  return value in SESSION_STATUS_FILTERS
+  return Object.prototype.hasOwnProperty.call(SESSION_STATUS_FILTERS, value)
 }
 
 export function getSessionStatusesForFilter(value: string): SessionStatus[] {
