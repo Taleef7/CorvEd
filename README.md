@@ -132,11 +132,11 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | `leads` DB migration | ✅ `supabase/migrations/20260223000001_create_leads_table.sql` — RLS: anon insert allowed, auth read/update |
 | **Admin: lead queue** | ✅ `app/admin/leads/page.tsx` — review Phase 0 intake records, open WhatsApp, update status, and store private admin notes |
 | Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
-| **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password |
+| **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password; browser-side cooldown + generic account errors |
 | **Auth: email verification** | ✅ `app/auth/verify/page.tsx` — instructions page; unverified users cannot reach dashboard |
-| **Auth: sign in (email/password)** | ✅ `app/auth/sign-in/page.tsx` — generic error message (no email enumeration) |
-| **Auth: Google OAuth** | ✅ Sign-in + sign-up pages both have "Sign in with Google" button |
-| **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if profile incomplete |
+| **Auth: sign in (email/password)** | ✅ `app/auth/sign-in/page.tsx` — generic error message (no email enumeration) + browser-side attempt cooldown |
+| **Auth: Google OAuth** | ✅ Sign-in + sign-up pages both have "Sign in with Google" button and local redirect cooldowns |
+| **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if WhatsApp or timezone is missing |
 | **Auth: profile setup** | ✅ `app/auth/profile-setup/page.tsx` — display name, WhatsApp number (auto-normalized), timezone (auto-detected) |
 | **Auth: sign out** | ✅ `app/auth/sign-out/route.ts` — POST clears session, redirects to sign-in |
 | **Route protection (proxy)** | ✅ `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
@@ -219,11 +219,11 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | `leads` DB migration | ✅ `supabase/migrations/20260223000001_create_leads_table.sql` — RLS: anon insert allowed, auth read/update |
 | **Admin: lead queue** | ✅ `app/admin/leads/page.tsx` — review Phase 0 intake records, open WhatsApp, update status, and store private admin notes |
 | Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
-| **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password |
+| **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password; browser-side cooldown + generic account errors |
 | **Auth: email verification** | ✅ `app/auth/verify/page.tsx` — instructions page; unverified users cannot reach dashboard |
-| **Auth: sign in (email/password)** | ✅ `app/auth/sign-in/page.tsx` — generic error message (no email enumeration) |
-| **Auth: Google OAuth** | ✅ Sign-in + sign-up pages both have "Sign in with Google" button |
-| **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if profile incomplete |
+| **Auth: sign in (email/password)** | ✅ `app/auth/sign-in/page.tsx` — generic error message (no email enumeration) + browser-side attempt cooldown |
+| **Auth: Google OAuth** | ✅ Sign-in + sign-up pages both have "Sign in with Google" button and local redirect cooldowns |
+| **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if WhatsApp or timezone is missing |
 | **Auth: profile setup** | ✅ `app/auth/profile-setup/page.tsx` — display name, WhatsApp number (auto-normalized), timezone (auto-detected) |
 | **Auth: sign out** | ✅ `app/auth/sign-out/route.ts` — POST clears session, redirects to sign-in |
 | **Route protection (proxy)** | ✅ `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
@@ -347,6 +347,7 @@ Recommended workflow
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >
+> - **Auth rate limits / SMTP**: review Auth rate-limit values for signup/recovery/resend flows and configure custom SMTP before production; Supabase's built-in sender is intended for low-volume/demo use.
 > - **Auth → Settings**: enable email confirmations; set Site URL to your domain; add `http://localhost:3000/auth/callback` to Redirect URLs.
 > - **Auth → Providers → Google**: enable Google OAuth with credentials from [Google Cloud Console](https://console.cloud.google.com). Authorized redirect URI: `https://<your-supabase-ref>.supabase.co/auth/v1/callback`.
 > - **Storage → New Bucket**: create a bucket named `payment-proofs` with **Public: No** (private). This is required for payment proof uploads in E5.

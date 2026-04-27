@@ -66,3 +66,12 @@ export function shouldPromoteOAuthParentSignup({
 
   return now.getTime() - createdAtMs <= FRESH_OAUTH_SIGNUP_WINDOW_MS
 }
+
+export function requiresProfileSetup(
+  profile: { whatsapp_number: string | null; timezone: string | null } | null,
+) {
+  if (!profile) return true
+  if (!profile.whatsapp_number?.trim()) return true
+  if (!profile.timezone?.trim()) return true
+  return false
+}
