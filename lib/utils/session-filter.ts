@@ -21,6 +21,14 @@ const SESSION_STATUS_FILTERS: Record<SessionStatusFilter, SessionStatus[]> = {
   no_show_tutor: ['no_show_tutor'],
 }
 
+export const PAST_ONLY_SESSION_STATUS_FILTERS: SessionStatusFilter[] = [
+  'done',
+  'rescheduled',
+  'no_show',
+  'no_show_student',
+  'no_show_tutor',
+]
+
 export function isSessionStatusFilter(value: string): value is SessionStatusFilter {
   return Object.prototype.hasOwnProperty.call(SESSION_STATUS_FILTERS, value)
 }
