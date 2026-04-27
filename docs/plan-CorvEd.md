@@ -121,8 +121,8 @@ These are the items required before MVP v0.1 is declared done per the exit crite
 
 ### 3.2 Nice-to-Have for v0.1 (but not blockers)
 
-- [ ] **Tutor availability overlap matching** — the current `fetchApprovedTutors` filters by subject and level but does not compare tutor availability_windows against the student's requested availability.
-- [ ] **Admin match detail: link to student and tutor profiles** — the match detail page shows names but should link to the user management and tutor detail pages.
+- [x] **Tutor availability overlap matching** — the admin assignment screen now shows overlap, no-overlap, and missing-availability hints using `lib/utils/availability.ts`; assignment remains manual.
+- [x] **Admin match detail: link to student and tutor profiles** — match detail now links the requester into admin user search and the tutor to the tutor detail page.
 - [x] **"What happens next" status banners** — `components/dashboards/StatusBanner.tsx` created and integrated into student dashboard.
 - [x] **Tutor no-show handling in admin** — `/admin/sessions?status=no_show` now intentionally groups `no_show_student` and `no_show_tutor`, so analytics links land on the sessions requiring follow-up.
 
@@ -138,6 +138,8 @@ These are the items required before MVP v0.1 is declared done per the exit crite
 - [x] **Empty states** — friendly empty state messages on list pages.
 - [x] **Error handling** — toast notifications standardized via Sonner. Zod validation for admin actions.
 - [x] **Reschedule cutoff warning** — `RescheduleButton` already implements 24-hour cutoff.
+- [x] **Admin detail breadcrumbs** — request, tutor, and match detail pages now expose deterministic admin breadcrumb return paths.
+- [x] **PKR formatting consistency** — pricing and payment UI now use shared `formatPkr()` formatting.
 
 ### 4.2 Design System Application — ✅ DONE
 
@@ -152,7 +154,7 @@ The Bauhaus design system has been applied:
 ### 4.3 Operational Tooling
 
 - [ ] **Admin WhatsApp copy buttons — comprehensive coverage** — extend to: 1-hour reminder, reschedule confirmation, no-show policy reminder on session pages.
-- [ ] **Filter and search improvements** — add text search by student name/subject to admin requests page.
+- [x] **Filter and search improvements** — admin requests now support text search by student/requester/subject and compose with status, subject, and level filters.
 - [x] **Audit log privacy hygiene** — audit detail writes use `sanitizeAuditDetails()` and the tutor session RPC redacts free-text notes before inserting into `audit_logs`.
 
 ### 4.4 Reliability & Error Handling — MOSTLY DONE

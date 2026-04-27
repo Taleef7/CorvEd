@@ -6,6 +6,10 @@
 import { useActionState, useState } from 'react'
 import Link from 'next/link'
 import { assignTutor } from '../actions'
+import {
+  type AvailabilityWindow,
+  getAvailabilityOverlapSummary,
+} from '@/lib/utils/availability'
 
 const DAY_OPTIONS = [
   { label: 'Sun', value: 0 },
@@ -19,14 +23,12 @@ const DAY_OPTIONS = [
 
 const DAY_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 
-type AvailWindow = { day: number; start: string; end: string }
-
 export type EligibleTutor = {
   tutor_user_id: string
   bio: string | null
   timezone: string
   user_profiles: { display_name: string; whatsapp_number: string | null } | null
-  tutor_availability: { windows: AvailWindow[] } | null
+  tutor_availability: { windows: AvailabilityWindow[] } | null
 }
 
 type ActionResult = { error?: string; matchId?: string } | undefined
@@ -59,13 +61,13 @@ async function assignAction(
 }
 
 /** Visual availability calendar: 7 columns (days), time-block rows colour-coded */
-function AvailabilityCalendar({ windows }: { windows: AvailWindow[] }) {
+function AvailabilityCalendar({ windows }: { windows: AvailabilityWindow[] }) {
   if (windows.length === 0) {
     return <p className="text-xs text-[#121212]/40 italic">No availability set</p>
   }
 
   // Group windows by day
-  const byDay: Record<number, AvailWindow[]> = {}
+  const byDay: Record<number, AvailabilityWindow[]> = {}
   for (const w of windows) {
     if (!byDay[w.day]) byDay[w.day] = []
     byDay[w.day].push(w)
@@ -100,18 +102,41 @@ function AvailabilityCalendar({ windows }: { windows: AvailWindow[] }) {
   )
 }
 
+function formatOverlapWindows(overlaps: AvailabilityWindow[]): string {
+  return overlaps
+    .map((window) => `${DAY_OPTIONS.find((day) => day.value === window.day)?.label ?? window.day} ${window.start}-${window.end}`)
+    .join(', ')
+}
+
 /** Single collapsible tutor card */
 function TutorCard({
   tutor,
+  requestAvailabilityWindows,
   isSelected,
   onSelect,
 }: {
   tutor: EligibleTutor
+  requestAvailabilityWindows: AvailabilityWindow[]
   isSelected: boolean
   onSelect: () => void
 }) {
   const [expanded, setExpanded] = useState(isSelected)
   const windows = tutor.tutor_availability?.windows ?? []
+  const overlap = getAvailabilityOverlapSummary(requestAvailabilityWindows, windows)
+  const overlapLabel =
+    overlap.status === 'overlap'
+      ? `Overlap: ${formatOverlapWindows(overlap.overlaps)}`
+      : overlap.status === 'none'
+        ? 'No requested-time overlap'
+        : overlap.status === 'missing_request'
+          ? 'Request availability missing'
+          : 'Tutor availability missing'
+  const overlapClass =
+    overlap.status === 'overlap'
+      ? 'border-[#1040C0] bg-[#1040C0]/10 text-[#1040C0]'
+      : overlap.status === 'none'
+        ? 'border-[#D02020] bg-[#D02020]/10 text-[#D02020]'
+        : 'border-[#F0C020] bg-[#F0C020]/20 text-[#121212]'
   const name = tutor.user_profiles?.display_name ?? '—'
 
   return (
@@ -137,6 +162,9 @@ function TutorCard({
           className="h-4 w-4 flex-shrink-0 accent-[#1040C0]"
         />
         <span className="flex-1 font-semibold text-[#121212]">{name}</span>
+        <span className={`border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${overlapClass}`}>
+          {overlapLabel}
+        </span>
         <span className="text-xs text-[#121212]/40">{tutor.timezone}</span>
         <button
           type="button"
@@ -177,10 +205,12 @@ function TutorCard({
 export function AssignTutorForm({
   requestId,
   requestTimezone,
+  requestAvailabilityWindows,
   eligibleTutors,
 }: {
   requestId: string
   requestTimezone: string
+  requestAvailabilityWindows: AvailabilityWindow[]
   eligibleTutors: EligibleTutor[]
 }) {
   const [selectedTutorId, setSelectedTutorId] = useState<string | null>(null)
@@ -223,6 +253,7 @@ export function AssignTutorForm({
             <TutorCard
               key={tutor.tutor_user_id}
               tutor={tutor}
+              requestAvailabilityWindows={requestAvailabilityWindows}
               isSelected={selectedTutorId === tutor.tutor_user_id}
               onSelect={() => setSelectedTutorId(tutor.tutor_user_id)}
             />

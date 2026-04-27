@@ -11,6 +11,7 @@ import { LEVEL_LABELS } from '@/lib/utils/request'
 import { ReassignTutorForm, EditMatchForm, GenerateSessionsForm, DeleteSessionsForm, AdminNotesForm } from './MatchActions'
 import { CopyMessageButton } from '@/components/CopyMessageButton'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
+import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs'
 import { templates } from '@/lib/whatsapp/templates'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
@@ -163,6 +164,14 @@ export default async function AdminMatchDetailPage({
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <AdminBreadcrumbs
+        items={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Matches', href: '/admin/matches' },
+          { label: 'Match Detail' },
+        ]}
+      />
+
       {assigned === '1' && (
         <div className="border-2 border-[#121212] bg-white px-6 py-4 text-[#121212]">
           <p className="font-semibold">Tutor assigned successfully.</p>
@@ -210,7 +219,23 @@ export default async function AdminMatchDetailPage({
         <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
           <div>
             <dt className="text-[#121212]/60">Student</dt>
-            <dd className="font-medium text-[#121212]">{studentName}</dd>
+            <dd className="font-medium text-[#121212]">
+              {studentProfile?.display_name ? (
+                <Link
+                  href={`/admin/users?search=${encodeURIComponent(studentProfile.display_name)}`}
+                  className="text-[#1040C0] underline-offset-4 hover:underline"
+                >
+                  {studentProfile.display_name}
+                </Link>
+              ) : (
+                studentName
+              )}
+              {request?.requester_role === 'parent' && request?.for_student_name && (
+                <span className="ml-1 text-xs text-[#121212]/50">
+                  (Student: {request.for_student_name})
+                </span>
+              )}
+            </dd>
             {studentProfile?.whatsapp_number && (
               <dd className="mt-1 flex items-center gap-2 text-xs text-[#121212]/40">
                 📱 {studentProfile.whatsapp_number}
@@ -225,6 +250,14 @@ export default async function AdminMatchDetailPage({
               {tutorUserProfile?.display_name ?? '—'}
             </dd>
             <dd className="text-xs text-[#121212]/40">{tutorProfile?.timezone}</dd>
+            <dd className="mt-1 text-xs">
+              <Link
+                href={`/admin/tutors/${match.tutor_user_id}`}
+                className="font-bold text-[#1040C0] underline-offset-4 hover:underline"
+              >
+                View tutor profile
+              </Link>
+            </dd>
             {tutorUserProfile?.whatsapp_number && (
               <dd className="mt-1 flex items-center gap-2 text-xs text-[#121212]/40">
                 📱 {tutorUserProfile.whatsapp_number}

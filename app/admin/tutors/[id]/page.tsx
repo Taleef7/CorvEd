@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { ApproveButton, RevokeButton } from '../TutorActions'
 import { WhatsAppLink } from '@/components/WhatsAppLink'
+import { AdminBreadcrumbs } from '@/components/admin/AdminBreadcrumbs'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -74,6 +75,14 @@ export default async function AdminTutorDetailPage({
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
+      <AdminBreadcrumbs
+        items={[
+          { label: 'Admin', href: '/admin' },
+          { label: 'Tutors', href: '/admin/tutors' },
+          { label: profile?.display_name ?? 'Tutor Detail' },
+        ]}
+      />
+
       {/* Back link */}
       <Link
         href="/admin/tutors"
