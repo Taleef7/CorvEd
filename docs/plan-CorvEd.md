@@ -113,8 +113,8 @@ These are the items required before MVP v0.1 is declared done per the exit crite
 ### 3.1 Must-Have (MVP v0.1 Blockers) — MOSTLY ADDRESSED
 
 - [x] **Email verification enforcement** — middleware now checks email verification status and redirects unverified email/password users to `/auth/verify`.
-- [ ] **Payment proof storage RLS** — confirm the Supabase Storage bucket for payment proofs has correct RLS policies so only the owner and admin can read a proof file. The signed URL approach (A1 fix) provides defense in depth.
-- [ ] **Session count correctness end-to-end test** — manual verification still needed. Double-increment guard (B1) now protects the RPC. Unit tests for scheduling logic added.
+- [x] **Payment proof storage RLS** — local Supabase integration tests now confirm the `payment-proofs` bucket is private, owner/admin signed URL access works, cross-user read/signed URL attempts fail, and proof paths must match `{payer_user_id}/{package_id}/...`.
+- [x] **Session count correctness end-to-end test** — local Supabase integration tests cover `increment_sessions_used`, `decrement_sessions_used`, `tutor_update_session`, double-submit stability, consuming/non-consuming transitions, service-role direct RPC use, and future-session completion blocking.
 - [ ] **Overseas timezone display smoke test** — sign in as a user with timezone America/New_York, confirm the next session card and sessions list display times in that timezone (not UTC or PKT).
 - [ ] **Admin can set Meet link and it appears on student + tutor dashboards** — trace the data flow from the EditMatchForm through to the NextSessionCard and tutor session list to confirm the meet_link field is displayed correctly.
 - [x] **Package renewal alert** — PackageSummary at ≤3 sessions. Admin analytics now shows renewal alerts via `getExpiringPackages(5)`.
@@ -159,7 +159,7 @@ The Bauhaus design system has been applied:
 
 - [x] **Form validation feedback** — Zod validation in admin server actions (C3). Inline errors + toast for outcomes.
 - [ ] **Supabase error surface** — wrap all Supabase calls in try/catch consistently. Partially done.
-- [ ] **Package/payment idempotency** — confirm payment creation prevents duplicates.
+- [x] **Package/payment idempotency** — local Supabase integration tests confirm repeated checkout returns the existing package/payment and rejected-proof resubmission only updates the intended rejected payment.
 
 ### 4.5 Testing — ✅ DONE
 
@@ -167,7 +167,7 @@ Test infrastructure established:
 
 - [x] **Unit tests for scheduling logic** — `lib/services/__tests__/scheduling.test.ts` with 11 tests covering: session count, tier limits, date range, 31-day months, UTC conversion for PKT, DST handling (US Eastern), invalid timezone, invalid time format, empty results, duration calculation. All passing.
 - [x] **Unit tests for rate-limit logic** — `lib/__tests__/rate-limit.test.ts` with 4 tests. All passing.
-- [ ] **Unit tests for session count logic** — DB trigger tests need local Supabase running.
+- [x] **Integration tests for session count logic** — `supabase/__tests__/payment-session-integrity.integration.test.ts` runs against local Supabase and verifies RPC usage accounting.
 - [ ] **Integration smoke tests** — E2E flow test still needed (Playwright infrastructure exists).
 
 ---
@@ -233,7 +233,7 @@ Vitest infrastructure established. 15 unit tests (11 scheduling, 4 rate-limit), 
 Run through `docs/MVP.md` section 14 (launch checklist) item by item. Also:
 - Install and configure Sentry (F2)
 - Set real bank details in env vars (A2)
-- Verify payment proof bucket RLS
+- Verify payment proof bucket RLS using `node scripts/with-local-supabase-env.mjs npm test -- supabase/__tests__/payment-session-integrity.integration.test.ts`
 - Run manual E2E scenario
 - 375px mobile responsiveness audit
 
@@ -299,4 +299,4 @@ Run through `docs/MVP.md` section 14 (launch checklist) item by item. Also:
 
 ---
 
-End of plan. Last updated: 2026-03-03.
+End of plan. Last updated: 2026-04-27.

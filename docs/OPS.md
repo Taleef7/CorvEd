@@ -1,6 +1,6 @@
 # CorvEd Ops
 
-Last updated: 2026-02-22  
+Last updated: 2026-04-27  
 Owner: Taleef  
 Market: Pakistan-first + overseas students  
 Primary comms: WhatsApp (WhatsApp Business recommended)  
@@ -259,7 +259,7 @@ Steps:
    - send confirmation with updated time
 3) if < 24 hours:
    - apply policy (see section 5)
-   - if you grant exception, log it in audit note (platform or Ops log)
+   - if you grant exception, enter a clear reason in the admin reschedule form so the platform audit log captures why the cutoff was overridden
 
 Minimum success condition:
 - platform session is updated correctly
@@ -346,8 +346,8 @@ You may allow exceptions for:
 
 When granting an exception:
 - do it consistently
-- record it:
-  - add an internal admin note and/or audit log entry
+- record it in the admin reschedule reason before saving the new session time
+- do not use WhatsApp alone as the exception record
 
 --------------------------------------------------------------------------------
 

@@ -7,9 +7,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PAYMENT_INSTRUCTIONS, PACKAGES } from '@/lib/config/pricing'
+import {
+  buildPaymentProofPath,
+  isAllowedPaymentProofType,
+  MAX_PAYMENT_PROOF_SIZE_BYTES,
+} from '@/lib/payments/proofs'
 import { LEVEL_LABELS } from '@/lib/utils/request'
-
-const MAX_PROOF_SIZE_BYTES = 5 * 1024 * 1024 // 5 MB
 
 type PackageRow = {
   id: string
@@ -138,24 +141,21 @@ export default function PackageDetailPage() {
     if (payment.status === 'rejected') {
       let newProofPath: string | null = payment.proof_path
       if (file) {
-        if (file.size > MAX_PROOF_SIZE_BYTES) {
+        if (file.size > MAX_PAYMENT_PROOF_SIZE_BYTES) {
           setError('File is too large. Maximum size is 5 MB.')
           setSubmitting(false)
           return
         }
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
-        if (!allowedTypes.includes(file.type)) {
+        if (!isAllowedPaymentProofType(file.type)) {
           setError('Only JPEG, PNG, or PDF files are allowed.')
           setSubmitting(false)
           return
         }
-        const lastDot = file.name.lastIndexOf('.')
-        const baseName = (lastDot > 0 ? file.name.slice(0, lastDot) : file.name)
-          .replace(/[^a-zA-Z0-9_-]/g, '_')
-          .slice(0, 60)
-        const ext = lastDot > 0 ? file.name.slice(lastDot).replace(/[^a-zA-Z0-9.]/g, '') : ''
-        const safeFileName = baseName + ext
-        const filePath = `${user.id}/${id}/${Date.now()}_${safeFileName}`
+        const filePath = buildPaymentProofPath({
+          userId: user.id,
+          packageId: id,
+          fileName: file.name,
+        })
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from('payment-proofs')
           .upload(filePath, file)
@@ -192,26 +192,22 @@ export default function PackageDetailPage() {
 
     // Upload proof file if selected
     if (file) {
-      if (file.size > MAX_PROOF_SIZE_BYTES) {
+      if (file.size > MAX_PAYMENT_PROOF_SIZE_BYTES) {
         setError('File is too large. Maximum size is 5 MB.')
         setSubmitting(false)
         return
       }
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
-      if (!allowedTypes.includes(file.type)) {
+      if (!isAllowedPaymentProofType(file.type)) {
         setError('Only JPEG, PNG, or PDF files are allowed.')
         setSubmitting(false)
         return
       }
 
-      // Sanitize filename: preserve only the final extension, clean the base name
-      const lastDot = file.name.lastIndexOf('.')
-      const baseName = (lastDot > 0 ? file.name.slice(0, lastDot) : file.name)
-        .replace(/[^a-zA-Z0-9_-]/g, '_')
-        .slice(0, 60)
-      const ext = lastDot > 0 ? file.name.slice(lastDot).replace(/[^a-zA-Z0-9.]/g, '') : ''
-      const safeFileName = baseName + ext
-      const filePath = `${user.id}/${id}/${Date.now()}_${safeFileName}`
+      const filePath = buildPaymentProofPath({
+        userId: user.id,
+        packageId: id,
+        fileName: file.name,
+      })
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('payment-proofs')
         .upload(filePath, file)
