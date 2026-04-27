@@ -1,6 +1,6 @@
 # CorvEd architecture
 
-Last updated: 2026-02-22  
+Last updated: 2026-04-27
 Stack: Next.js (App Router) + Supabase (Postgres + Auth + Storage)  
 Primary market: Pakistan, supports overseas students (timezone-aware)  
 Primary comms: WhatsApp (manual or WhatsApp Business), platform is source of truth
@@ -830,6 +830,11 @@ visibility: private
 
 payment-proofs/{payer_user_id}/{package_id}/{timestamp}_{original_filename}
 
+Application code validates this convention before saving or signing a proof path:
+- folder 1 must equal the authenticated payer user id
+- folder 2 must equal the package id for the payment being updated/viewed
+- a file name segment must exist
+
 7.3 policies
 
 insert: payer can upload into their folder
@@ -859,7 +864,11 @@ proofs remain private
 
 admin UI uses server-side signed URLs to view proofs
 
-student UI does not need to view proof after upload
+student UI uses server-side signed URLs after ownership and package-path validation
+
+Verification command:
+
+node scripts/with-local-supabase-env.mjs npm test -- supabase/__tests__/payment-session-integrity.integration.test.ts
 
 8) key workflows (sequence-level detail)
 

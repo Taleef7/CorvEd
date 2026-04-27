@@ -27,7 +27,7 @@
 | | |
 |---|---|
 | **Severity** | Critical |
-| **Status** | **RESOLVED** — `app/dashboard/packages/actions.ts` provides `getPaymentProofSignedUrl()` server action that verifies ownership and creates 300s signed URLs. `app/dashboard/packages/[id]/page.tsx` updated to use it. |
+| **Status** | **RESOLVED** — `app/dashboard/packages/actions.ts` provides `getPaymentProofSignedUrl()` server action that verifies ownership, package path binding, and creates 300s signed URLs. `supabase/__tests__/payment-session-integrity.integration.test.ts` verifies private bucket owner/admin access and cross-user denial against local Supabase. |
 
 ### A2. ~~`PAYMENT_INSTRUCTIONS` contains placeholder values~~ ✅ DONE
 
@@ -59,7 +59,7 @@
 | | |
 |---|---|
 | **Severity** | Critical |
-| **Status** | **RESOLVED** — Migration `20260303000001_fix_double_increment_guard.sql` replaces the RPC with a guarded version that checks previous status before incrementing/decrementing. Also adds `decrement_sessions_used` helper. |
+| **Status** | **RESOLVED** — Migration `20260303000001_fix_double_increment_guard.sql` replaces the RPC with a guarded version that checks previous status before incrementing/decrementing. Also adds `decrement_sessions_used` helper. Local Supabase integration tests now verify double-submit stability, consuming/non-consuming transitions, service-role direct increments, and future-session blocking. |
 
 ### B2. ~~Documentation says `p_package_id` but code uses `p_request_id`~~ ✅ DONE
 

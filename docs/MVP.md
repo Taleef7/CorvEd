@@ -1,6 +1,6 @@
 # CorvEd MVP
 
-Last updated: 2026-02-22
+Last updated: 2026-04-27
 Owner: Taleef
 Market: Pakistan-first, with support for overseas students from day 1
 Primary comms: WhatsApp (WhatsApp-first operations)
@@ -156,6 +156,7 @@ These policies are locked for MVP.
 - reschedule requests are initiated via WhatsApp to admin
 - admin updates the session time in the platform
 - rescheduled sessions must still occur within the same package month window (unless admin makes an explicit exception)
+- launch decision: the admin tool warns for sessions inside the 24-hour cutoff but does not hard-block an operator. Late exceptions are admin-discretion only and must be recorded in the reschedule reason/audit trail.
 
 5.4 no-show policy
 Student no-show
@@ -527,6 +528,9 @@ Quality checks
   - parent signup → request A Level Math 8 sessions → pay → match → schedule → 2 sessions done → 1 student no-show → check remaining count
 - check timezone display for an overseas user (example: US Central)
 - verify reschedule cutoff logic is documented and applied in ops workflow (automation optional)
+- run local Supabase integrity checks:
+  - `npx supabase db reset`
+  - `node scripts/with-local-supabase-env.mjs npm test -- supabase/__tests__/payment-session-integrity.integration.test.ts`
 
 --------------------------------------------------------------------------------
 

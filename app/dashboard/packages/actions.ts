@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { PACKAGES, type PackageTier } from '@/lib/config/pricing'
+import { isPaymentProofPathForPackage } from '@/lib/payments/proofs'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createClient } from '@/lib/supabase/server'
 
@@ -37,7 +38,11 @@ export async function getPaymentProofSignedUrl(
     return { url: null, error: 'Unauthorized' }
   }
 
-  if (!payment.proof_path || payment.proof_path !== proofPath) {
+  if (
+    !payment.proof_path
+    || payment.proof_path !== proofPath
+    || !isPaymentProofPathForPackage({ proofPath, userId: user.id, packageId })
+  ) {
     return { url: null, error: 'Proof not found' }
   }
 
@@ -113,6 +118,17 @@ export async function updatePendingPaymentDetails(
     return { success: false, error: 'Payment is not in pending status' }
   }
 
+  if (
+    proofPath
+    && !isPaymentProofPathForPackage({
+      proofPath,
+      userId: user.id,
+      packageId: payment.package_id,
+    })
+  ) {
+    return { success: false, error: 'Invalid proof path' }
+  }
+
   const admin = createAdminClient()
   const { data: updated, error } = await admin
     .from('payments')
@@ -158,7 +174,7 @@ export async function resubmitRejectedPayment(
   // Verify the user owns this payment and it's rejected
   const { data: payment } = await supabase
     .from('payments')
-    .select('id, payer_user_id, status')
+    .select('id, package_id, payer_user_id, status')
     .eq('id', paymentId)
     .single()
 
@@ -168,6 +184,17 @@ export async function resubmitRejectedPayment(
 
   if (payment.status !== 'rejected') {
     return { success: false, error: 'Payment is not in rejected status' }
+  }
+
+  if (
+    proofPath
+    && !isPaymentProofPathForPackage({
+      proofPath,
+      userId: user.id,
+      packageId: payment.package_id,
+    })
+  ) {
+    return { success: false, error: 'Invalid proof path' }
   }
 
   const admin = createAdminClient()
