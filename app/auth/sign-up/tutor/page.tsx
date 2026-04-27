@@ -10,6 +10,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import {
+  AUTH_THROTTLE_MESSAGE,
+  checkClientAuthThrottle,
+  getFriendlyAuthErrorMessage,
+} from '@/lib/auth/throttle'
 import { tutorSignUpSchema, type TutorSignUpData } from '@/lib/validators/tutor-sign-up'
 import {
   BauhausLogo,
@@ -66,6 +71,12 @@ export default function TutorSignUpPage() {
 
   async function onSubmit(data: TutorSignUpData) {
     setServerError(null)
+    const throttle = checkClientAuthThrottle('sign_up', window.localStorage)
+    if (!throttle.allowed) {
+      setServerError(AUTH_THROTTLE_MESSAGE)
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email: data.email,
@@ -84,7 +95,12 @@ export default function TutorSignUpPage() {
       },
     })
     if (error) {
-      setServerError(error.message)
+      setServerError(
+        getFriendlyAuthErrorMessage(
+          error.message,
+          'Could not submit the tutor application. Check the details and try again.',
+        ),
+      )
       return
     }
     router.push('/auth/verify')

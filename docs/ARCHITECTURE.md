@@ -1132,11 +1132,15 @@ Sentry for Next.js
 
 ensure PII is not logged (WhatsApp numbers should be treated as sensitive)
 
-12.3 rate limiting (optional)
+12.3 rate limiting
 
-Vercel edge middleware or a lightweight rate limiter on auth endpoints and intake form
+Current launch protections:
 
-not required for MVP, but useful if spam becomes an issue
+- `app/api/leads/route.ts` uses `lib/rate-limit.ts` for a 10 req/min per-IP lead intake limit.
+- Supabase Auth enforces provider-side rate limits for email-sending Auth flows such as signup, recovery, resend/verify, and user email updates. Confirm project-specific values in Supabase Dashboard -> Authentication -> Rate Limits before launch.
+- `lib/auth/throttle.ts` adds browser-side cooldowns for sign-in, sign-up, password reset, and Google OAuth buttons, with generic user-facing errors so auth failures do not expose account existence.
+
+For production scale, replace in-memory/browser-only app throttles with Vercel Edge middleware plus durable storage such as Upstash Redis.
 
 13) future-proofing notes (post-MVP)
 

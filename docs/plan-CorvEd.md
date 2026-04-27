@@ -224,11 +224,11 @@ Bauhaus design system fully applied: Outfit font, CSS custom properties, landing
 
 ### Step 4: Admin Ops Tooling — PARTIALLY DONE
 
-Renewal alerts in analytics, Zod validation, rate limiting done. WhatsApp button comprehensive coverage and text search still TODO.
+Renewal alerts in analytics, Zod validation, request text search, and rate limiting are done. WhatsApp button comprehensive coverage still TODO.
 
 ### Step 5: Testing — ✅ DONE
 
-Vitest infrastructure established. 15 unit tests (11 scheduling, 4 rate-limit), all passing. DB trigger tests and E2E smoke test still recommended.
+Vitest infrastructure established with unit coverage for scheduling, rate limiting, auth callback/profile-gate helpers, auth throttling, validators, WhatsApp utilities, request search, currency formatting, availability overlap, and dashboard components. DB trigger tests and authenticated E2E smoke tests are still recommended before launch.
 
 ### Step 6: Pre-launch Checklist — TODO
 
@@ -238,6 +238,7 @@ Run through `docs/MVP.md` section 14 (launch checklist) item by item. Also:
 - Verify payment proof bucket RLS using `node scripts/with-local-supabase-env.mjs npm test -- supabase/__tests__/payment-session-integrity.integration.test.ts`
 - Run manual E2E scenario
 - 375px mobile responsiveness audit
+- Confirm Supabase Auth production settings: custom SMTP configured, Auth rate-limit values reviewed, Google OAuth redirect URLs set for the production domain
 
 ---
 
@@ -247,7 +248,7 @@ Run through `docs/MVP.md` section 14 (launch checklist) item by item. Also:
 2. **Email notifications** — MVP.md marks transactional email (payment received, tutor assigned) as optional. Should this be implemented before launch or deferred?
 3. **Renewal flow** — is renewal triggered by the admin generating a new package, or does the student select and pay again? The student UI currently shows a renewal alert but there is no explicit renewal CTA or new package flow tied to an existing match.
 4. **Public tutor profiles** — does the student see the tutor's bio and name before being matched, or only after? Currently the match detail shows the tutor name to the student on the dashboard.
-5. **Google OAuth profile setup** — when a user signs up via Google, do they still go through the profile setup page to capture WhatsApp number and timezone? Confirm the callback route handles this correctly.
+5. ~~**Google OAuth profile setup**~~ — resolved. `/auth/callback` now unit-covers and uses `requiresProfileSetup()` so OAuth users missing either WhatsApp number or timezone are sent to `/auth/profile-setup`; parent Google sign-up role promotion remains covered by `shouldPromoteOAuthParentSignup()`.
 
 ---
 
@@ -267,6 +268,7 @@ Run through `docs/MVP.md` section 14 (launch checklist) item by item. Also:
 | --- | --- |
 | `lib/supabase/database.types.ts` | Generated TypeScript types for all tables, enums, functions |
 | `lib/rate-limit.ts` | In-memory sliding-window rate limiter |
+| `lib/auth/throttle.ts` | Browser-side cooldowns and generic Auth error mapping for sign-in, sign-up, password reset, and OAuth flows |
 | `app/auth/actions.ts` | Server Action for sign-out (CSRF-protected) |
 | `app/api/cron/expire-packages/route.ts` | Daily cron to expire packages past end_date |
 | `app/dashboard/packages/actions.ts` | Signed URL + rejected payment re-upload server actions |

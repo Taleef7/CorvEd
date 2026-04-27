@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import {
   buildAuthCallbackUrl,
+  requiresProfileSetup,
   safeNext,
   shouldPromoteOAuthParentSignup,
 } from '@/lib/auth/utils'
@@ -74,6 +75,23 @@ describe('shouldPromoteOAuthParentSignup', () => {
         whatsappNumber: null,
         profileCreatedAt: '2026-04-08T11:58:00.000Z',
         now: new Date('2026-04-08T12:00:00.000Z'),
+      }),
+    ).toBe(false)
+  })
+})
+
+describe('requiresProfileSetup', () => {
+  test('requires setup when an OAuth profile is missing WhatsApp or timezone', () => {
+    expect(requiresProfileSetup(null)).toBe(true)
+    expect(requiresProfileSetup({ whatsapp_number: null, timezone: 'Asia/Karachi' })).toBe(true)
+    expect(requiresProfileSetup({ whatsapp_number: '+923001234567', timezone: '' })).toBe(true)
+  })
+
+  test('allows completed profiles to continue to the requested destination', () => {
+    expect(
+      requiresProfileSetup({
+        whatsapp_number: '+923001234567',
+        timezone: 'America/New_York',
       }),
     ).toBe(false)
   })

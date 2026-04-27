@@ -12,6 +12,11 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { buildAuthCallbackUrl } from '@/lib/auth/utils'
 import {
+  AUTH_THROTTLE_MESSAGE,
+  checkClientAuthThrottle,
+  getFriendlyAuthErrorMessage,
+} from '@/lib/auth/throttle'
+import {
   BauhausLogo,
   BauhausLabel,
   BauhausInput,
@@ -75,6 +80,12 @@ export default function SignUpPage() {
 
   async function onSubmit(data: SignUpData) {
     setServerError(null)
+    const throttle = checkClientAuthThrottle('sign_up', window.localStorage)
+    if (!throttle.allowed) {
+      setServerError(AUTH_THROTTLE_MESSAGE)
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email: data.email,
@@ -90,16 +101,28 @@ export default function SignUpPage() {
       },
     })
     if (error) {
-      setServerError(error.message)
+      setServerError(
+        getFriendlyAuthErrorMessage(
+          error.message,
+          'Could not create the account. Check the details and try again.',
+        ),
+      )
       return
     }
     router.push('/auth/verify')
   }
 
   async function signInWithGoogle() {
+    setServerError(null)
+    const throttle = checkClientAuthThrottle('oauth', window.localStorage)
+    if (!throttle.allowed) {
+      setServerError(AUTH_THROTTLE_MESSAGE)
+      return
+    }
+
     setGoogleLoading(true)
     const supabase = createClient()
-    await supabase.auth.signInWithOAuth({
+    const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: buildAuthCallbackUrl(window.location.origin, {
@@ -108,6 +131,15 @@ export default function SignUpPage() {
         }),
       },
     })
+    if (error) {
+      setGoogleLoading(false)
+      setServerError(
+        getFriendlyAuthErrorMessage(
+          error.message,
+          'Could not start Google sign-up. Please try again.',
+        ),
+      )
+    }
   }
 
   const busy = isSubmitting || googleLoading

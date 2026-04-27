@@ -3,6 +3,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import {
+  AUTH_THROTTLE_MESSAGE,
+  checkClientAuthThrottle,
+  getFriendlyAuthErrorMessage,
+} from '@/lib/auth/throttle'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -17,6 +22,13 @@ export default function ForgotPasswordPage() {
     setStatus('loading')
     setErrorMsg('')
 
+    const throttle = checkClientAuthThrottle('password_reset', window.localStorage)
+    if (!throttle.allowed) {
+      setStatus('error')
+      setErrorMsg(AUTH_THROTTLE_MESSAGE)
+      return
+    }
+
     const supabase = createClient()
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/reset-password`,
@@ -24,7 +36,12 @@ export default function ForgotPasswordPage() {
 
     if (error) {
       setStatus('error')
-      setErrorMsg(error.message)
+      setErrorMsg(
+        getFriendlyAuthErrorMessage(
+          error.message,
+          'Could not send reset instructions. Please wait and try again.',
+        ),
+      )
     } else {
       setStatus('sent')
     }

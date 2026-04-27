@@ -5,7 +5,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { safeNext, shouldPromoteOAuthParentSignup } from '@/lib/auth/utils'
+import { requiresProfileSetup, safeNext, shouldPromoteOAuthParentSignup } from '@/lib/auth/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
         const [{ data: profile }, { data: roleRows }] = await Promise.all([
           supabase
             .from('user_profiles')
-            .select('primary_role, whatsapp_number, created_at')
+            .select('primary_role, whatsapp_number, timezone, created_at')
             .eq('user_id', user.id)
             .single(),
           supabase.from('user_roles').select('role').eq('user_id', user.id),
@@ -76,8 +76,8 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        // New users who haven't set their WhatsApp number yet go to profile-setup
-        if (!profile?.whatsapp_number) {
+        // OAuth users must finish business profile fields before dashboard access.
+        if (requiresProfileSetup(profile)) {
           return NextResponse.redirect(`${origin}/auth/profile-setup`)
         }
       }

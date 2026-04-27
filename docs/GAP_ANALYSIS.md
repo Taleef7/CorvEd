@@ -112,7 +112,7 @@
 | | |
 |---|---|
 | **Severity** | Important |
-| **Status** | **RESOLVED** — `lib/rate-limit.ts` provides in-memory sliding-window rate limiter. Applied to `app/api/leads/route.ts` (10 req/min per IP). For production scale, upgrade to `@upstash/ratelimit` + Redis. |
+| **Status** | **RESOLVED** — `lib/rate-limit.ts` provides an in-memory sliding-window limiter for API routes, and `app/api/leads/route.ts` keeps its 10 req/min per-IP protection. Supabase Auth also enforces provider-side Auth limits for email-sending flows such as signup/recovery/resend, configurable in Supabase Dashboard -> Authentication -> Rate Limits; production should use custom SMTP instead of the low-limit built-in sender. CorvEd now adds browser-side cooldowns for sign-in, sign-up, password reset, and Google OAuth in `lib/auth/throttle.ts`, and auth forms show generic throttled/account-error messages to avoid email enumeration. For production scale, upgrade app-side throttles to `@upstash/ratelimit` + Redis or equivalent edge/server-side storage. |
 
 ### C5. ~~Sign-out uses POST without CSRF token~~ ✅ DONE
 
