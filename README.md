@@ -33,7 +33,7 @@ Out of scope for MVP
 ├── app/                          # Next.js App Router routes (UI)
 ├── components/                   # UI components
 ├── lib/                          # Supabase clients, services, validators
-├── middleware.ts                 # Next.js edge middleware: session refresh + route protection
+├── proxy.ts                      # Next.js edge proxy: session refresh + route protection
 ├── supabase/                     # Migrations, seed data, local Supabase config
 ├── docs/                         # Product + ops + architecture docs
 │   ├── MVP.md
@@ -130,6 +130,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | WhatsApp CTA button | ✅ `wa.me` deep link with prefilled message (requires `NEXT_PUBLIC_WHATSAPP_NUMBER` env var) |
 | `POST /api/leads` route | ✅ Server-side validation + Supabase insert via admin client |
 | `leads` DB migration | ✅ `supabase/migrations/20260223000001_create_leads_table.sql` — RLS: anon insert allowed, auth read/update |
+| **Admin: lead queue** | ✅ `app/admin/leads/page.tsx` — review Phase 0 intake records, open WhatsApp, update status, and store private admin notes |
 | Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
 | **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password |
 | **Auth: email verification** | ✅ `app/auth/verify/page.tsx` — instructions page; unverified users cannot reach dashboard |
@@ -138,7 +139,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if profile incomplete |
 | **Auth: profile setup** | ✅ `app/auth/profile-setup/page.tsx` — display name, WhatsApp number (auto-normalized), timezone (auto-detected) |
 | **Auth: sign out** | ✅ `app/auth/sign-out/route.ts` — POST clears session, redirects to sign-in |
-| **Route protection (middleware)** | ✅ `middleware.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
+| **Route protection (proxy)** | ✅ `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
 | **Role-aware dashboard redirect** | ✅ `app/dashboard/page.tsx` — admin→`/admin`, tutor→`/tutor`, student/parent stays on dashboard |
 | **Admin route protection** | ✅ `app/admin/layout.tsx` — verifies `admin` role server-side; non-admins → `/dashboard` |
 | **Tutor route protection** | ✅ `app/tutor/layout.tsx` — verifies `tutor` or `admin` role; others → `/dashboard` |
@@ -205,9 +206,9 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | Admin: WhatsApp link on request detail (E11) | ✅ `/admin/requests/[id]` — "Open chat" link next to student's WhatsApp number |
 | Admin: WhatsApp link on tutor detail (E11) | ✅ `/admin/tutors/[id]` — "Open chat" link next to tutor's WhatsApp number |
 | **Policies page (E12 T12.1)** | ✅ `app/policies/page.tsx` — public page at `/policies`; covers reschedule (24h cutoff, exceptions), no-show (student/tutor/late-join), refund/expiry (no carryover, admin discretion), package terms (per subject, 60 min, assigned tutor), privacy; linked from landing page footer |
-| **Tutor code of conduct (E12 T12.2)** | ✅ `app/tutor/conduct/page.tsx` — public page at `/tutor/conduct`; covers punctuality, session quality, communication, privacy, quality expectations, incidents; acknowledgement checkbox added to tutor profile/application form (required before submit) |
-| **Admin: audit log (E12 T12.3)** | ✅ `app/admin/audit/page.tsx` — admin-only; shows recent 200 audit events newest-first; human-readable action labels; actor name, entity type/ID (truncated), details; uses `audit_logs` table (created in E5 migration) |
-| **Admin: analytics dashboard (E12 T12.4)** | ✅ `app/admin/analytics/page.tsx` — admin-only; 7 metric cards: active students, active tutors, upcoming sessions (next 7d), missed sessions (last 7d), unmarked sessions (needs follow-up), pending payments, pending tutor approvals; attention metrics highlighted in amber/orange; clickable cards link to relevant admin pages |
+| **Tutor code of conduct (E12 T12.2)** | ✅ `app/tutor/conduct/page.tsx` — public page at `/tutor/conduct`; acknowledgement is required on initial tutor signup and again in profile completion |
+| **Admin: audit log (E12 T12.3)** | ✅ `app/admin/audit/page.tsx` — admin-only; audit detail writes use `sanitizeAuditDetails()` so notes, Meet links, payment references, WhatsApp/contact fields, and names are redacted before storage |
+| **Admin: analytics dashboard (E12 T12.4)** | ✅ `app/admin/analytics/page.tsx` — admin-only; tracks active students/tutors, upcoming/missed/unmarked sessions, pending payments, pending tutors, and new lead intake follow-up |
 
 | Area | Status |
 |---|---|
@@ -216,6 +217,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | WhatsApp CTA button | ✅ `wa.me` deep link with prefilled message (requires `NEXT_PUBLIC_WHATSAPP_NUMBER` env var) |
 | `POST /api/leads` route | ✅ Server-side validation + Supabase insert via admin client |
 | `leads` DB migration | ✅ `supabase/migrations/20260223000001_create_leads_table.sql` — RLS: anon insert allowed, auth read/update |
+| **Admin: lead queue** | ✅ `app/admin/leads/page.tsx` — review Phase 0 intake records, open WhatsApp, update status, and store private admin notes |
 | Supabase clients wired up | ✅ `lib/supabase/client.ts`, `server.ts`, `admin.ts` |
 | **Auth: sign up (email/password)** | ✅ `app/auth/sign-up/page.tsx` — display name, email, password, timezone; min 8-char password |
 | **Auth: email verification** | ✅ `app/auth/verify/page.tsx` — instructions page; unverified users cannot reach dashboard |
@@ -224,7 +226,7 @@ Open [http://localhost:3000](http://localhost:3000). You'll see the CorvEd landi
 | **Auth: callback handler** | ✅ `app/auth/callback/route.ts` — PKCE code exchange; redirects to profile-setup if profile incomplete |
 | **Auth: profile setup** | ✅ `app/auth/profile-setup/page.tsx` — display name, WhatsApp number (auto-normalized), timezone (auto-detected) |
 | **Auth: sign out** | ✅ `app/auth/sign-out/route.ts` — POST clears session, redirects to sign-in |
-| **Route protection (middleware)** | ✅ `middleware.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
+| **Route protection (proxy)** | ✅ `proxy.ts` — unauthenticated → sign-in for `/dashboard`, `/tutor`, `/admin`; authenticated → dashboard for auth pages |
 | **Role-aware dashboard redirect** | ✅ `app/dashboard/page.tsx` — admin→`/admin`, tutor→`/tutor`, student/parent stays on dashboard |
 | **Admin route protection** | ✅ `app/admin/layout.tsx` — verifies `admin` role server-side; non-admins → `/dashboard` |
 | **Tutor route protection** | ✅ `app/tutor/layout.tsx` — verifies `tutor` or `admin` role; others → `/dashboard` |
@@ -341,6 +343,7 @@ Recommended workflow
 | `20260225000001_create_matches_table.sql` | `matches` table with unique `request_id` FK, `tutor_user_id`, `status` enum (matched/active/paused/ended), `meet_link`, `schedule_pattern` JSONB, `assigned_by_user_id`/`assigned_at`; updated_at trigger; RLS: admin full access, tutor and request creator can select. |
 | `20260225000002_create_sessions_table.sql` | `sessions` table (match_id FK, scheduled_start/end_utc, status enum, tutor_notes, updated_by_user_id); indexes on (match_id, start_utc) and (status, start_utc); 4 RLS policies (admin all, tutor select, student select via match→request, tutor update own); `increment_sessions_used(p_request_id)` RPC for atomic sessions_used increment; `tutor_update_session(p_session_id, p_status, p_notes)` security-definer RPC. |
 | `20260225000003_increment_sessions_used_guard.sql` | Adds `sessions_used < sessions_total` safety guard to `increment_sessions_used` RPC — prevents `sessions_used` from exceeding `sessions_total` (over-incrementing); sets safe `search_path`; restricts `EXECUTE` to `service_role` only. |
+| `20260426000001_sanitize_session_audit_details.sql` | Replaces `tutor_update_session` so audit details keep status transitions but redact tutor notes from `audit_logs.details`. |
 
 > **Supabase Dashboard settings required for auth** (after running migrations):
 >

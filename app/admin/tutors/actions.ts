@@ -6,6 +6,7 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
+import { sanitizeAuditDetails } from '@/lib/audit/sanitize'
 
 /** Set tutor_profiles.approved = true and write audit log. */
 export async function approveTutor(tutorUserId: string): Promise<{ error?: string }> {
@@ -26,7 +27,7 @@ export async function approveTutor(tutorUserId: string): Promise<{ error?: strin
         action: 'tutor_approved',
         entity_type: 'tutor_profile',
         entity_id: tutorUserId,
-        details: {},
+        details: sanitizeAuditDetails({}),
       },
     ])
     if (auditError) {
@@ -59,7 +60,7 @@ export async function revokeTutorApproval(tutorUserId: string): Promise<{ error?
         action: 'tutor_approval_revoked',
         entity_type: 'tutor_profile',
         entity_id: tutorUserId,
-        details: {},
+        details: sanitizeAuditDetails({}),
       },
     ])
     if (auditError) {

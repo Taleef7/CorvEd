@@ -9,10 +9,10 @@ import { generateSessions as generateSessionSlots, SchedulePattern } from "@/lib
 import {
   getSessionUsageAdjustment,
   isSessionCompletionAllowed,
-  isSessionRescheduleAllowed,
 } from "@/lib/services/session-status-transitions";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath } from "next/cache";
+import { sanitizeAuditDetails } from "@/lib/audit/sanitize";
 
 // ── Auth helpers ───────────────────────────────────────────────────────────────
 
@@ -132,7 +132,7 @@ export async function generateSessionsForMatch(
         action: "sessions_generated",
         entity_type: "match",
         entity_id: matchId,
-        details: { session_count: rows.length },
+        details: sanitizeAuditDetails({ session_count: rows.length }),
       },
     ]);
 
@@ -218,7 +218,7 @@ export async function deleteSessionsForMatch(
         action: "sessions_deleted",
         entity_type: "match",
         entity_id: matchId,
-        details: { session_count: existingCount ?? 0, request_id: match.request_id, sessions_used_reset: true },
+        details: sanitizeAuditDetails({ session_count: existingCount ?? 0, request_id: match.request_id, sessions_used_reset: true }),
       },
     ]);
 
@@ -303,12 +303,12 @@ export async function updateSessionStatus({
         action: "session_status_updated",
         entity_type: "session",
         entity_id: sessionId,
-        details: {
+        details: sanitizeAuditDetails({
           previous_status: current.status,
           status,
           tutor_notes: tutorNotes ?? null,
           match_id: matchId,
-        },
+        }),
       },
     ]);
 
@@ -399,21 +399,9 @@ export async function rescheduleSession({
     const adminUserId = await requireAdmin();
     const admin = createAdminClient();
 
-    const { data: currentSession, error: currentSessionErr } = await admin
-      .from("sessions")
-      .select("scheduled_start_utc")
-      .eq("id", sessionId)
-      .single();
-    if (currentSessionErr || !currentSession) {
-      throw new Error("Session not found.");
-    }
-
     // Prevent rescheduling to a past datetime
     if (new Date(newStartUtc) < new Date()) {
       throw new Error("Cannot reschedule a session to a past date and time.");
-    }
-    if (!isSessionRescheduleAllowed({ scheduledStartUtc: currentSession.scheduled_start_utc })) {
-      throw new Error("Sessions can only be rescheduled with at least 24 hours notice.");
     }
 
     const { error: updateErr } = await admin
@@ -437,11 +425,11 @@ export async function rescheduleSession({
         action: "session_rescheduled",
         entity_type: "session",
         entity_id: sessionId,
-        details: {
+        details: sanitizeAuditDetails({
           new_start_utc: newStartUtc,
           new_end_utc: newEndUtc,
           reason: reason ?? null,
-        },
+        }),
       },
     ]);
 

@@ -57,6 +57,7 @@ export default async function AdminAnalyticsPage() {
     unmarkedSessions,
     pendingPayments,
     pendingTutors,
+    newLeads,
   ] = await Promise.all([
     // Active students: unique users with active requests
     admin.from('requests').select('created_by_user_id').eq('status', 'active'),
@@ -92,6 +93,8 @@ export default async function AdminAnalyticsPage() {
       .from('tutor_profiles')
       .select('tutor_user_id', { count: 'exact', head: true })
       .eq('approved', false),
+    // Lead intake records waiting for first follow-up
+    admin.from('leads').select('id', { count: 'exact', head: true }).eq('status', 'new'),
   ])
 
   const firstError =
@@ -101,7 +104,8 @@ export default async function AdminAnalyticsPage() {
     missedSessions.error ||
     unmarkedSessions.error ||
     pendingPayments.error ||
-    pendingTutors.error
+    pendingTutors.error ||
+    newLeads.error
 
   if (firstError) {
     throw new Error(`Failed to load analytics metrics: ${firstError.message}`)
@@ -117,6 +121,7 @@ export default async function AdminAnalyticsPage() {
     unmarkedSessions: unmarkedSessions.count ?? 0,
     pendingPayments: pendingPayments.count ?? 0,
     pendingTutors: pendingTutors.count ?? 0,
+    newLeads: newLeads.count ?? 0,
   }
 
   return (
@@ -238,6 +243,15 @@ export default async function AdminAnalyticsPage() {
             variant={metrics.pendingTutors > 0 ? 'attention' : 'normal'}
             href="/admin/tutors"
             linkLabel="Review tutors →"
+          />
+          <MetricCard
+            label="New Leads"
+            value={metrics.newLeads}
+            unit="awaiting follow-up"
+            icon="☎"
+            variant={metrics.newLeads > 0 ? 'attention' : 'normal'}
+            href="/admin/leads?status=new"
+            linkLabel="Review leads →"
           />
         </div>
       </section>

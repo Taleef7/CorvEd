@@ -6,9 +6,9 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireAdmin } from '@/lib/auth/requireAdmin'
 import { revalidatePath } from 'next/cache'
-import { redirect } from 'next/navigation'
 import type { Json } from '@/lib/supabase/database.types'
 import type { Database } from '@/lib/supabase/database.types'
+import { sanitizeAuditDetails } from '@/lib/audit/sanitize'
 
 /** Create a match record, advance request to 'matched', and write audit log. */
 export async function assignTutor({
@@ -27,8 +27,6 @@ export async function assignTutor({
     duration_mins: number
   }
 }): Promise<{ error?: string; matchId?: string }> {
-  let assignedMatchId: string | null = null
-
   try {
     const adminUserId = await requireAdmin()
     const admin = createAdminClient()
@@ -85,7 +83,7 @@ export async function assignTutor({
         action: 'tutor_assigned',
         entity_type: 'match',
         entity_id: match.id,
-        details: { tutor_user_id: tutorUserId, request_id: requestId },
+        details: sanitizeAuditDetails({ tutor_user_id: tutorUserId, request_id: requestId }),
       },
     ])
     if (auditError) {
@@ -95,13 +93,10 @@ export async function assignTutor({
     revalidatePath(`/admin/requests/${requestId}`)
     revalidatePath('/admin/requests')
     revalidatePath('/admin/matches')
-    revalidatePath(`/admin/matches/${match.id}`)
-    assignedMatchId = match.id
+    return { matchId: match.id }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'An unexpected error occurred.' }
   }
-
-  redirect(`/admin/matches/${assignedMatchId}?assigned=1`)
 }
 
 /** Update match.tutor_user_id to a new tutor and write audit log (history kept). */
@@ -146,11 +141,11 @@ export async function reassignTutor({
         action: 'tutor_reassigned',
         entity_type: 'match',
         entity_id: matchId,
-        details: {
+        details: sanitizeAuditDetails({
           old_tutor_user_id: previousTutorUserId,
           new_tutor_user_id: newTutorUserId,
           reason: reason || null,
-        },
+        }),
       },
     ])
     if (auditError) {
@@ -220,7 +215,7 @@ export async function updateMatchDetails({
         action: 'match_details_updated',
         entity_type: 'match',
         entity_id: matchId,
-        details: auditDetails as Json,
+        details: sanitizeAuditDetails(auditDetails) as Json,
       },
     ])
     if (auditError) {
@@ -258,7 +253,7 @@ export async function updateMatchNotes({
       action: 'match_notes_updated',
       entity_type: 'match',
       entity_id: matchId,
-      details: { admin_notes: adminNotes || null },
+      details: sanitizeAuditDetails({ admin_notes: adminNotes || null }),
     }])
 
     revalidatePath(`/admin/matches/${matchId}`)
@@ -326,7 +321,7 @@ export async function adminCancelRequest(
       action: 'admin_cancel_request',
       entity_type: 'request',
       entity_id: requestId,
-      details: { previous_status: previousStatus, reason: reason || null },
+      details: sanitizeAuditDetails({ previous_status: previousStatus, reason: reason || null }),
     }])
 
     revalidatePath(`/admin/requests/${requestId}`)
@@ -371,7 +366,7 @@ export async function adminUpdateRequestStatus(
       action: 'admin_update_request_status',
       entity_type: 'request',
       entity_id: requestId,
-      details: { previous_status: previousStatus, new_status: newStatus },
+      details: sanitizeAuditDetails({ previous_status: previousStatus, new_status: newStatus }),
     }])
 
     revalidatePath(`/admin/requests/${requestId}`)
