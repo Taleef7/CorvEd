@@ -1,6 +1,6 @@
 # CorvEd architecture
 
-Last updated: 2026-04-27
+Last updated: 2026-04-27  
 Stack: Next.js (App Router) + Supabase (Postgres + Auth + Storage)  
 Primary market: Pakistan, supports overseas students (timezone-aware)  
 Primary comms: WhatsApp (manual or WhatsApp Business), platform is source of truth

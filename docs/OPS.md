@@ -1,6 +1,6 @@
 # CorvEd Ops
 
-Last updated: 2026-04-27
+Last updated: 2026-04-27  
 Owner: Taleef  
 Market: Pakistan-first + overseas students  
 Primary comms: WhatsApp (WhatsApp Business recommended)  

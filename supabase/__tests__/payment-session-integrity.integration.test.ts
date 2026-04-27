@@ -251,11 +251,11 @@ describeLocal('payment proof storage, checkout idempotency, and session RPCs', (
       .remove([proofPath])
     expect(deleteError).toBeNull()
 
-    const { data: stillPrivateProof, error: stillPrivateProofError } = await student.client.storage
+    const { data: deletedProof, error: deletedProofError } = await student.client.storage
       .from('payment-proofs')
       .download(proofPath)
-    expect(stillPrivateProofError).toBeNull()
-    expect(await stillPrivateProof?.text()).toBe('proof')
+    expect(deletedProofError).toBeTruthy()
+    expect(deletedProof).toBeNull()
   })
 
   test('keeps checkout and rejected-payment resubmission idempotent', async () => {
